@@ -6,9 +6,20 @@ ENV PYTHONUNBUFFERED=1
 
 WORKDIR /code
 
+ARG XRAY_VERSION=v26.5.9
+
 RUN apt-get update \
     && apt-get install -y --no-install-recommends build-essential curl unzip gcc python3-dev libpq-dev \
-    && curl -L https://github.com/Gozargah/Marzban-scripts/raw/master/install_latest_xray.sh | bash \
+    && ARCH=$(case "$(dpkg --print-architecture)" in amd64) echo "64";; arm64) echo "arm64-v8a";; armhf) echo "arm32-v7a";; i386) echo "32";; *) echo "64";; esac) \
+    && curl -L -o /tmp/xray.zip "https://github.com/XTLS/Xray-core/releases/download/${XRAY_VERSION}/Xray-linux-${ARCH}.zip" \
+    && unzip /tmp/xray.zip -d /tmp/xray \
+    && mv /tmp/xray/xray /usr/local/bin/xray \
+    && chmod +x /usr/local/bin/xray \
+    && mkdir -p /usr/local/share/xray \
+    && [ -f /tmp/xray/geoip.dat ] && mv /tmp/xray/geoip.dat /usr/local/share/xray/ || true \
+    && [ -f /tmp/xray/geosite.dat ] && mv /tmp/xray/geosite.dat /usr/local/share/xray/ || true \
+    && rm -rf /tmp/xray /tmp/xray.zip \
+    && xray version \
     && rm -rf /var/lib/apt/lists/*
 
 COPY ./requirements.txt /code/
