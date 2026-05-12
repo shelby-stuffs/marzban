@@ -39,14 +39,6 @@
  <a href="./README.md">
  English
  </a>
- /
- <a href="./README-fa.md">
- فارسی
- </a>
-  /
-  <a href="./README-zh-cn.md">
- 简体中文
- </a>
    /
   <a href="./README-ru.md">
  Русский
@@ -111,18 +103,18 @@ Marzban is user-friendly, feature-rich and reliable. It lets you to create diffe
 Run the following command to install Marzban with SQLite database:
 
 ```bash
-sudo bash -c "$(curl -sL https://github.com/Gozargah/Marzban-scripts/raw/master/marzban.sh)" @ install
+sudo bash -c "$(curl -sL https://github.com/shelby-stuffs/Marzban-scripts/raw/master/marzban.sh)" @ install
 ```
 
 Run the following command to install Marzban with MySQL database:
 
 ```bash
-sudo bash -c "$(curl -sL https://github.com/Gozargah/Marzban-scripts/raw/master/marzban.sh)" @ install --database mysql
+sudo bash -c "$(curl -sL https://github.com/shelby-stuffs/Marzban-scripts/raw/master/marzban.sh)" @ install --database mysql
 ```
 
 Run the following command to install Marzban with MariaDB database:
 ```bash
-sudo bash -c "$(curl -sL https://github.com/Gozargah/Marzban-scripts/raw/master/marzban.sh)" @ install --database mariadb
+sudo bash -c "$(curl -sL https://github.com/shelby-stuffs/Marzban-scripts/raw/master/marzban.sh)" @ install --database mariadb
 ```
 
 Once the installation is complete:
