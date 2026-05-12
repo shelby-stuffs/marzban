@@ -255,7 +255,7 @@ class ClashConfiguration(object):
 
     def add(self, remark: str, address: str, inbound: dict, settings: dict):
         # not supported by clash
-        if inbound['network'] in ("kcp", "splithttp", "xhttp"):
+        if inbound['network'] in ("kcp", "splithttp", "xhttp", "hysteria"):
             return
 
         proxy_remark = self._remark_validation(remark)
@@ -345,8 +345,36 @@ class ClashMetaConfiguration(ClashConfiguration):
         return node
 
     def add(self, remark: str, address: str, inbound: dict, settings: dict):
+        # Hysteria2 protocol
+        if inbound['protocol'] == 'hysteria':
+            proxy_remark = self._remark_validation(remark)
+            port = inbound['port']
+            if isinstance(port, str):
+                from random import choice as _choice
+                port = int(_choice(port.split(',')))
+            node = {
+                'name': proxy_remark,
+                'type': 'hysteria2',
+                'server': address,
+                'port': port,
+                'password': settings['auth'],
+            }
+            if inbound.get('sni'):
+                node['sni'] = inbound['sni']
+            if inbound.get('alpn'):
+                node['alpn'] = inbound['alpn'].split(',') if isinstance(inbound['alpn'], str) else inbound['alpn']
+            if inbound.get('ais'):
+                node['skip-cert-verify'] = True
+            if inbound.get('obfs'):
+                node['obfs'] = inbound['obfs']
+                if inbound.get('obfs_password'):
+                    node['obfs-password'] = inbound['obfs_password']
+            self.data['proxies'].append(node)
+            self.proxy_remarks.append(proxy_remark)
+            return
+
         # not supported by clash-meta
-        if inbound['network'] in ("kcp", "splithttp", "xhttp") or (inbound['network'] == "quic" and inbound["header_type"] != "none"):
+        if inbound['network'] in ("kcp", "splithttp", "xhttp", "hysteria") or (inbound['network'] == "quic" and inbound["header_type"] != "none"):
             return
 
         proxy_remark = self._remark_validation(remark)

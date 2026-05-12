@@ -296,6 +296,16 @@ class XRayConfig(dict):
                     settings['path'] = net_settings.get('key', '')
                     settings['host'] = [net_settings.get('security', '')]
 
+                elif net == 'hysteria':
+                    # Hysteria transport (Xray-core PR #5679)
+                    settings['header_type'] = ''
+                    settings['hysteria_version'] = net_settings.get('version', 2)
+                    settings['path'] = ''
+                    settings['host'] = []
+                    # Add Hysteria2 obfs support
+                    settings['obfs'] = net_settings.get('obfs', '')
+                    settings['obfs_password'] = net_settings.get('obfsPassword', '')
+
                 elif net == 'httpupgrade':
                     settings['path'] = net_settings.get('path', '')
                     host = net_settings.get('host', '')

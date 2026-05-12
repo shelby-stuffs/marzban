@@ -8,6 +8,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from app.utils.system import random_password
 from xray_api.types.account import (
+    HysteriaAccount,
     ShadowsocksAccount,
     ShadowsocksMethods,
     TrojanAccount,
@@ -29,6 +30,7 @@ class ProxyTypes(str, Enum):
     VLESS = "vless"
     Trojan = "trojan"
     Shadowsocks = "shadowsocks"
+    Hysteria2 = "hysteria"
 
     @property
     def account_model(self):
@@ -40,6 +42,8 @@ class ProxyTypes(str, Enum):
             return TrojanAccount
         if self == self.Shadowsocks:
             return ShadowsocksAccount
+        if self == self.Hysteria2:
+            return HysteriaAccount
 
     @property
     def settings_model(self):
@@ -51,6 +55,22 @@ class ProxyTypes(str, Enum):
             return TrojanSettings
         if self == self.Shadowsocks:
             return ShadowsocksSettings
+        if self == self.Hysteria2:
+
+           return Hysteria2Settings
+
+    @property
+    def settings_model(self):
+        if self == self.VMess:
+            return VMessSettings
+        elif self == self.VLESS:
+            return VLESSSettings
+        elif self == self.Trojan:
+            return TrojanSettings
+        elif self == self.Shadowsocks:
+            return ShadowsocksSettings
+        elif self == self.Hysteria2:
+            return Hysteria2Settings
 
 
 class ProxySettings(BaseModel, use_enum_values=True):
@@ -93,6 +113,18 @@ class ShadowsocksSettings(ProxySettings):
 
     def revoke(self):
         self.password = random_password()
+
+class HysteriaSettings(BaseModel):
+    auth: UUID = Field(default_factory=uuid4)
+
+
+class Hysteria2Settings(ProxySettings):
+    auth: str = Field(default_factory=lambda: str(uuid4()))
+    obfs: Optional[str] = None
+    obfs_password: Optional[str] = None
+
+    def revoke(self):
+        self.auth = str(uuid4())
 
 
 class ProxyHostSecurity(str, Enum):

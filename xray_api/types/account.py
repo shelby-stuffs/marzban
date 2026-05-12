@@ -1,5 +1,6 @@
-from abc import ABC, abstractmethod 
+from abc import ABC, abstractmethod
 from enum import Enum
+from typing import Optional
 from uuid import UUID
 
 from pydantic import BaseModel
@@ -12,6 +13,7 @@ from ..proto.proxy.shadowsocks.config_pb2 import \
 from ..proto.proxy.trojan.config_pb2 import Account as TrojanAccountPb2
 from ..proto.proxy.vless.account_pb2 import Account as VLESSAccountPb2
 from ..proto.proxy.vmess.account_pb2 import Account as VMessAccountPb2
+from ..proto.proxy.hysteria.account.config_pb2 import Account as HysteriaAccountPb2
 from .message import Message
 
 
@@ -77,3 +79,14 @@ class ShadowsocksAccount(Account):
     @property
     def message(self):
         return Message(ShadowsocksAccountPb2(password=self.password, cipher_type=self.cipher_type))
+
+
+class HysteriaAccount(Account):
+    auth: str
+    # Add obfs support for salamander
+    obfs: Optional[str] = None
+    obfs_password: Optional[str] = None
+
+    @property
+    def message(self):
+        return Message(HysteriaAccountPb2(auth=self.auth))

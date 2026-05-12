@@ -175,6 +175,7 @@
   "userDialog.userCreated": "Пользователь {{username}} создан.",
   "userDialog.userEdited": "Пользователь {{username}} изменён.",
   "userDialog.vlessDesc": "Легковесный, быстрый и безопасный",
+  "userDialog.hysteriaDesc": "Молниеносная скорость, безопасность и стабильность",
   "userDialog.vmessDesc": "Быстрый и безопасный",
   "userDialog.warningNoProtocol": "Пожалуйста, выберите хотя бы один протокол",
   "userDialog.weeks": "Недели",

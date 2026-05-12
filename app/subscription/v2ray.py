@@ -161,6 +161,19 @@ class V2rayShareLink(str):
                 password=settings["password"],
                 method=settings["method"],
             )
+
+        elif inbound["protocol"] == "hysteria":
+            link = self.hysteria2(
+                remark=remark,
+                address=address,
+                port=inbound["port"],
+                auth=settings["auth"],
+                sni=inbound.get("sni", ""),
+                alpn=inbound.get("alpn", ""),
+                ais=inbound.get("ais", ""),
+                obfs=inbound.get("obfs", ""),
+                obfs_password=inbound.get("obfs_password", ""),
+            )
         else:
             return
 
@@ -514,6 +527,38 @@ class V2rayShareLink(str):
         )
 
     @classmethod
+    def hysteria2(
+            cls,
+            remark: str,
+            address: str,
+            port: int,
+            auth: str,
+            sni: str = "",
+            alpn: str = "",
+            ais: str = "",
+            obfs: str = "",
+            obfs_password: str = "",
+    ):
+        payload = {}
+        if sni:
+            payload["sni"] = sni
+        if alpn:
+            payload["alpn"] = alpn
+        if ais:
+            payload["insecure"] = 1
+        if obfs:
+            payload["obfs"] = obfs
+            if obfs_password:
+                payload["obfs-password"] = obfs_password
+
+        query = ("?" + urlparse.urlencode(payload)) if payload else ""
+        return (
+            "hysteria2://"
+            + f"{urlparse.quote(auth, safe=':')}@{address}:{port}{query}"
+            + f"#{urlparse.quote(remark)}"
+        )
+
+    @classmethod
     def shadowsocks(
             cls, remark: str, address: str, port: int, password: str, method: str
     ):
@@ -780,6 +825,11 @@ class V2rayJsonConfig(str):
 
         return config
 
+    def hysteria_config(self, version: int = 2) -> dict:
+        hysteriaSettings = copy.deepcopy(self.settings.get("hysteriaSettings", {}))
+        hysteriaSettings["version"] = version
+        return hysteriaSettings
+
     def quic_config(self, path=None, host=None, header=None) -> dict:
         quicSettings = copy.deepcopy(self.settings.get("quicSettings", {
             "security": "none",
@@ -913,6 +963,23 @@ class V2rayJsonConfig(str):
         }
 
     @staticmethod
+    def hysteria2_config(address=None, port=None, auth=None, obfs: str = "", obfs_password: str = "") -> dict:
+        config = {
+            "servers": [
+                {
+                    "address": address,
+                    "port": port,
+                    "password": auth,
+                }
+            ]
+        }
+        if obfs:
+            config["obfs"] = obfs
+            if obfs_password:
+                config["obfs-password"] = obfs_password
+        return config
+
+    @staticmethod
     def make_fragment(fragment: str) -> dict:
         length, interval, packets = fragment.split(',')
         return {
@@ -984,6 +1051,7 @@ class V2rayJsonConfig(str):
                             scStreamUpServerSecs: int | None = None,
                             heartbeatPeriod: int = 0,
                             keepAlivePeriod: int = 0,
+                            hysteria_version: int = 2,
                             ) -> dict:
 
         if net == "ws":
@@ -1004,6 +1072,8 @@ class V2rayJsonConfig(str):
         elif net == "quic":
             network_setting = self.quic_config(
                 path=path, host=host, header=headers)
+        elif net == "hysteria":
+            network_setting = self.hysteria_config(version=hysteria_version)
         elif net == "httpupgrade":
             network_setting = self.httpupgrade_config(
                 path=path, host=host, random_user_agent=random_user_agent)
@@ -1097,6 +1167,13 @@ class V2rayJsonConfig(str):
                                                            password=settings['password'],
                                                            method=settings['method'])
 
+        elif inbound['protocol'] == 'hysteria':
+            outbound["settings"] = self.hysteria2_config(address=address,
+                                                         port=port,
+                                                         auth=settings['auth'],
+                                                         obfs=inbound.get('obfs', ''),
+                                                         obfs_password=inbound.get('obfs_password', ''))
+
         outbounds = [outbound]
         dialer_proxy = ''
         extra_outbound = self.make_dialer_outbound(fragment, noise)
@@ -1104,8 +1181,10 @@ class V2rayJsonConfig(str):
             dialer_proxy = extra_outbound['tag']
             outbounds.append(extra_outbound)
 
-        alpn = inbound.get('alpn', None)
-        outbound["streamSettings"] = self.make_stream_setting(
+        # Hysteria2 doesn't use streamSettings
+        if inbound['protocol'] != 'hysteria':
+            alpn = inbound.get('alpn', None)
+            outbound["streamSettings"] = self.make_stream_setting(
             net=net,
             tls=tls,
             sni=inbound['sni'],
@@ -1132,6 +1211,7 @@ class V2rayJsonConfig(str):
             heartbeatPeriod=inbound.get("heartbeatPeriod", 0),
             keepAlivePeriod=inbound.get("keepAlivePeriod", 0),
             scStreamUpServerSecs=inbound.get("scStreamUpServerSecs"),
+            hysteria_version=inbound.get("hysteria_version", 2),
         )
 
         mux_json = json.loads(self.mux_template)
