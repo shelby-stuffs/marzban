@@ -20,6 +20,12 @@ RUN apt-get update \
     && [ -f /tmp/xray/geosite.dat ] && mv /tmp/xray/geosite.dat /usr/local/share/xray/ || true \
     && rm -rf /tmp/xray /tmp/xray.zip \
     && xray version \
+    && rm -rf /var/lib/apt/lists/* \
+    && echo "Downloading additional geobase..." \
+    && curl -L -o /tmp/geoip_RU.dat "https://raw.githubusercontent.com/runetfreedom/russia-v2ray-rules-dat/release/geoip.dat" \
+    && curl -L -o /tmp/geosite_RU.dat "https://raw.githubusercontent.com/runetfreedom/russia-v2ray-rules-dat/release/geosite.dat" \
+    && mv /tmp/geoip_RU.dat /usr/local/share/xray/geoip_RU.dat \
+    && mv /tmp/geosite_RU.dat /usr/local/share/xray/geosite_RU.dat \
     && rm -rf /var/lib/apt/lists/*
 
 COPY ./requirements.txt /code/
