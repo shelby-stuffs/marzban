@@ -1,150 +1,475 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 
 <head>
-    <title>Subscription Information</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Подписка — {{ user.username }}</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚀</text></svg>">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
+        :root {
+            --bg: #f5f5fa;
+            --card: rgba(255, 255, 255, .78);
+            --text: #17182b;
+            --muted: #6b7280;
+            --border: rgba(23, 24, 43, .08);
+            --accent: #7c3aed;
+            --accent-2: #8b5cf6;
+            --accent-3: #6366f1;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #0e1017;
+                --card: rgba(26, 29, 43, .72);
+                --text: #e8e9f2;
+                --muted: #9aa1b5;
+                --border: rgba(255, 255, 255, .09);
+            }
+        }
+
+        * { box-sizing: border-box; }
+
         body {
-            font-family: Arial, sans-serif;
-            padding: 20px;
+            margin: 0;
+            min-height: 100vh;
+            padding: 28px 16px 56px;
+            font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            overflow-x: hidden;
         }
 
-        h1 {
-            margin-top: 0;
+        body::before,
+        body::after {
+            content: "";
+            position: fixed;
+            z-index: -1;
+            width: 480px;
+            height: 480px;
+            border-radius: 50%;
+            filter: blur(120px);
+            opacity: .35;
         }
 
-        .link-input {
+        body::before {
+            top: -160px;
+            left: -120px;
+            background: var(--accent);
+        }
+
+        body::after {
+            bottom: -180px;
+            right: -140px;
+            background: var(--accent-3);
+        }
+
+        .wrap { max-width: 680px; margin: 0 auto; }
+
+        .card,
+        .hero {
+            border-radius: 20px;
+            margin-bottom: 16px;
+            animation: rise .45s ease both;
+        }
+
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            padding: 20px 22px;
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            box-shadow: 0 8px 30px rgba(20, 10, 60, .06);
+        }
+
+        .card:nth-of-type(2) { animation-delay: .06s; }
+        .card:nth-of-type(3) { animation-delay: .12s; }
+
+        @keyframes rise {
+            from { opacity: 0; transform: translateY(14px); }
+            to { opacity: 1; transform: none; }
+        }
+
+        .hero {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 24px 26px;
+            color: #fff;
+            background: linear-gradient(135deg, var(--accent), var(--accent-2) 55%, var(--accent-3));
+            box-shadow: 0 14px 40px rgba(124, 58, 237, .35);
+        }
+
+        .hero .label {
+            margin: 0 0 6px;
+            font-size: 11px;
+            letter-spacing: .14em;
+            text-transform: uppercase;
+            opacity: .85;
+        }
+
+        .hero h1 { margin: 0; font-size: 26px; word-break: break-all; }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 7px 14px;
+            border-radius: 999px;
+            font-size: 13px;
+            font-weight: 600;
+            background: rgba(255, 255, 255, .2);
+            border: 1px solid rgba(255, 255, 255, .35);
+            white-space: nowrap;
+        }
+
+        .badge .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #4ade80;
+            animation: pulse 2s infinite;
+        }
+
+        .badge.st-limited .dot { background: #fbbf24; animation: none; }
+        .badge.st-expired .dot,
+        .badge.st-disabled .dot { background: #f87171; animation: none; }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(74, 222, 128, .6); }
+            70% { box-shadow: 0 0 0 9px rgba(74, 222, 128, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0); }
+        }
+
+        h2 {
+            margin: 0 0 14px;
+            font-size: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        @media (max-width: 540px) { .grid { grid-template-columns: 1fr; } }
+
+        .grid .card { margin-bottom: 0; }
+
+        .stat .value {
+            font-size: 22px;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .stat .hint { color: var(--muted); font-size: 13px; margin-top: 4px; }
+
+        .bar {
+            position: relative;
+            height: 10px;
+            border-radius: 999px;
+            background: var(--border);
+            overflow: hidden;
+            margin-top: 14px;
+        }
+
+        .bar span {
+            display: block;
+            height: 100%;
+            width: 0;
+            border-radius: 999px;
+            background: linear-gradient(90deg, var(--accent), var(--accent-2));
+            transition: width 1s cubic-bezier(.22, 1, .36, 1);
+        }
+
+        .bar.warn span { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+        .bar.bad span { background: linear-gradient(90deg, #ef4444, #f87171); }
+
+        .row {
+            display: flex;
+            gap: 8px;
             margin-bottom: 10px;
         }
 
-        .copy-button {
-            margin-left: 10px;
+        .row:last-child { margin-bottom: 0; }
+
+        .row input {
+            flex: 1;
+            min-width: 0;
+            padding: 10px 13px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background: rgba(127, 127, 160, .07);
+            color: var(--text);
+            font-size: 13px;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
         }
 
-        .status {
-            display: inline-block;
-            padding: 3px 8px;
-            border-radius: 3px;
-            font-weight: bold;
-            font-size: 16px;
-            line-height: 1;
+        .row input:focus { outline: 2px solid var(--accent-2); outline-offset: -1px; }
+
+        button {
+            padding: 10px 15px;
+            border: 0;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--accent), var(--accent-2));
+            color: #fff;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform .15s ease, box-shadow .15s ease, opacity .15s ease;
         }
 
-        .active {
-            background-color: #4CAF50;
-            color: white;
+        button:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(124, 58, 237, .35); }
+
+        button:active { transform: none; }
+
+        button.ghost {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text);
         }
 
-        .limited {
-            background-color: #F44336;
-            color: white;
-        }
+        button.ghost:hover { box-shadow: none; border-color: var(--accent-2); }
 
-        .expired {
-            background-color: #FF9800;
-            color: white;
-        }
-
-        .disabled {
-            background-color: #9E9E9E;
-            color: white;
-        }
-
-        .qr-popup {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background-color: white;
-            padding: 10px 25px 25px 25px;
+        .chip {
+            align-self: center;
+            flex-shrink: 0;
+            min-width: 64px;
+            text-align: center;
+            padding: 6px 0;
             border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: .04em;
+            text-transform: uppercase;
+            color: #fff;
+            background: #64748b;
+        }
+
+        .chip.p-vless { background: #7c3aed; }
+        .chip.p-vmess { background: #2563eb; }
+        .chip.p-trojan { background: #dc2626; }
+        .chip.p-ss { background: #0d9488; }
+        .chip.p-hy2 { background: #d97706; }
+
+        .apps {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .apps a {
+            padding: 9px 14px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            color: var(--text);
+            font-size: 13px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: border-color .15s ease, transform .15s ease;
+        }
+
+        .apps a:hover { border-color: var(--accent-2); transform: translateY(-1px); }
+
+        .empty { color: var(--muted); font-size: 14px; margin: 0; }
+
+        .foot {
+            text-align: center;
+            color: var(--muted);
+            font-size: 12px;
+            margin-top: 24px;
+        }
+
+        .qr-overlay {
+            position: fixed;
+            inset: 0;
             display: none;
+            align-items: center;
+            justify-content: center;
+            background: rgba(10, 8, 24, .6);
+            backdrop-filter: blur(6px);
             z-index: 9999;
         }
 
-        .qr-close-button {
-            text-align: right;
-            margin-bottom: 5px;
-            margin-right: -15px;
+        .qr-box {
+            background: #fff;
+            border-radius: 20px;
+            padding: 22px;
+            text-align: center;
+            animation: rise .25s ease both;
         }
+
+        .qr-box .qr-title {
+            margin: 0 0 12px;
+            color: #17182b;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .qr-box button { margin-top: 16px; width: 100%; }
     </style>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 
 <body>
-    <h1>User Information</h1>
-    <p>Username: {{ user.username }}</p>
-    <p>Status: <span
-            class="status {% if user.status.value == 'active' %}active{% elif user.status.value == 'limited' %}limited{% elif user.status.value == 'expired' %}expired{% elif user.status.value == 'disabled' %}disabled{% endif %}">{{
-            user.status.value }}</span></p>
-    <p>Data Limit: {% if not user.data_limit %}∞{% else %}{{ user.data_limit | bytesformat }}{% endif %}</p>
-    <p>Data Used: {{ user.used_traffic | bytesformat }}{% if user.data_limit_reset_strategy != 'no_reset' %} (resets
-        every {{ user.data_limit_reset_strategy.value }}){% endif %}</p>
-    <p>Expiration Date:
-        {% if not user.expire %}
-        ∞
-        {% else %}
-        {% set current_timestamp = now().timestamp() %}
-        {% set remaining_days = ((user.expire - current_timestamp) // (24 * 3600)) %}
-        {{ user.expire | datetime }} ({{ remaining_days | int }} days
-        remaining)
-        {% endif %}</p>
-
-    {% if user.status == 'active' %}
-    <h2>Links:</h2>
-    <ul>
-        {% for link in user.links %}
-        <li>
-            <input type="text" value="{{ link }}" readonly>
-            <button class="copy-button" onclick="copyLink('{{ link }}', this)">Copy</button>
-            <button class="qr-button" data-link="{{ link }}">QR Code</button>
-        </li>
-        {% endfor %}
-    </ul>
-    <div class="qr-popup" id="qrPopup">
-        <div class="qr-close-button">
-            <button onclick="closeQrPopup()">X</button>
+    {% set status = user.status.value %}
+    {% set status_ru = {'active': 'Активна', 'limited': 'Лимит исчерпан', 'expired': 'Истекла', 'disabled': 'Отключена', 'on_hold': 'В ожидании'} %}
+    <div class="wrap"
+         id="meta"
+         data-used="{{ user.used_traffic or 0 }}"
+         data-limit="{{ user.data_limit or 0 }}"
+         data-expire="{{ user.expire or 0 }}">
+        <div class="hero">
+            <div>
+                <p class="label">Подписка</p>
+                <h1>{{ user.username }}</h1>
+            </div>
+            <span class="badge st-{{ status }}"><span class="dot"></span>{{ status_ru.get(status, status) }}</span>
         </div>
-        <div id="qrCodeContainer"></div>
+
+        <div class="grid">
+            <div class="card stat">
+                <h2>📊 Трафик</h2>
+                <div class="value" id="traffic">—</div>
+                <div class="hint" id="traffic-hint"></div>
+                <div class="bar" id="traffic-track"><span id="traffic-bar"></span></div>
+            </div>
+            <div class="card stat">
+                <h2>⏳ Срок действия</h2>
+                <div class="value" id="expire">—</div>
+                <div class="hint" id="expire-hint"></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>🔗 Ссылка на подписку</h2>
+            <div class="row">
+                <input type="text" id="subUrl" value="" readonly>
+                <button onclick="copyRow(this)">Копировать</button>
+                <button class="ghost" onclick="showQr(this, 'Ссылка на подписку')">QR</button>
+            </div>
+            <div class="apps">
+                <a id="app-v2rayng" href="#">⚡ v2rayNG</a>
+                <a id="app-hiddify" href="#">🟣 Hiddify</a>
+                <a id="app-streisand" href="#">🍏 Streisand</a>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>🧩 Конфигурации</h2>
+            {% if status in ('active', 'on_hold') and user.links %}
+            {% for link in user.links %}
+            <div class="row">
+                <span class="chip">cfg</span>
+                <input type="text" value="{{ link }}" readonly>
+                <button onclick="copyRow(this)">Копировать</button>
+                <button class="ghost" onclick="showQr(this, 'Конфигурация')">QR</button>
+            </div>
+            {% endfor %}
+            {% else %}
+            <p class="empty">Конфигурации недоступны: подписка неактивна.</p>
+            {% endif %}
+        </div>
+
+        <p class="foot">Страница обновляется автоматически при каждом открытии ссылки подписки.</p>
     </div>
-    {% endif %}
+
+    <div class="qr-overlay" id="qrOverlay" onclick="hideQr()">
+        <div class="qr-box" onclick="event.stopPropagation()">
+            <p class="qr-title" id="qrTitle"></p>
+            <div id="qrCode"></div>
+            <button onclick="hideQr()">Закрыть</button>
+        </div>
+    </div>
 
     <script>
-        function copyLink(link, button) {
-            const tempInput = document.createElement('input');
-            tempInput.setAttribute('value', link);
-            document.body.appendChild(tempInput);
-            tempInput.select();
-            document.execCommand('copy');
-            document.body.removeChild(tempInput);
+        var meta = document.getElementById('meta');
+        var used = Number(meta.dataset.used) || 0;
+        var limit = Number(meta.dataset.limit) || 0;
+        var expire = Number(meta.dataset.expire) || 0;
 
-            button.textContent = 'Copied!';
-            setTimeout(function () {
-                button.textContent = 'Copy';
-            }, 1500);
+        function fmtBytes(n) {
+            if (!n) return '0 Б';
+            var units = ['Б', 'КБ', 'МБ', 'ГБ', 'ТБ'];
+            var i = Math.min(Math.floor(Math.log(n) / Math.log(1024)), units.length - 1);
+            return (n / Math.pow(1024, i)).toFixed(i ? 2 : 0) + ' ' + units[i];
         }
 
-        const qrButtons = document.querySelectorAll('.qr-button');
-        const qrPopup = document.getElementById('qrPopup');
+        document.getElementById('traffic').textContent =
+            fmtBytes(used) + (limit ? ' / ' + fmtBytes(limit) : '');
+        var track = document.getElementById('traffic-track');
+        var barEl = document.getElementById('traffic-bar');
+        if (limit) {
+            var pct = Math.min(100, used / limit * 100);
+            if (pct >= 90) track.className = 'bar bad';
+            else if (pct >= 75) track.className = 'bar warn';
+            document.getElementById('traffic-hint').textContent =
+                'Использовано ' + pct.toFixed(1) + '%';
+            setTimeout(function () { barEl.style.width = pct.toFixed(1) + '%'; }, 80);
+        } else {
+            document.getElementById('traffic-hint').textContent = 'Лимит не задан';
+            setTimeout(function () { barEl.style.width = '5%'; }, 80);
+        }
 
-        qrButtons.forEach((qrButton) => {
-            qrButton.addEventListener('click', () => {
-                const link = qrButton.dataset.link;
-                while (qrCodeContainer.firstChild) {
-                    qrCodeContainer.removeChild(qrCodeContainer.firstChild);
-                }
-                const qrCode = new QRCode(qrCodeContainer, {
-                    text: link,
-                    width: 256,
-                    height: 256,
-                    correctLevel: QRCode.CorrectLevel.L
-                });
-                qrPopup.style.display = 'block';
-            });
+        if (expire) {
+            var d = new Date(expire * 1000);
+            document.getElementById('expire').textContent =
+                d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
+            var days = Math.ceil((d - Date.now()) / 86400000);
+            document.getElementById('expire-hint').textContent =
+                days >= 0 ? 'Осталось дней: ' + days : 'Истекла ' + Math.abs(days) + ' дн. назад';
+        } else {
+            document.getElementById('expire').textContent = '∞';
+            document.getElementById('expire-hint').textContent = 'Бессрочная подписка';
+        }
+
+        var subUrl = window.location.href.split('#')[0];
+        document.getElementById('subUrl').value = subUrl;
+        document.getElementById('app-v2rayng').href =
+            'v2rayng://install-sub/?url=' + encodeURIComponent(subUrl);
+        document.getElementById('app-hiddify').href =
+            'hiddify://import/' + subUrl;
+        document.getElementById('app-streisand').href =
+            'streisand://import/' + subUrl;
+
+        var chipMap = {
+            vless: 'p-vless', vmess: 'p-vmess', trojan: 'p-trojan',
+            ss: 'p-ss', hysteria2: 'p-hy2', hy2: 'p-hy2'
+        };
+        document.querySelectorAll('.chip').forEach(function (chip) {
+            var input = chip.parentElement.querySelector('input');
+            var proto = (input.value.split('://')[0] || 'cfg').toLowerCase();
+            chip.textContent = proto === 'hysteria2' ? 'hy2' : proto;
+            if (chipMap[proto]) chip.classList.add(chipMap[proto]);
         });
-        function closeQrPopup() {
-            document.getElementById('qrPopup').style.display = 'none';
+
+        function copyRow(btn) {
+            var input = btn.parentElement.querySelector('input');
+            input.select();
+            input.setSelectionRange(0, 99999);
+            try { navigator.clipboard.writeText(input.value); } catch (e) { document.execCommand('copy'); }
+            var old = btn.textContent;
+            btn.textContent = 'Скопировано!';
+            setTimeout(function () { btn.textContent = old; }, 1500);
+        }
+
+        function showQr(btn, title) {
+            var link = btn.parentElement.querySelector('input').value;
+            var box = document.getElementById('qrCode');
+            box.innerHTML = '';
+            new QRCode(box, { text: link, width: 256, height: 256, correctLevel: QRCode.CorrectLevel.L });
+            document.getElementById('qrTitle').textContent = title;
+            document.getElementById('qrOverlay').style.display = 'flex';
+        }
+
+        function hideQr() {
+            document.getElementById('qrOverlay').style.display = 'none';
         }
     </script>
 </body>
