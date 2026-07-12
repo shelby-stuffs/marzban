@@ -21,7 +21,6 @@ temp_enum_name = f"temp_{enum_name}"
 old_values = ("VMess", "VLESS", "Trojan", "Shadowsocks")
 new_values = (*old_values, "Hysteria2")
 downgrade_from = ("Hysteria2",)
-downgrade_to = "VLESS"
 
 old_type = sa.Enum(*old_values, name=enum_name)
 new_type = sa.Enum(*new_values, name=enum_name)
@@ -75,12 +74,13 @@ def upgrade():
 
 def downgrade():
     bind = op.get_bind()
-    update_query = (
-        temp_table.update()
-        .where(temp_table.c.type.in_(downgrade_from))
-        .values(type=downgrade_to)
+    # Re-typing Hysteria2 rows as VLESS keeps their {"auth": ...} settings
+    # JSON, which VLESSSettings cannot validate and crashes the panel after
+    # a downgrade. Drop those proxies instead.
+    delete_query = temp_table.delete().where(
+        temp_table.c.type.in_(downgrade_from)
     )
-    op.execute(update_query)
+    op.execute(delete_query)
 
     if bind.dialect.name == "sqlite":
         with op.batch_alter_table(table_name) as batch_op:

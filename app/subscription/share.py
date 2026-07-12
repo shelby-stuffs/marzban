@@ -144,7 +144,12 @@ def generate_subscription(
     }
 
     from app.models.user import UserStatus
-    if getattr(user, "status", None) == UserStatus.expired:
+    # Raw vless:// lines are only valid for link-list formats; returning them
+    # for clash/clash-meta/sing-box/outline breaks those clients entirely.
+    if getattr(user, "status", None) == UserStatus.expired and config_format in (
+        "v2ray",
+        "v2ray-json",
+    ):
         config = _generate_expired_notice(config_format)
         if as_base64:
             config = base64.b64encode(config.encode()).decode()

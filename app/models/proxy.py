@@ -56,20 +56,6 @@ class ProxyTypes(str, Enum):
         if self == self.Shadowsocks:
             return ShadowsocksSettings
         if self == self.Hysteria2:
-
-           return Hysteria2Settings
-
-    @property
-    def settings_model(self):
-        if self == self.VMess:
-            return VMessSettings
-        elif self == self.VLESS:
-            return VLESSSettings
-        elif self == self.Trojan:
-            return TrojanSettings
-        elif self == self.Shadowsocks:
-            return ShadowsocksSettings
-        elif self == self.Hysteria2:
             return Hysteria2Settings
 
 
@@ -113,10 +99,6 @@ class ShadowsocksSettings(ProxySettings):
 
     def revoke(self):
         self.password = random_password()
-
-class HysteriaSettings(BaseModel):
-    auth: UUID = Field(default_factory=uuid4)
-
 
 class Hysteria2Settings(ProxySettings):
     auth: str = Field(default_factory=lambda: str(uuid4()))
