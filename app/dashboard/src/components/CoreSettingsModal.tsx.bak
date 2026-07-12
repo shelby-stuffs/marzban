@@ -9,8 +9,10 @@ import {
   HStack,
   IconButton,
   Modal,
+  ModalBody,
   ModalCloseButton,
   ModalContent,
+  ModalFooter,
   ModalHeader,
   ModalOverlay,
   Select,
@@ -104,7 +106,7 @@ const getWebsocketUrl = (nodeID: string) => {
 };
 
 let logsTmp: string[] = [];
-export const CoreSettingsPanel: FC = () => {
+const CoreSettingModalContent: FC = () => {
 
   const { colorMode } = useColorMode();
 
@@ -146,7 +148,7 @@ export const CoreSettingsPanel: FC = () => {
   }, [config]);
 
   useEffect(() => {
-    fetchCoreSettings();
+    if (isEditingCore) fetchCoreSettings();
   }, [isEditingCore]);
   "".startsWith;
   const scrollShouldStayOnEnd = useRef(true);
@@ -235,7 +237,7 @@ export const CoreSettingsPanel: FC = () => {
   };
   return (
     <form onSubmit={form.handleSubmit(handleOnSave)}>
-      <Box>
+      <ModalBody>
         <FormControl>
           <HStack justifyContent="space-between" alignItems="flex-start">
             <FormLabel>
@@ -337,8 +339,8 @@ export const CoreSettingsPanel: FC = () => {
             ))}
           </Box>
         </FormControl>
-      </Box>
-      <Box mt="4">
+      </ModalBody>
+      <ModalFooter>
         <HStack w="full" justifyContent="space-between">
           <HStack>
             <Box>
@@ -372,7 +374,7 @@ export const CoreSettingsPanel: FC = () => {
             </Button>
           </HStack>
         </HStack>
-      </Box>
+      </ModalFooter>
     </form>
   );
 };
@@ -396,7 +398,7 @@ export const CoreSettingsModal: FC = () => {
           </HStack>
         </ModalHeader>
         <ModalCloseButton mt={3} />
-        <CoreSettingsPanel />
+        <CoreSettingModalContent />
       </ModalContent>
     </Modal>
   );

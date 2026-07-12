@@ -1,13 +1,10 @@
-import { Box, VStack } from "@chakra-ui/react";
-import { CoreSettingsPanel } from "components/CoreSettingsModal";
+import { Box, Button, Heading, VStack } from "@chakra-ui/react";
 import { Header } from "components/Header";
 import { Statistics } from "components/Statistics";
 import { useDashboard } from "contexts/DashboardContext";
 import { FC, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
-
-const darkBorder = { borderColor: "gray.600" };
 
 const useReturnHomeOnClose = (
   selector: (s: ReturnType<typeof useDashboard.getState>) => boolean
@@ -61,16 +58,18 @@ export const CoreRoute: FC = () => {
   const { t } = useTranslation();
   return (
     <VStack align="stretch" spacing="4" w="full">
-      <Header title={t("core.title", "Core")} />
+      <Header />
       <Statistics />
-      <Box
-        borderWidth="1px"
-        borderColor="light-border"
-        _dark={darkBorder}
-        borderRadius="10px"
-        p="4"
-      >
-        <CoreSettingsPanel />
+      <Box>
+        <Heading size="sm" mb="2">
+          {t("core.title", "Core settings")}
+        </Heading>
+        <Button
+          colorScheme="primary"
+          onClick={() => useDashboard.setState({ isEditingCore: true })}
+        >
+          {t("header.coreSettings", "Core settings")}
+        </Button>
       </Box>
     </VStack>
   );
