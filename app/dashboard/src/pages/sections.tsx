@@ -1,6 +1,8 @@
 import { Box, VStack } from "@chakra-ui/react";
 import { CoreSettingsPanel } from "components/CoreSettingsModal";
 import { Header } from "components/Header";
+import { HostsDialog } from "components/HostsDialog";
+import { NodesDialog } from "components/NodesModal";
 import { Statistics } from "components/Statistics";
 import { useDashboard } from "contexts/DashboardContext";
 import { FC, useEffect } from "react";
@@ -25,25 +27,39 @@ const useReturnHomeOnClose = (
 };
 
 export const HostsRoute: FC = () => {
-  useReturnHomeOnClose((s) => s.isEditingHosts);
-  useEffect(() => {
-    useDashboard.getState().onEditingHosts(true);
-    return () => {
-      useDashboard.getState().onEditingHosts(false);
-    };
-  }, []);
-  return null;
+  const { t } = useTranslation();
+  return (
+    <VStack align="stretch" spacing="4" w="full">
+      <Header title={t("header.hostSettings", "Hosts")} />
+      <Box
+        borderWidth="1px"
+        borderColor="light-border"
+        _dark={darkBorder}
+        borderRadius="10px"
+        p="4"
+      >
+        <HostsDialog />
+      </Box>
+    </VStack>
+  );
 };
 
 export const NodesRoute: FC = () => {
-  useReturnHomeOnClose((s) => s.isEditingNodes);
-  useEffect(() => {
-    useDashboard.getState().onEditingNodes(true);
-    return () => {
-      useDashboard.getState().onEditingNodes(false);
-    };
-  }, []);
-  return null;
+  const { t } = useTranslation();
+  return (
+    <VStack align="stretch" spacing="4" w="full">
+      <Header title={t("header.nodeSettings", "Nodes")} />
+      <Box
+        borderWidth="1px"
+        borderColor="light-border"
+        _dark={darkBorder}
+        borderRadius="10px"
+        p="4"
+      >
+        <NodesDialog />
+      </Box>
+    </VStack>
+  );
 };
 
 export const NodesUsageRoute: FC = () => {

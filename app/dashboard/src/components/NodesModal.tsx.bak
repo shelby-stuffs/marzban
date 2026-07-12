@@ -558,16 +558,16 @@ export const NodesDialog: FC = () => {
 
   return (
     <>
-      <Box>
-        
-        <Box>
-          <Box pt={6} mb={2}>
+      <Modal isOpen={isEditingNodes} onClose={onClose}>
+        <ModalOverlay bg="blackAlpha.300" backdropFilter="blur(10px)" />
+        <ModalContent mx="3" w="fit-content" maxW="3xl">
+          <ModalHeader pt={6}>
             <Icon color="primary">
               <ModalIcon color="white" />
             </Icon>
-          </Box>
-          
-          <Box pb={6} pt={3}>
+          </ModalHeader>
+          <ModalCloseButton mt={3} />
+          <ModalBody w="440px" pb={6} pt={3}>
             <Text mb={3} opacity={0.8} fontSize="sm">
               {t("nodes.title")}
             </Text>
@@ -597,9 +597,9 @@ export const NodesDialog: FC = () => {
                 />
               </VStack>
             </Accordion>
-          </Box>
-        </Box>
-      </Box>
+          </ModalBody>
+        </ModalContent>
+      </Modal>
       <DeleteNodeModal deleteCallback={() => setOpenAccordions({})} />
     </>
   );

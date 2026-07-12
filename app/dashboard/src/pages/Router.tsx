@@ -22,24 +22,8 @@ export const router = createHashRouter([
     loader: fetchAdminLoader,
     children: [
       { index: true, element: <Dashboard /> },
-      {
-        path: "hosts",
-        element: (
-          <>
-            <Dashboard />
-            <HostsRoute />
-          </>
-        ),
-      },
-      {
-        path: "nodes",
-        element: (
-          <>
-            <Dashboard />
-            <NodesRoute />
-          </>
-        ),
-      },
+      { path: "hosts", element: <HostsRoute /> },
+      { path: "nodes", element: <NodesRoute /> },
       {
         path: "nodes-usage",
         element: (

@@ -1236,14 +1236,14 @@ export const HostsDialog: FC = () => {
   const [openAccordions, setOpenAccordions] = useState<any>({});
 
   useEffect(() => {
-    if (isEditingHosts) fetchHosts();
+    fetchHosts();
   }, [isEditingHosts]);
   const form = useForm<z.infer<typeof hostsSchema>>({
     resolver: zodResolver(hostsSchema),
   });
 
   useEffect(() => {
-    if (hosts && isEditingHosts) {
+    if (hosts) {
       form.reset(hosts);
     }
   }, [hosts]);
@@ -1297,16 +1297,16 @@ export const HostsDialog: FC = () => {
   };
 
   return (
-    <Modal isOpen={isEditingHosts} onClose={onClose}>
-      <ModalOverlay bg="blackAlpha.300" backdropFilter="blur(10px)" />
-      <ModalContent mx="3" w="fit-content" maxW="3xl">
-        <ModalHeader pt={6}>
+    <Box>
+      
+      <Box>
+        <Box pt={6} mb={2}>
           <Icon color="primary">
             <ModalIcon color="white" />
           </Icon>
-        </ModalHeader>
-        <ModalCloseButton mt={3} />
-        <ModalBody w="440px" pb={3} pt={3}>
+        </Box>
+        
+        <Box pb={3} pt={3}>
           <FormProvider {...form}>
             <form onSubmit={form.handleSubmit(handleFormSubmit)}>
               <Text mb={3} opacity={0.8} fontSize="sm">
@@ -1355,8 +1355,8 @@ export const HostsDialog: FC = () => {
               </HStack>
             </form>
           </FormProvider>
-        </ModalBody>
-      </ModalContent>
-    </Modal>
+        </Box>
+      </Box>
+    </Box>
   );
 };
