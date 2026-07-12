@@ -644,7 +644,7 @@ class V2rayJsonConfig(str):
         realitySettings["show"] = False
 
         if pbk:
-            realitySettings["password"] = pbk
+            realitySettings["publicKey"] = pbk
         if sid:
             realitySettings["shortId"] = sid
         if spx:
@@ -696,12 +696,7 @@ class V2rayJsonConfig(str):
                          scStreamUpServerSecs: int | None = None,
                          keepAlivePeriod: int = 0,
                          ) -> dict:
-        config = copy.deepcopy(
-            self.settings.get(
-                "xhttpSettings",
-                self.settings.get("splithttpSettings", {}),
-            )
-        )
+        config = copy.deepcopy(self.settings.get("splithttpSettings", {}))
 
         config["mode"] = mode
         if path:
@@ -709,9 +704,7 @@ class V2rayJsonConfig(str):
         if host:
             config["host"] = host
         if random_user_agent:
-            config.setdefault("headers", {})["User-Agent"] = choice(
-                self.user_agent_list
-            )
+            config["headers"]["User-Agent"] = choice(self.user_agent_list)
         extra = {}
         if sc_max_each_post_bytes is not None:
             extra["scMaxEachPostBytes"] = sc_max_each_post_bytes
@@ -732,7 +725,8 @@ class V2rayJsonConfig(str):
         if downloadSettings:
             extra["downloadSettings"] = downloadSettings
         if extra:
-            config.update(extra)
+            config["extra"] = extra
+        # core will ignore unknown variables
 
         return config
 
@@ -890,39 +884,14 @@ class V2rayJsonConfig(str):
                               network_setting=None, tls_settings=None,
                               sockopt=None) -> dict:
 
-        method_map = {
-            "tcp": "raw",
-            "raw": "raw",
-            "ws": "websocket",
-            "websocket": "websocket",
-            "kcp": "mkcp",
-            "mkcp": "mkcp",
-            "splithttp": "xhttp",
-            "xhttp": "xhttp",
-            "gun": "grpc",
-            "grpc": "grpc",
-            "httpupgrade": "httpupgrade",
-            "hysteria": "hysteria",
-        }
-        method = method_map.get(network, network or "raw")
-        settings_key = {
-            "raw": "rawSettings",
-            "websocket": "wsSettings",
-            "mkcp": "kcpSettings",
-            "xhttp": "xhttpSettings",
-            "grpc": "grpcSettings",
-            "httpupgrade": "httpupgradeSettings",
-            "hysteria": "hysteriaSettings",
-        }.get(method, f"{method}Settings")
-
-        streamSettings = {"method": method}
+        streamSettings = {"network": network}
 
         if security and security != "none":
             streamSettings["security"] = security
             streamSettings[f"{security}Settings"] = tls_settings
 
-        if network_setting:
-            streamSettings[settings_key] = network_setting
+        if network and network_setting:
+            streamSettings[f"{network}Settings"] = network_setting
 
         if sockopt:
             streamSettings['sockopt'] = sockopt
@@ -1101,7 +1070,7 @@ class V2rayJsonConfig(str):
         elif net == "kcp":
             network_setting = self.kcp_config(
                 seed=path, host=host, header=headers)
-        elif net in ("tcp", "raw"):
+        elif net in ("tcp", "raw") and tls != "reality":
             network_setting = self.tcp_config(
                 headers=headers, path=path, host=host, random_user_agent=random_user_agent)
         elif net == "quic":

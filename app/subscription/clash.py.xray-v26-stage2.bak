@@ -92,7 +92,7 @@ class ClashConfiguration(object):
         if random_user_agent:
             if "headers" not in config:
                 config["headers"] = {}
-            config["headers"]["User-Agent"] = choice(self.user_agent_list)
+            config["header"]["User-Agent"] = choice(self.user_agent_list)
 
         return config
 
@@ -170,9 +170,6 @@ class ClashConfiguration(object):
 
         if network in ["grpc", "gun"]:
             path = get_grpc_gun(path)
-
-        if network == "raw":
-            network = "tcp"
 
         if type == 'shadowsocks':
             type = 'ss'
