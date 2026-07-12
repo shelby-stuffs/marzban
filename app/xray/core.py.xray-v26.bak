@@ -1,5 +1,4 @@
 import atexit
-import os
 import re
 import subprocess
 import threading
@@ -26,8 +25,9 @@ class XRayCore:
         self._temp_log_buffers = {}
         self._on_start_funcs = []
         self._on_stop_funcs = []
-        self._env = os.environ.copy()
-        self._env["XRAY_LOCATION_ASSET"] = assets_path
+        self._env = {
+            "XRAY_LOCATION_ASSET": assets_path
+        }
 
         atexit.register(lambda: self.stop() if self.started else None)
 
@@ -43,39 +43,21 @@ class XRayCore:
         if private_key:
             cmd.extend(['-i', private_key])
         output = subprocess.check_output(cmd, stderr=subprocess.STDOUT).decode('utf-8')
-        private = None
-        public = None
+        data = {}
         for line in output.splitlines():
-            if ":" not in line:
-                continue
-            key, value = line.split(":", 1)
-            normalized = re.sub(r"[^a-z]", "", key.lower())
-            value = value.strip()
-            if normalized.startswith("private"):
-                private = value
-            elif normalized.startswith("public") or normalized.startswith("password"):
-                public = value
-
-        if private and public:
+            if ":" in line:
+                key, value = line.split(":", 1)
+                data[key.strip()] = value.strip()
+        
+        keys_lower = {k.lower().replace(' ', ''): v for k, v in data.items()}
+        prv = keys_lower.get("privatekey")
+        pub = keys_lower.get("publickey") or keys_lower.get("password")
+        
+        if prv and pub:
             return {
-                "private_key": private,
-                "public_key": public,
+                "private_key": prv,
+                "public_key": pub
             }
-        raise RuntimeError(f"Unsupported xray x25519 output: {output!r}")
-
-    def validate_config(self, config: XRayConfig):
-        result = subprocess.run(
-            [self.executable_path, "run", "-test", "-config", "stdin:"],
-            input=config.to_json(),
-            env=self._env,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            text=True,
-            timeout=30,
-        )
-        if result.returncode != 0:
-            raise ValueError(f"Invalid Xray config: {result.stdout.strip()}")
-        return result.stdout
 
     def __capture_process_logs(self):
         def capture_and_debug_log():
@@ -104,9 +86,9 @@ class XRayCore:
                     break
 
         if DEBUG:
-            threading.Thread(target=capture_and_debug_log, daemon=True).start()
+            threading.Thread(target=capture_and_debug_log).start()
         else:
-            threading.Thread(target=capture_only, daemon=True).start()
+            threading.Thread(target=capture_only).start()
 
     @contextmanager
     def get_logs(self):
@@ -133,12 +115,8 @@ class XRayCore:
         if self.started is True:
             raise RuntimeError("Xray is started already")
 
-        log_config = config.get('log', {})
-        log_key = 'loglevel' if 'loglevel' in log_config else 'logLevel'
-        if log_config.get(log_key) in ('none', 'error'):
-            log_config[log_key] = 'warning'
-
-        self.validate_config(config)
+        if config.get('log', {}).get('logLevel') in ('none', 'error'):
+            config['log']['logLevel'] = 'warning'
 
         cmd = [
             self.executable_path,
@@ -150,7 +128,7 @@ class XRayCore:
             cmd,
             env=self._env,
             stdin=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
+            stderr=subprocess.PIPE,
             stdout=subprocess.PIPE,
             universal_newlines=True
         )
@@ -169,13 +147,7 @@ class XRayCore:
         if not self.started:
             return
 
-        process = self.process
-        process.terminate()
-        try:
-            process.wait(timeout=10)
-        except subprocess.TimeoutExpired:
-            process.kill()
-            process.wait(timeout=5)
+        self.process.terminate()
         self.process = None
         logger.warning("Xray core stopped")
 

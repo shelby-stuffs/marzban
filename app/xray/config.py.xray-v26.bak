@@ -65,6 +65,7 @@ class XRayConfig(dict):
         api_inbound = self.get_inbound("API_INBOUND")
         if api_inbound:
             api_inbound["listen"] = self.api_host
+            api_inbound["listen"]["address"] = self.api_host
             api_inbound["port"] = self.api_port
             return
 
@@ -178,35 +179,10 @@ class XRayConfig(dict):
 
             # stream settings
             if stream := inbound.get('streamSettings'):
-                method = stream.get('method') or stream.get('network', 'raw')
-                method_aliases = {
-                    'tcp': 'raw',
-                    'ws': 'websocket',
-                    'kcp': 'mkcp',
-                    'splithttp': 'xhttp',
-                    'gun': 'grpc',
-                }
-                method = method_aliases.get(method, method)
-                internal_network = {
-                    'websocket': 'ws',
-                    'mkcp': 'kcp',
-                }.get(method, method)
-                settings_keys = {
-                    'raw': ('rawSettings', 'tcpSettings'),
-                    'websocket': ('websocketSettings', 'wsSettings'),
-                    'mkcp': ('mkcpSettings', 'kcpSettings'),
-                    'xhttp': ('xhttpSettings', 'splithttpSettings'),
-                    'grpc': ('grpcSettings',),
-                    'httpupgrade': ('httpupgradeSettings',),
-                    'hysteria': ('hysteriaSettings',),
-                }.get(method, (f"{method}Settings",))
-                net_settings = next(
-                    (stream[key] for key in settings_keys if isinstance(stream.get(key), dict)),
-                    {},
-                )
-                net = internal_network
-                security = stream.get("security", "none")
-                tls_settings = stream.get(f"{security}Settings") or {}
+                net = stream.get('network', 'tcp')
+                net_settings = stream.get(f"{net}Settings", {})
+                security = stream.get("security")
+                tls_settings = stream.get(f"{security}Settings")
 
                 if settings['is_fallback'] is True:
                     # probably this is a fallback
@@ -241,11 +217,9 @@ class XRayConfig(dict):
                     settings['tls'] = 'reality'
                     settings['sni'] = tls_settings.get('serverNames', [])
 
-                    settings['pbk'] = (
-                        tls_settings.get('password')
-                        or tls_settings.get('publicKey')
-                    )
-                    if not settings['pbk']:
+                    try:
+                        settings['pbk'] = tls_settings['publicKey']
+                    except KeyError:
                         pvk = tls_settings.get('privateKey')
                         if not pvk:
                             raise ValueError(
@@ -255,17 +229,14 @@ class XRayConfig(dict):
                             from app.xray import core
                             x25519 = core.get_x25519(pvk)
                             if not x25519:
-                                raise ValueError(
-                                    f"Could not parse x25519 output from xray core for {inbound['tag']}"
-                                )
+                                raise ValueError(f"Could not parse x25519 output from xray core for {inbound['tag']}")
                             settings['pbk'] = x25519['public_key']
                         except ImportError:
                             pass
 
                         if not settings.get('pbk'):
                             raise ValueError(
-                                f"You need password (publicKey) in realitySettings of {inbound['tag']}"
-                            )
+                                f"You need to provide publicKey in realitySettings of {inbound['tag']}")
 
                     try:
                         settings['sids'] = tls_settings.get('shortIds')
@@ -273,13 +244,12 @@ class XRayConfig(dict):
                     except (IndexError, TypeError):
                         raise ValueError(
                             f"You need to define at least one shortID in realitySettings of {inbound['tag']}")
-                    settings['spx'] = (
-                        tls_settings.get('spiderX')
-                        or tls_settings.get('SpiderX')
-                        or ""
-                    )
+                    try:
+                        settings['spx'] = tls_settings.get('SpiderX')
+                    except:
+                        settings['spx'] = ""
 
-                if net == 'raw':
+                if net in ('tcp', 'raw'):
                     header = net_settings.get('header', {})
                     request = header.get('request', {})
                     path = request.get('path')
@@ -314,7 +284,7 @@ class XRayConfig(dict):
                         settings['host'] = [host]
 
                     settings["heartbeatPeriod"] = net_settings.get('heartbeatPeriod', 0)
-                elif net == 'grpc':
+                elif net == 'grpc' or net == 'gun':
                     settings['header_type'] = ''
                     settings['path'] = net_settings.get('serviceName', '')
                     host = net_settings.get('authority', '')
@@ -341,7 +311,7 @@ class XRayConfig(dict):
                     host = net_settings.get('host', '')
                     settings['host'] = [host]
 
-                elif net == 'xhttp':
+                elif net in ('splithttp', 'xhttp'):
                     settings['path'] = net_settings.get('path', '')
                     host = net_settings.get('host', '')
                     settings['host'] = [host]

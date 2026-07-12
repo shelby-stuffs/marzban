@@ -138,10 +138,10 @@ def update_user(dbuser: "DBUser"):
 
             # XTLS currently only supports transmission methods of TCP and mKCP
             if getattr(account, 'flow', None) and (
-                inbound.get('network', 'raw') not in ('tcp', 'raw', 'kcp')
+                inbound.get('network', 'tcp') not in ('tcp', 'kcp')
                 or
                 (
-                    inbound.get('network', 'raw') in ('tcp', 'raw', 'kcp')
+                    inbound.get('network', 'tcp') in ('tcp', 'kcp')
                     and
                     inbound.get('tls') not in ('tls', 'reality')
                 )
