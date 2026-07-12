@@ -677,28 +677,32 @@ const AccordionInbound: FC<AccordionInboundType> = ({
                               )}
                             />
                           </FormControl>
-                          <FormControl>
-                            <FormLabel display="flex" pb={1} alignItems="center" justifyContent="space-between" gap={1} m="0">
-                              <span>Obfs</span>
-                            </FormLabel>
-                            <Input
-                              size="sm"
-                              borderRadius="4px"
-                              placeholder="salamander"
-                              {...form.register(hostKey + "." + index + ".obfs")}
-                            />
-                          </FormControl>
-                          <FormControl>
-                            <FormLabel display="flex" pb={1} alignItems="center" justifyContent="space-between" gap={1} m="0">
-                              <span>Obfs password</span>
-                            </FormLabel>
-                            <Input
-                              size="sm"
-                              borderRadius="4px"
-                              placeholder="obfs password"
-                              {...form.register(hostKey + "." + index + ".obfs_password")}
-                            />
-                          </FormControl>
+                          {inbound && String(inbound.protocol).includes("hysteria") && (
+                            <>
+                              <FormControl>
+                                <FormLabel display="flex" pb={1} alignItems="center" justifyContent="space-between" gap={1} m="0">
+                                  <span>Obfs</span>
+                                </FormLabel>
+                                <Input
+                                  size="sm"
+                                  borderRadius="4px"
+                                  placeholder="salamander"
+                                  {...form.register(hostKey + "." + index + ".obfs")}
+                                />
+                              </FormControl>
+                              <FormControl>
+                                <FormLabel display="flex" pb={1} alignItems="center" justifyContent="space-between" gap={1} m="0">
+                                  <span>Obfs password</span>
+                                </FormLabel>
+                                <Input
+                                  size="sm"
+                                  borderRadius="4px"
+                                  placeholder="obfs password"
+                                  {...form.register(hostKey + "." + index + ".obfs_password")}
+                                />
+                              </FormControl>
+                            </>
+                          )}
                           <FormControl
                             isInvalid={
                               !!(accordionErrors && accordionErrors[index]?.sni)
