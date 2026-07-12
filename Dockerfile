@@ -6,7 +6,7 @@ ENV PYTHONUNBUFFERED=1
 
 WORKDIR /code
 
-ARG XRAY_VERSION=v26.6.27
+ARG XRAY_VERSION=v26.7.11
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends build-essential curl unzip gcc python3-dev libpq-dev \
