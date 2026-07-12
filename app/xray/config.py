@@ -26,6 +26,98 @@ def merge_dicts(a, b):  # B will override A dictionary key and values
     return a
 
 
+def merge_dicts(a, b):  # B will override A dictionary key and values
+    for key, value in b.items():
+        if isinstance(value, dict) and key in a and isinstance(a[key], dict):
+            merge_dicts(a[key], value)  # Recursively merge nested dictionaries
+        else:
+            a[key] = value
+    return a
+
+
+def normalize_xray_v26_config(config: dict) -> dict:
+    """Normalize legacy streamSettings to the Xray-core v26 schema.
+
+    The function mutates only the private deep copy created by XRayConfig.
+    It handles both inbounds and outbounds and intentionally rejects removed
+    transports that cannot be converted without changing their semantics.
+    """
+    method_aliases = {
+        "tcp": "raw",
+        "raw": "raw",
+        "ws": "websocket",
+        "websocket": "websocket",
+        "kcp": "mkcp",
+        "mkcp": "mkcp",
+        "splithttp": "xhttp",
+        "xhttp": "xhttp",
+        "gun": "grpc",
+        "grpc": "grpc",
+        "httpupgrade": "httpupgrade",
+        "hysteria": "hysteria",
+    }
+    removed_methods = {
+        "quic": "QUIC transport was removed; migrate it to XHTTP or Hysteria",
+        "http": "HTTP/H2 transport was removed; migrate it to XHTTP",
+        "h2": "HTTP/H2 transport was removed; migrate it to XHTTP",
+        "h3": "HTTP/H3 transport was removed; migrate it to XHTTP",
+        "domainsocket": "DomainSocket transport was removed",
+    }
+    settings_renames = {
+        "tcpSettings": "rawSettings",
+        "websocketSettings": "wsSettings",
+        "mkcpSettings": "kcpSettings",
+        "splithttpSettings": "xhttpSettings",
+    }
+
+    for section in ("inbounds", "outbounds"):
+        for endpoint in config.get(section, []):
+            stream = endpoint.get("streamSettings")
+            if not isinstance(stream, dict):
+                continue
+
+            legacy_network = stream.pop("network", None)
+            configured_method = stream.get("method") or legacy_network or "raw"
+            normalized_method = method_aliases.get(configured_method, configured_method)
+
+            if normalized_method in removed_methods:
+                tag = endpoint.get("tag", "<untagged>")
+                raise ValueError(
+                    f"Xray v26 incompatible transport in {section} {tag!r}: "
+                    f"{removed_methods[normalized_method]}"
+                )
+
+            if normalized_method not in set(method_aliases.values()):
+                tag = endpoint.get("tag", "<untagged>")
+                raise ValueError(
+                    f"Unsupported Xray v26 transport {normalized_method!r} "
+                    f"in {section} {tag!r}"
+                )
+
+            stream["method"] = normalized_method
+
+            for old_key, new_key in settings_renames.items():
+                if old_key not in stream:
+                    continue
+                old_value = stream.pop(old_key)
+                if new_key not in stream:
+                    stream[new_key] = old_value
+                elif isinstance(old_value, dict) and isinstance(stream[new_key], dict):
+                    stream[new_key] = merge_dicts(old_value, stream[new_key])
+
+            if normalized_method == "raw" and "rawSettings" not in stream:
+                stream["rawSettings"] = {}
+
+            if stream.get("security") == "reality":
+                reality = stream.get("realitySettings")
+                if isinstance(reality, dict) and "publicKey" in reality:
+                    if not reality.get("password"):
+                        reality["password"] = reality["publicKey"]
+                    del reality["publicKey"]
+
+    return config
+
+
 class XRayConfig(dict):
     def __init__(self,
                  config: Union[dict, str, PosixPath] = {},
@@ -46,6 +138,7 @@ class XRayConfig(dict):
 
         if isinstance(config, dict):
             config = deepcopy(config)
+            config = normalize_xray_v26_config(config)
 
         self.api_host = api_host
         self.api_port = api_port
