@@ -171,8 +171,8 @@ class V2rayShareLink(str):
                 sni=inbound.get("sni", ""),
                 alpn=inbound.get("alpn", ""),
                 ais=inbound.get("ais", ""),
-                obfs=inbound.get("obfs", ""),
-                obfs_password=inbound.get("obfs_password", ""),
+                obfs=settings.get("obfs") or inbound.get("obfs", ""),
+                obfs_password=settings.get("obfs_password") or inbound.get("obfs_password", ""),
             )
         else:
             return
@@ -540,16 +540,20 @@ class V2rayShareLink(str):
             obfs_password: str = "",
     ):
         payload = {}
+        if obfs:
+            payload["obfs"] = obfs
+            if obfs_password:
+                payload["obfs-password"] = obfs_password
+                payload["fm"] = json.dumps(
+                    {"udp": [{"type": obfs, "settings": {"password": obfs_password}}]},
+                    separators=(",", ":"),
+                )
         if sni:
             payload["sni"] = sni
         if alpn:
             payload["alpn"] = alpn
         if ais:
             payload["insecure"] = 1
-        if obfs:
-            payload["obfs"] = obfs
-            if obfs_password:
-                payload["obfs-password"] = obfs_password
 
         query = ("?" + urlparse.urlencode(payload)) if payload else ""
         return (
