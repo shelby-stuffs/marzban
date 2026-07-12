@@ -803,10 +803,7 @@ export const UserDialog: FC<UserDialogProps> = () => {
                     </FormControl>
                     <FormControl mt="10px">
                       <FormLabel>
-                        <Flex gap={2} alignItems={"center"}>
-                          {t("userDialog.hysteriaObfsPassword")}
-                          <ReloadIcon cursor={"pointer"} onClick={() => { const p = Array.from(crypto.getRandomValues(new Uint8Array(16))).map((b) => b.toString(16).padStart(2, "0")).join(""); form.setValue("proxies.hysteria.obfs", "salamander"); form.setValue("proxies.hysteria.obfs_password", p); }} />
-                        </Flex>
+                        {t("userDialog.hysteriaObfsPassword")}
                       </FormLabel>
                       <Input
                         size="sm"

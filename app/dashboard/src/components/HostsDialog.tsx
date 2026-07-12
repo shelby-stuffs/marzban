@@ -680,26 +680,25 @@ const AccordionInbound: FC<AccordionInboundType> = ({
                           {inbound && String(inbound.protocol).includes("hysteria") && (
                             <>
                               <FormControl>
-                                <FormLabel display="flex" pb={1} alignItems="center" justifyContent="space-between" gap={1} m="0">
-                                  <span>Obfs</span>
-                                </FormLabel>
-                                <Input
-                                  size="sm"
-                                  borderRadius="4px"
-                                  placeholder="salamander"
-                                  {...form.register(hostKey + "." + index + ".obfs")}
-                                />
+                                <FormLabel display="flex" pb={1} m="0"><span>Obfs</span></FormLabel>
+                                <Select size="sm" borderRadius="4px" {...form.register(hostKey + "." + index + ".obfs")}>
+                                  <option value="">none</option>
+                                  <option value="salamander">salamander</option>
+                                </Select>
                               </FormControl>
                               <FormControl>
-                                <FormLabel display="flex" pb={1} alignItems="center" justifyContent="space-between" gap={1} m="0">
-                                  <span>Obfs password</span>
-                                </FormLabel>
-                                <Input
-                                  size="sm"
-                                  borderRadius="4px"
-                                  placeholder="obfs password"
-                                  {...form.register(hostKey + "." + index + ".obfs_password")}
-                                />
+                                <FormLabel display="flex" pb={1} m="0"><span>Obfs password</span></FormLabel>
+                                <HStack>
+                                  <Input
+                                    size="sm"
+                                    borderRadius="4px"
+                                    placeholder="obfs password"
+                                    {...form.register(hostKey + "." + index + ".obfs_password")}
+                                  />
+                                  <Button size="sm" flexShrink={0} onClick={() => { const p = Array.from(crypto.getRandomValues(new Uint8Array(16))).map((b) => b.toString(16).padStart(2, "0")).join(""); form.setValue((hostKey + "." + index + ".obfs") as any, "salamander"); form.setValue((hostKey + "." + index + ".obfs_password") as any, p); }}>
+                                    Gen
+                                  </Button>
+                                </HStack>
                               </FormControl>
                             </>
                           )}
