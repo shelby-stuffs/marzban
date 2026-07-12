@@ -12,9 +12,10 @@ import {
 } from "@chakra-ui/react";
 import {
   ArrowLeftOnRectangleIcon,
-  Bars3Icon,
+  ArrowTopRightOnSquareIcon,
   CurrencyDollarIcon,
   DocumentMinusIcon,
+  EllipsisHorizontalIcon,
   MoonIcon,
   SunIcon,
 } from "@heroicons/react/24/outline";
@@ -24,7 +25,6 @@ import differenceInDays from "date-fns/differenceInDays";
 import isValid from "date-fns/isValid";
 import useGetUser from "hooks/useGetUser";
 import { FC, ReactNode, useState } from "react";
-import GitHubButton from "react-github-btn";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { updateThemeColor } from "utils/themeColor";
@@ -34,15 +34,17 @@ type HeaderProps = {
   title?: string;
   actions?: ReactNode;
 };
+
 const iconProps = {
   baseStyle: { w: 4, h: 4 },
 };
 const DarkIcon = chakra(MoonIcon, iconProps);
 const LightIcon = chakra(SunIcon, iconProps);
-const MenuIcon = chakra(Bars3Icon, iconProps);
+const MoreIcon = chakra(EllipsisHorizontalIcon, iconProps);
 const LogoutIcon = chakra(ArrowLeftOnRectangleIcon, iconProps);
 const DonationIcon = chakra(CurrencyDollarIcon, iconProps);
 const ResetUsageIcon = chakra(DocumentMinusIcon, iconProps);
+const GitHubIcon = chakra(ArrowTopRightOnSquareIcon, iconProps);
 const NotificationCircle = chakra(Box, {
   baseStyle: {
     bg: "yellow.500",
@@ -54,7 +56,7 @@ const NotificationCircle = chakra(Box, {
 });
 
 const titleSize = { base: "xl", md: "2xl" };
-const ghDisplay = { base: "none", md: "flex" };
+const controlsWrap = { base: "wrap", sm: "nowrap" };
 
 const NOTIFICATION_KEY = "marzban-menu-notification";
 
@@ -84,7 +86,6 @@ export const Header: FC<HeaderProps> = ({ title, actions }) => {
   const [showDonationNotif, setShowDonationNotif] = useState(
     shouldShowDonation()
   );
-  const gBtnColor = colorMode === "dark" ? "dark_dimmed" : colorMode;
 
   const handleOnClose = () => {
     localStorage.setItem(NOTIFICATION_KEY, new Date().getTime().toString());
@@ -100,21 +101,46 @@ export const Header: FC<HeaderProps> = ({ title, actions }) => {
       flexWrap="wrap"
       w="full"
     >
-      <Text as="h1" fontWeight="semibold" fontSize={titleSize}>
+      <Text
+        as="h1"
+        fontWeight="semibold"
+        fontSize={titleSize}
+        minW="0"
+        noOfLines={1}
+      >
         {title ?? t("users")}
       </Text>
-      <HStack alignItems="center" gap={2}>
+      <HStack
+        alignItems="center"
+        justifyContent="flex-end"
+        gap={2}
+        ml="auto"
+        flexShrink={0}
+        flexWrap={controlsWrap}
+      >
         {actions}
-        <Menu>
+        <Language />
+        <IconButton
+          size="sm"
+          variant="outline"
+          aria-label="switch theme"
+          onClick={() => {
+            updateThemeColor(colorMode === "dark" ? "light" : "dark");
+            toggleColorMode();
+          }}
+        >
+          {colorMode === "light" ? <DarkIcon /> : <LightIcon />}
+        </IconButton>
+        <Menu placement="bottom-end">
           <MenuButton
             as={IconButton}
             size="sm"
             variant="outline"
-            aria-label="menu"
+            aria-label="more actions"
           >
-            <MenuIcon />
+            <MoreIcon />
           </MenuButton>
-          <MenuList minW="180px" zIndex={99999}>
+          <MenuList minW="190px" zIndex={99999}>
             {isSudo() && (
               <MenuItem
                 fontSize="sm"
@@ -135,6 +161,11 @@ export const Header: FC<HeaderProps> = ({ title, actions }) => {
                 {showDonationNotif && <NotificationCircle top="3" right="2" />}
               </MenuItem>
             </Link>
+            <Link to={REPO_URL} target="_blank">
+              <MenuItem fontSize="sm" icon={<GitHubIcon />}>
+                GitHub
+              </MenuItem>
+            </Link>
             <Link to="/login">
               <MenuItem fontSize="sm" icon={<LogoutIcon />}>
                 {t("header.logout")}
@@ -142,29 +173,6 @@ export const Header: FC<HeaderProps> = ({ title, actions }) => {
             </Link>
           </MenuList>
         </Menu>
-        <Language />
-        <IconButton
-          size="sm"
-          variant="outline"
-          aria-label="switch theme"
-          onClick={() => {
-            updateThemeColor(colorMode === "dark" ? "light" : "dark");
-            toggleColorMode();
-          }}
-        >
-          {colorMode === "light" ? <DarkIcon /> : <LightIcon />}
-        </IconButton>
-        <Box display={ghDisplay} alignItems="center" pr="2">
-          <GitHubButton
-            href={REPO_URL}
-            data-color-scheme={`no-preference: ${gBtnColor}; light: ${gBtnColor}; dark: ${gBtnColor};`}
-            data-size="large"
-            data-show-count="true"
-            aria-label="Star Marzban on GitHub"
-          >
-            Star
-          </GitHubButton>
-        </Box>
       </HStack>
     </HStack>
   );
