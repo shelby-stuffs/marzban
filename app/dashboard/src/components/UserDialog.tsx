@@ -122,7 +122,7 @@ const getDefaultValues = (): FormType => {
       vmess: { id: "" },
       trojan: { password: "" },
       shadowsocks: { password: "", method: "chacha20-ietf-poly1305" },
-      hysteria: { auth: "" },
+      hysteria: { auth: "", obfs: "", obfs_password: "" },
     },
   };
 };
@@ -164,6 +164,8 @@ const baseSchema = {
       deleteIfEmpty(ins.shadowsocks, "password");
       deleteIfEmpty(ins.shadowsocks, "method");
       deleteIfEmpty(ins.hysteria, "auth");
+      deleteIfEmpty(ins.hysteria, "obfs");
+      deleteIfEmpty(ins.hysteria, "obfs_password");
       return ins;
     }),
   data_limit: z
@@ -256,9 +258,9 @@ export const UserDialog: FC<UserDialogProps> = () => {
     []
   );
 
-  const [dataLimit, userStatus] = useWatch({
+  const [dataLimit, userStatus, selectedProxies] = useWatch({
     control: form.control,
-    name: ["data_limit", "status"],
+    name: ["data_limit", "status", "selected_proxies"],
   });
 
   const usageTitle = t("userDialog.total");
@@ -784,6 +786,34 @@ export const UserDialog: FC<UserDialogProps> = () => {
                       )}
                     </FormErrorMessage>
                   </FormControl>
+                  <Collapse
+                    in={(selectedProxies || []).includes("hysteria")}
+                    animateOpacity
+                  >
+                    <FormControl mt="10px">
+                      <FormLabel>{t("userDialog.hysteriaObfs")}</FormLabel>
+                      <Select
+                        size="sm"
+                        disabled={disabled}
+                        {...form.register("proxies.hysteria.obfs")}
+                      >
+                        <option value="">none</option>
+                        <option value="salamander">salamander</option>
+                      </Select>
+                    </FormControl>
+                    <FormControl mt="10px">
+                      <FormLabel>
+                        {t("userDialog.hysteriaObfsPassword")}
+                      </FormLabel>
+                      <Input
+                        size="sm"
+                        type="text"
+                        borderRadius="6px"
+                        disabled={disabled}
+                        {...form.register("proxies.hysteria.obfs_password")}
+                      />
+                    </FormControl>
+                  </Collapse>
                 </GridItem>
                 {isEditing && usageVisible && (
                   <GridItem pt={6} colSpan={{ base: 1, md: 2 }}>

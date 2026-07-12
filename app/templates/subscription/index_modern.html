@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Подписка — {{ user.username }}</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        :root {
+            --bg: #f4f4f8;
+            --card: #ffffff;
+            --text: #17182b;
+            --muted: #6b7280;
+            --border: #e5e7eb;
+            --accent: #7c3aed;
+            --accent-2: #8b5cf6;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #10121a;
+                --card: #181b28;
+                --text: #e7e8f0;
+                --muted: #9aa1b5;
+                --border: #262b3d;
+            }
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            padding: 24px 16px 48px;
+            font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        .wrap { max-width: 640px; margin: 0 auto; }
+
+        .hero {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            background: linear-gradient(135deg, var(--accent), var(--accent-2));
+            border-radius: 16px;
+            color: #fff;
+            padding: 22px 24px;
+            margin-bottom: 16px;
+        }
+
+        .hero .label {
+            margin: 0 0 4px;
+            font-size: 12px;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+            opacity: .8;
+        }
+
+        .hero h1 { margin: 0; font-size: 24px; word-break: break-all; }
+
+        .badge {
+            padding: 6px 12px;
+            border-radius: 999px;
+            font-size: 13px;
+            font-weight: 600;
+            background: rgba(255, 255, 255, .22);
+            white-space: nowrap;
+        }
+
+        .badge.st-limited, .badge.st-expired, .badge.st-disabled { background: rgba(0, 0, 0, .28); }
+
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 18px 20px;
+            margin-bottom: 16px;
+        }
+
+        .card h2 { margin: 0 0 12px; font-size: 15px; }
+
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+        @media (max-width: 520px) { .grid { grid-template-columns: 1fr; } }
+
+        .stat .value { font-size: 20px; font-weight: 700; }
+
+        .stat .hint { color: var(--muted); font-size: 13px; margin-top: 2px; }
+
+        .bar {
+            height: 8px;
+            border-radius: 999px;
+            background: var(--border);
+            overflow: hidden;
+            margin-top: 12px;
+        }
+
+        .bar span {
+            display: block;
+            height: 100%;
+            border-radius: 999px;
+            background: linear-gradient(90deg, var(--accent), var(--accent-2));
+        }
+
+        .link-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .link-row input {
+            flex: 1;
+            min-width: 0;
+            padding: 9px 12px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: var(--bg);
+            color: var(--text);
+            font-size: 13px;
+        }
+
+        button {
+            padding: 9px 14px;
+            border: 0;
+            border-radius: 10px;
+            background: var(--accent);
+            color: #fff;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        button.ghost {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text);
+        }
+
+        button:hover { opacity: .9; }
+
+        .empty { color: var(--muted); font-size: 14px; }
+
+        .qr-overlay {
+            position: fixed;
+            inset: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, .55);
+            z-index: 9999;
+        }
+
+        .qr-box {
+            background: #fff;
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .qr-box button { margin-top: 14px; }
+    </style>
+</head>
+
+<body>
+    {% set status = user.status.value %}
+    {% set status_ru = {'active': 'Активна', 'limited': 'Лимит исчерпан', 'expired': 'Истекла', 'disabled': 'Отключена', 'on_hold': 'В ожидании'} %}
+    <div class="wrap"
+         id="meta"
+         data-used="{{ user.used_traffic or 0 }}"
+         data-limit="{{ user.data_limit or 0 }}"
+         data-expire="{{ user.expire or 0 }}">
+        <div class="hero">
+            <div>
+                <p class="label">Подписка</p>
+                <h1>{{ user.username }}</h1>
+            </div>
+            <span class="badge st-{{ status }}">{{ status_ru.get(status, status) }}</span>
+        </div>
+
+        <div class="grid">
+            <div class="card stat">
+                <h2>Трафик</h2>
+                <div class="value" id="traffic">—</div>
+                <div class="hint" id="traffic-hint"></div>
+                <div class="bar"><span id="traffic-bar" style="width:0%"></span></div>
+            </div>
+            <div class="card stat">
+                <h2>Срок действия</h2>
+                <div class="value" id="expire">—</div>
+                <div class="hint" id="expire-hint"></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Ссылки на конфигурации</h2>
+            {% if status in ('active', 'on_hold') and user.links %}
+            {% for link in user.links %}
+            <div class="link-row">
+                <input type="text" value="{{ link }}" readonly>
+                <button onclick="copyLink(this)">Копировать</button>
+                <button class="ghost" onclick="showQr(this)">QR</button>
+            </div>
+            {% endfor %}
+            {% else %}
+            <p class="empty">Ссылки недоступны: подписка неактивна.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="qr-overlay" id="qrOverlay" onclick="hideQr()">
+        <div class="qr-box" onclick="event.stopPropagation()">
+            <div id="qrCode"></div>
+            <button onclick="hideQr()">Закрыть</button>
+        </div>
+    </div>
+
+    <script>
+        var meta = document.getElementById('meta');
+        var used = Number(meta.dataset.used) || 0;
+        var limit = Number(meta.dataset.limit) || 0;
+        var expire = Number(meta.dataset.expire) || 0;
+
+        function fmtBytes(n) {
+            if (!n) return '0 Б';
+            var units = ['Б', 'КБ', 'МБ', 'ГБ', 'ТБ'];
+            var i = Math.min(Math.floor(Math.log(n) / Math.log(1024)), units.length - 1);
+            return (n / Math.pow(1024, i)).toFixed(i ? 2 : 0) + ' ' + units[i];
+        }
+
+        document.getElementById('traffic').textContent =
+            fmtBytes(used) + (limit ? ' / ' + fmtBytes(limit) : '');
+        if (limit) {
+            var pct = Math.min(100, used / limit * 100);
+            document.getElementById('traffic-bar').style.width = pct.toFixed(1) + '%';
+            document.getElementById('traffic-hint').textContent =
+                'Использовано ' + pct.toFixed(1) + '%';
+        } else {
+            document.getElementById('traffic-bar').style.width = '4%';
+            document.getElementById('traffic-hint').textContent = 'Лимит не задан';
+        }
+
+        if (expire) {
+            var d = new Date(expire * 1000);
+            document.getElementById('expire').textContent =
+                d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
+            var days = Math.ceil((d - Date.now()) / 86400000);
+            document.getElementById('expire-hint').textContent =
+                days >= 0 ? 'Осталось дней: ' + days : 'Истекла ' + Math.abs(days) + ' дн. назад';
+        } else {
+            document.getElementById('expire').textContent = '∞';
+            document.getElementById('expire-hint').textContent = 'Бессрочная подписка';
+        }
+
+        function copyLink(btn) {
+            var input = btn.parentElement.querySelector('input');
+            input.select();
+            input.setSelectionRange(0, 99999);
+            try { navigator.clipboard.writeText(input.value); } catch (e) { document.execCommand('copy'); }
+            var old = btn.textContent;
+            btn.textContent = 'Скопировано!';
+            setTimeout(function () { btn.textContent = old; }, 1500);
+        }
+
+        var qrCode = null;
+        function showQr(btn) {
+            var link = btn.parentElement.querySelector('input').value;
+            var box = document.getElementById('qrCode');
+            box.innerHTML = '';
+            qrCode = new QRCode(box, { text: link, width: 256, height: 256, correctLevel: QRCode.CorrectLevel.L });
+            document.getElementById('qrOverlay').style.display = 'flex';
+        }
+
+        function hideQr() {
+            document.getElementById('qrOverlay').style.display = 'none';
+        }
+    </script>
+</body>
+
+</html>

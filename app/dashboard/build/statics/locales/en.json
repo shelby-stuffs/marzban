@@ -176,6 +176,8 @@
   "userDialog.userEdited": "User {{username}} edited.",
   "userDialog.vlessDesc": "Lightweight, fast and secure",
   "userDialog.hysteriaDesc": "Lightning Speed, Security and Stability",
+  "userDialog.hysteriaObfs": "Hysteria2 obfuscation (obfs)",
+  "userDialog.hysteriaObfsPassword": "Obfuscation password",
   "userDialog.vmessDesc": "Fast and secure",
   "userDialog.warningNoProtocol": "Please select at least one protocol",
   "userDialog.weeks": "Weeks",

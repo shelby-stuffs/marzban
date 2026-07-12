@@ -25,6 +25,8 @@ export type ProxyType = {
   };
   hysteria?: {
     auth?: string;
+    obfs?: string;
+    obfs_password?: string;
   };
 };
 
