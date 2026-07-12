@@ -12,7 +12,6 @@ import {
 } from "@chakra-ui/react";
 import { Bars3Icon } from "@heroicons/react/24/outline";
 import { DeleteUserModal } from "components/DeleteUserModal";
-import { NodesUsage } from "components/NodesUsage";
 import { QRCodeDialog } from "components/QRCodeDialog";
 import { ResetAllUsageModal } from "components/ResetAllUsageModal";
 import { ResetUserUsageModal } from "components/ResetUserUsageModal";
@@ -77,7 +76,6 @@ export const Layout: FC = () => {
       <QRCodeDialog />
       <ResetUserUsageModal />
       <RevokeSubscriptionModal />
-      <NodesUsage />
       <ResetAllUsageModal />
     </Flex>
   );

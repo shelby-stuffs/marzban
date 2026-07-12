@@ -1,6 +1,5 @@
 import { chakra, Flex, Text, VStack } from "@chakra-ui/react";
 import {
-  ChartPieIcon,
   Cog6ToothIcon,
   LinkIcon,
   SquaresPlusIcon,
@@ -15,7 +14,6 @@ const navIconStyle = { baseStyle: { w: 5, h: 5 } };
 const UsersNavIcon = chakra(UsersIcon, navIconStyle);
 const HostsNavIcon = chakra(LinkIcon, navIconStyle);
 const NodesNavIcon = chakra(SquaresPlusIcon, navIconStyle);
-const UsageNavIcon = chakra(ChartPieIcon, navIconStyle);
 const CoreNavIcon = chakra(Cog6ToothIcon, navIconStyle);
 
 const darkBorder = { borderColor: "gray.700" };
@@ -30,13 +28,7 @@ type NavItemProps = {
   onClick?: () => void;
 };
 
-const NavItem: FC<NavItemProps> = ({
-  to,
-  end,
-  icon: IconEl,
-  label,
-  onClick,
-}) => {
+const NavItem: FC<NavItemProps> = ({ to, end, icon: IconEl, label, onClick }) => {
   return (
     <NavLink to={to} end={end} onClick={onClick}>
       {(navData) => (
@@ -95,14 +87,6 @@ export const SidebarContent: FC<{ onNavigate?: () => void }> = ({
           to="/nodes"
           icon={NodesNavIcon}
           label={t("nodes", "Nodes")}
-          onClick={onNavigate}
-        />
-      )}
-      {isSudo && (
-        <NavItem
-          to="/nodes-usage"
-          icon={UsageNavIcon}
-          label={t("nodes.usage", "Usage")}
           onClick={onNavigate}
         />
       )}

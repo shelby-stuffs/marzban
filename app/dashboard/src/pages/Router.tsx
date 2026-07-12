@@ -4,7 +4,7 @@ import { getAuthToken } from "../utils/authStorage";
 import { Dashboard } from "./Dashboard";
 import { Layout } from "./Layout";
 import { Login } from "./Login";
-import { CoreRoute, HostsRoute, NodesRoute, NodesUsageRoute } from "./sections";
+import { CoreRoute, HostsRoute, NodesRoute } from "./sections";
 
 const fetchAdminLoader = () => {
   return fetch("/admin", {
@@ -24,15 +24,6 @@ export const router = createHashRouter([
       { index: true, element: <Dashboard /> },
       { path: "hosts", element: <HostsRoute /> },
       { path: "nodes", element: <NodesRoute /> },
-      {
-        path: "nodes-usage",
-        element: (
-          <>
-            <Dashboard />
-            <NodesUsageRoute />
-          </>
-        ),
-      },
       { path: "core", element: <CoreRoute /> },
     ],
   },

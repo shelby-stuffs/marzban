@@ -57,12 +57,12 @@ export const NodesUsage: FC<NodesUsageProps> = () => {
   };
 
   useEffect(() => {
-    if (true) {
+    if (isShowingNodesUsage) {
       fetchUsageWithFilter({
         start: dayjs().utc().subtract(30, "day").format("YYYY-MM-DDTHH:00:00"),
       });
     }
-  }, []);
+  }, [isShowingNodesUsage]);
 
   const onClose = () => {
     onShowingNodesUsage(false);
@@ -72,9 +72,10 @@ export const NodesUsage: FC<NodesUsageProps> = () => {
   const disabled = loading;
 
   return (
-    <Box w="full">
-      <Box w="full">
-        <Box pt={2} mb={2}>
+    <Modal isOpen={isShowingNodesUsage} onClose={onClose} size="2xl">
+      <ModalOverlay bg="blackAlpha.300" backdropFilter="blur(10px)" />
+      <ModalContent mx="3" w="full">
+        <ModalHeader pt={6}>
           <HStack gap={2}>
             <Icon color="primary">
               <UsageIcon color="white" />
@@ -83,8 +84,9 @@ export const NodesUsage: FC<NodesUsageProps> = () => {
               {t("header.nodesUsage")}
             </Text>
           </HStack>
-        </Box>
-        <Box>
+        </ModalHeader>
+        <ModalCloseButton mt={3} disabled={disabled} />
+        <ModalBody>
           <VStack gap={4}>
             <UsageFilter
               defaultValue={usageFilter}
@@ -104,8 +106,9 @@ export const NodesUsage: FC<NodesUsageProps> = () => {
               </Suspense>
             </Box>
           </VStack>
-        </Box>
-      </Box>
-    </Box>
+        </ModalBody>
+        <ModalFooter mt="3"></ModalFooter>
+      </ModalContent>
+    </Modal>
   );
 };
