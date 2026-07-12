@@ -56,7 +56,7 @@ const NotificationCircle = chakra(Box, {
 });
 
 const titleSize = { base: "xl", md: "2xl" };
-const controlsWrap = { base: "wrap", sm: "nowrap" };
+const controlsWrap = "nowrap" as const;
 
 const NOTIFICATION_KEY = "marzban-menu-notification";
 
