@@ -153,8 +153,6 @@ const hostsSchema = z.record(
       alpn: z.string(),
       fingerprint: z.string(),
       use_sni_as_host: z.boolean().default(false),
-      obfs: z.string().nullable(),
-      obfs_password: z.string().nullable(),
     })
   )
 );
@@ -216,8 +214,6 @@ const AccordionInbound: FC<AccordionInboundType> = ({
       alpn: "",
       fingerprint: "",
       use_sni_as_host: false,
-      obfs: "",
-      obfs_password: "",
     });
   };
   const duplicateHost = (index: number) => {
@@ -675,28 +671,6 @@ const AccordionInbound: FC<AccordionInboundType> = ({
                               {...form.register(
                                 hostKey + "." + index + ".port"
                               )}
-                            />
-                          </FormControl>
-                          <FormControl>
-                            <FormLabel display="flex" pb={1} alignItems="center" justifyContent="space-between" gap={1} m="0">
-                              <span>Obfs</span>
-                            </FormLabel>
-                            <Input
-                              size="sm"
-                              borderRadius="4px"
-                              placeholder="salamander"
-                              {...form.register(hostKey + "." + index + ".obfs")}
-                            />
-                          </FormControl>
-                          <FormControl>
-                            <FormLabel display="flex" pb={1} alignItems="center" justifyContent="space-between" gap={1} m="0">
-                              <span>Obfs password</span>
-                            </FormLabel>
-                            <Input
-                              size="sm"
-                              borderRadius="4px"
-                              placeholder="obfs password"
-                              {...form.register(hostKey + "." + index + ".obfs_password")}
                             />
                           </FormControl>
                           <FormControl

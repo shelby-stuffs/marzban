@@ -368,8 +368,6 @@ def process_inbounds_and_tags(
                         "fragment_setting": host["fragment_setting"],
                         "noise_setting": host["noise_setting"],
                         "random_user_agent": host["random_user_agent"],
-                        "obfs": host.get("obfs") or inbound.get("obfs", ""),
-                        "obfs_password": host.get("obfs_password") or inbound.get("obfs_password", ""),
                     }
                 )
 
