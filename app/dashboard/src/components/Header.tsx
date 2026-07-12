@@ -53,6 +53,9 @@ const NotificationCircle = chakra(Box, {
   },
 });
 
+const titleSize = { base: "xl", md: "2xl" };
+const ghDisplay = { base: "none", md: "flex" };
+
 const NOTIFICATION_KEY = "marzban-menu-notification";
 
 export const shouldShowDonation = (): boolean => {
@@ -89,11 +92,18 @@ export const Header: FC<HeaderProps> = ({ title, actions }) => {
   };
 
   return (
-    <HStack gap={2} justifyContent="space-between" position="relative" mb="4">
-      <Text as="h1" fontWeight="semibold" fontSize="2xl">
+    <HStack
+      gap={2}
+      justifyContent="space-between"
+      position="relative"
+      mb="4"
+      flexWrap="wrap"
+      w="full"
+    >
+      <Text as="h1" fontWeight="semibold" fontSize={titleSize}>
         {title ?? t("users")}
       </Text>
-      <HStack alignItems="center">
+      <HStack alignItems="center" gap={2}>
         {actions}
         <Menu>
           <MenuButton
@@ -144,7 +154,7 @@ export const Header: FC<HeaderProps> = ({ title, actions }) => {
         >
           {colorMode === "light" ? <DarkIcon /> : <LightIcon />}
         </IconButton>
-        <Box display="flex" alignItems="center" pr="2">
+        <Box display={ghDisplay} alignItems="center" pr="2">
           <GitHubButton
             href={REPO_URL}
             data-color-scheme={`no-preference: ${gBtnColor}; light: ${gBtnColor}; dark: ${gBtnColor};`}
