@@ -1,9 +1,6 @@
 import asyncio
 import json
-import os
-import tempfile
 import time
-from copy import deepcopy
 
 import commentjson
 from fastapi import APIRouter, Depends, HTTPException, WebSocket
@@ -15,30 +12,9 @@ from app.models.admin import Admin
 from app.models.core import CoreStats
 from app.utils import responses
 from app.xray import XRayConfig
-from app.xray.config import normalize_xray_v26_config
 from config import XRAY_JSON
 
 router = APIRouter(tags=["Core"], prefix="/api", responses={401: responses._401})
-
-
-def _atomic_write_json(path: str, payload: dict) -> None:
-    directory = os.path.dirname(os.path.abspath(path)) or "."
-    fd, temp_path = tempfile.mkstemp(
-        prefix=".marzban-xray-",
-        suffix=".json.tmp",
-        dir=directory,
-        text=True,
-    )
-    try:
-        with os.fdopen(fd, "w", encoding="utf-8") as temp_file:
-            json.dump(payload, temp_file, indent=4)
-            temp_file.write("\n")
-            temp_file.flush()
-            os.fsync(temp_file.fileno())
-        os.replace(temp_path, path)
-    finally:
-        if os.path.exists(temp_path):
-            os.unlink(temp_path)
 
 
 @router.websocket("/core/logs")
@@ -137,27 +113,20 @@ def modify_core_config(
 ) -> dict:
     """Modify the core configuration and restart the core."""
     try:
-        normalized_payload = normalize_xray_v26_config(deepcopy(payload))
-        config = XRayConfig(
-            normalized_payload,
-            api_port=xray.config.api_port,
-        )
-        startup_config = config.include_db_users()
-        # Validate while the currently working core is still running.
-        xray.core.validate_config(startup_config)
-    except (ValueError, RuntimeError, TimeoutError) as err:
+        config = XRayConfig(payload, api_port=xray.config.api_port)
+    except ValueError as err:
         raise HTTPException(status_code=400, detail=str(err))
 
-    # Persist only the user's normalized config. XRayConfig's dynamic API
-    # inbound, policies and database users must never leak into XRAY_JSON.
-    _atomic_write_json(XRAY_JSON, normalized_payload)
     xray.config = config
-    xray.core.restart(startup_config)
+    with open(XRAY_JSON, "w") as f:
+        f.write(json.dumps(payload, indent=4))
 
+    startup_config = xray.config.include_db_users()
+    xray.core.restart(startup_config)
     for node_id, node in list(xray.nodes.items()):
         if node.connected:
             xray.operations.restart_node(node_id, startup_config)
 
     xray.hosts.update()
 
-    return normalized_payload
+    return payload

@@ -187,9 +187,6 @@ class XRayCore:
         if self.restarting is True:
             return
 
-        # Never stop a healthy process for a config that current Xray rejects.
-        self.validate_config(config)
-
         try:
             self.restarting = True
             logger.warning("Restarting Xray core...")
