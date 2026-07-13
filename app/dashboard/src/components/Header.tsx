@@ -15,7 +15,6 @@ import {
   ArrowTopRightOnSquareIcon,
   CurrencyDollarIcon,
   DocumentMinusIcon,
-  EllipsisHorizontalIcon,
   MoonIcon,
   SunIcon,
 } from "@heroicons/react/24/outline";
@@ -40,7 +39,13 @@ const iconProps = {
 };
 const DarkIcon = chakra(MoonIcon, iconProps);
 const LightIcon = chakra(SunIcon, iconProps);
-const MoreIcon = chakra(EllipsisHorizontalIcon, iconProps);
+const MoreIcon: FC = () => (
+  <HStack spacing="1" h="4" align="center" justify="center">
+    <Box boxSize="1" borderRadius="full" bg="currentColor" />
+    <Box boxSize="1" borderRadius="full" bg="currentColor" />
+    <Box boxSize="1" borderRadius="full" bg="currentColor" />
+  </HStack>
+);
 const LogoutIcon = chakra(ArrowLeftOnRectangleIcon, iconProps);
 const DonationIcon = chakra(CurrencyDollarIcon, iconProps);
 const ResetUsageIcon = chakra(DocumentMinusIcon, iconProps);
