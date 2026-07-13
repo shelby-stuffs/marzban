@@ -38,11 +38,6 @@ class V2rayShareLink(str):
 
     def add(self, remark: str, address: str, inbound: dict, settings: dict):
         net = inbound["network"]
-        # RAW is the v26 rename of TCP and is wire-identical to it. Emit the
-        # universally understood "tcp" label in share links so that clients
-        # with older cores keep importing these links correctly.
-        if net == "raw":
-            net = "tcp"
         multi_mode = inbound.get("multiMode", False)
         old_path: str = inbound["path"]
 
