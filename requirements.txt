@@ -15,8 +15,8 @@ click==8.1.8
 commentjson==0.9.0
 cryptography==44.0.0
 fastapi==0.136.1
-grpcio-tools==1.80.0
-grpcio==1.80.0
+grpcio==1.82.1
+protobuf==7.35.0
 httptools==0.6.4
 jdatetime==5.2.0
 passlib==1.7.4
