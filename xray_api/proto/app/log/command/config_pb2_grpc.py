@@ -5,7 +5,7 @@ import warnings
 
 from xray_api.proto.app.log.command import config_pb2 as app_dot_log_dot_command_dot_config__pb2
 
-GRPC_GENERATED_VERSION = '1.80.0'
+GRPC_GENERATED_VERSION = '1.82.1'
 GRPC_VERSION = grpc.__version__
 _version_not_supported = False
 
@@ -25,7 +25,7 @@ if _version_not_supported:
     )
 
 
-class LoggerServiceStub(object):
+class LoggerServiceStub:
     """Missing associated documentation comment in .proto file."""
 
     def __init__(self, channel):
@@ -41,7 +41,7 @@ class LoggerServiceStub(object):
                 _registered_method=True)
 
 
-class LoggerServiceServicer(object):
+class LoggerServiceServicer:
     """Missing associated documentation comment in .proto file."""
 
     def RestartLogger(self, request, context):
@@ -66,7 +66,7 @@ def add_LoggerServiceServicer_to_server(servicer, server):
 
 
  # This class is part of an EXPERIMENTAL API.
-class LoggerService(object):
+class LoggerService:
     """Missing associated documentation comment in .proto file."""
 
     @staticmethod

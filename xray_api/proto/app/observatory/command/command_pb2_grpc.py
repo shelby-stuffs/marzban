@@ -5,7 +5,7 @@ import warnings
 
 from xray_api.proto.app.observatory.command import command_pb2 as app_dot_observatory_dot_command_dot_command__pb2
 
-GRPC_GENERATED_VERSION = '1.80.0'
+GRPC_GENERATED_VERSION = '1.82.1'
 GRPC_VERSION = grpc.__version__
 _version_not_supported = False
 
@@ -25,7 +25,7 @@ if _version_not_supported:
     )
 
 
-class ObservatoryServiceStub(object):
+class ObservatoryServiceStub:
     """Missing associated documentation comment in .proto file."""
 
     def __init__(self, channel):
@@ -41,7 +41,7 @@ class ObservatoryServiceStub(object):
                 _registered_method=True)
 
 
-class ObservatoryServiceServicer(object):
+class ObservatoryServiceServicer:
     """Missing associated documentation comment in .proto file."""
 
     def GetOutboundStatus(self, request, context):
@@ -66,7 +66,7 @@ def add_ObservatoryServiceServicer_to_server(servicer, server):
 
 
  # This class is part of an EXPERIMENTAL API.
-class ObservatoryService(object):
+class ObservatoryService:
     """Missing associated documentation comment in .proto file."""
 
     @staticmethod

@@ -5,7 +5,7 @@ import warnings
 
 from xray_api.proto.app.router.command import command_pb2 as app_dot_router_dot_command_dot_command__pb2
 
-GRPC_GENERATED_VERSION = '1.80.0'
+GRPC_GENERATED_VERSION = '1.82.1'
 GRPC_VERSION = grpc.__version__
 _version_not_supported = False
 
@@ -25,7 +25,7 @@ if _version_not_supported:
     )
 
 
-class RoutingServiceStub(object):
+class RoutingServiceStub:
     """Missing associated documentation comment in .proto file."""
 
     def __init__(self, channel):
@@ -71,7 +71,7 @@ class RoutingServiceStub(object):
                 _registered_method=True)
 
 
-class RoutingServiceServicer(object):
+class RoutingServiceServicer:
     """Missing associated documentation comment in .proto file."""
 
     def SubscribeRoutingStats(self, request, context):
@@ -162,7 +162,7 @@ def add_RoutingServiceServicer_to_server(servicer, server):
 
 
  # This class is part of an EXPERIMENTAL API.
-class RoutingService(object):
+class RoutingService:
     """Missing associated documentation comment in .proto file."""
 
     @staticmethod
