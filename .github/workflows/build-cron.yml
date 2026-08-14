@@ -1,0 +1,53 @@
+Name: Build every 6 hours
+
+on:
+  schedule:
+    - cron: "0 */6 * * *"
+  workflow_dispatch:
+
+jobs:
+  build-docker-image:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: 'main' # Укажите 'master', если ваша основная ветка называется master
+
+      - name: Setup nodejs
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        working-directory: ./app/dashboard
+        run: npm install --no-audit --no-fund
+
+      - name: Build project
+        working-directory: ./app/dashboard
+        run: VITE_BASE_API=/api/ npm run build --if-present -- --outDir build --assetsDir statics
+
+      - name: Create 404.html
+        working-directory: ./app/dashboard
+        run: cp ./build/index.html ./build/404.html
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64
+          push: true
+          tags: |
+            shelbyhell/marzban:latest
