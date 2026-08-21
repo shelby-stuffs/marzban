@@ -37,7 +37,7 @@
     "react-json-editor-ajrm": "^2.5.14",
     "react-loading-skeleton": "^3.1.0",
     "react-query": "^3.39.3",
-    "react-router-dom": "^6.30.4",
+    "react-router-dom": "^6.30.5",
     "react-slick": "^0.29.0",
     "react-use-websocket": "^4.3.1",
     "rollup-plugin-visualizer": "^5.9.0",
