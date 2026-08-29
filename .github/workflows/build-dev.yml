@@ -8,7 +8,6 @@ on:
 
 env:
   IMAGE: shelbyhell/marzban:${{ github.ref_name }}
-  GHCR_IMAGE: ghcr.io/shelbyhell/marzban:${{ github.ref_name }}
 
 jobs:
   build-dashboard:
@@ -68,13 +67,6 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Build and push ${{ matrix.arch }} image
         uses: docker/build-push-action@v6
         with:
@@ -84,7 +76,6 @@ jobs:
           file: ./Dockerfile
           tags: |
             ${{ env.IMAGE }}-${{ matrix.arch }}
-            ${{ env.GHCR_IMAGE }}-${{ matrix.arch }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -98,13 +89,6 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Create tagged manifest
         uses: int128/docker-manifest-create-action@v2
         with:
@@ -112,11 +96,3 @@ jobs:
           sources: |
             ${{ env.IMAGE }}-amd64
             ${{ env.IMAGE }}-arm64
-
-      - name: Create tagged manifest for GitHub
-        uses: int128/docker-manifest-create-action@v2
-        with:
-          tags: ${{ env.GHCR_IMAGE }}
-          sources: |
-            ${{ env.GHCR_IMAGE }}-amd64
-            ${{ env.GHCR_IMAGE }}-arm64

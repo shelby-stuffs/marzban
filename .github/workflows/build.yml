@@ -6,9 +6,7 @@ on:
 
 env:
   IMAGE: shelbyhell/marzban:${{ github.ref_name }}
-  GHCR_IMAGE: ghcr.io/shelbyhell/marzban:${{ github.ref_name }}
   IMAGE_LATEST: shelbyhell/marzban:latest
-  GHCR_IMAGE_LATEST: ghcr.io/shelbyhell/marzban:latest
 
 jobs:
   build-dashboard:
@@ -84,7 +82,6 @@ jobs:
           file: ./Dockerfile
           tags: |
             ${{ env.IMAGE }}-${{ matrix.arch }}
-            ${{ env.GHCR_IMAGE }}-${{ matrix.arch }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -113,14 +110,6 @@ jobs:
             ${{ env.IMAGE }}-amd64
             ${{ env.IMAGE }}-arm64
 
-      - name: Create tagged manifest for GitHub
-        uses: int128/docker-manifest-create-action@v2
-        with:
-          tags: ${{ env.GHCR_IMAGE }}
-          sources: |
-            ${{ env.GHCR_IMAGE }}-amd64
-            ${{ env.GHCR_IMAGE }}-arm64
-
       - name: Create latest manifest if not prerelease
         if: ${{ github.event.release.prerelease != true }}
         uses: int128/docker-manifest-create-action@v2
@@ -129,12 +118,3 @@ jobs:
           sources: |
             ${{ env.IMAGE }}-amd64
             ${{ env.IMAGE }}-arm64
-
-      - name: Create latest manifest for GitHub if not prerelease
-        if: ${{ github.event.release.prerelease != true }}
-        uses: int128/docker-manifest-create-action@v2
-        with:
-          tags: ${{ env.GHCR_IMAGE_LATEST }}
-          sources: |
-            ${{ env.GHCR_IMAGE }}-amd64
-            ${{ env.GHCR_IMAGE }}-arm64
