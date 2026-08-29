@@ -7,8 +7,8 @@ on:
       - "next"
 
 env:
-  IMAGE: gozargah/marzban:${{ github.ref_name }}
-  GHCR_IMAGE: ghcr.io/gozargah/marzban:${{ github.ref_name }}
+  IMAGE: shelbyhell/marzban:${{ github.ref_name }}
+  GHCR_IMAGE: ghcr.io/shelbyhell/marzban:${{ github.ref_name }}
 
 jobs:
   build-dashboard:
