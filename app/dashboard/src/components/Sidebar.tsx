@@ -2,6 +2,7 @@ import { chakra, Flex, Text, VStack } from "@chakra-ui/react";
 import {
   Cog6ToothIcon,
   LinkIcon,
+  ShieldCheckIcon,
   SquaresPlusIcon,
   UsersIcon,
 } from "@heroicons/react/24/outline";
@@ -15,6 +16,7 @@ const UsersNavIcon = chakra(UsersIcon, navIconStyle);
 const HostsNavIcon = chakra(LinkIcon, navIconStyle);
 const NodesNavIcon = chakra(SquaresPlusIcon, navIconStyle);
 const CoreNavIcon = chakra(Cog6ToothIcon, navIconStyle);
+const WireGuardNavIcon = chakra(ShieldCheckIcon, navIconStyle);
 
 const darkBorder = { borderColor: "gray.700" };
 const hoverStyle = { bg: "gray.100", _dark: { bg: "gray.700" } };
@@ -95,6 +97,14 @@ export const SidebarContent: FC<{ onNavigate?: () => void }> = ({
           to="/core"
           icon={CoreNavIcon}
           label={t("core.title", "Core")}
+          onClick={onNavigate}
+        />
+      )}
+      {isSudo && (
+        <NavItem
+          to="/wireguard"
+          icon={WireGuardNavIcon}
+          label={t("wireguard.title", "WireGuard")}
           onClick={onNavigate}
         />
       )}
