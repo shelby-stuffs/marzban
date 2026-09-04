@@ -59,10 +59,12 @@ class WireGuardPeerSettings(BaseModel):
             derived_public_key = get_wireguard_public_key(self.private_key)
             if self.public_key and self.public_key != derived_public_key:
                 raise ValueError("wireguard public_key does not match private_key")
-            self.public_key = derived_public_key
+            object.__setattr__(self, "public_key", derived_public_key)
         return self
 
     def ensure_keypair(self) -> WireGuardPeerSettings:
         if not self.private_key:
-            self.private_key, self.public_key = generate_wireguard_keypair()
+            private_key, public_key = generate_wireguard_keypair()
+            object.__setattr__(self, "private_key", private_key)
+            object.__setattr__(self, "public_key", public_key)
         return self
