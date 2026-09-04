@@ -1,4 +1,16 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap");
+
+// ---------------------------------------------------------------------------
+// Terminal design tokens mirrored from chakra.config.ts
+// ---------------------------------------------------------------------------
+:root {
+  --term-bg: #06080b;
+  --term-surface: #0b0f15;
+  --term-overlay: #101620;
+  --term-border: #1c2634;
+  --term-accent: #00e08c;
+  --term-dim: #5b6b7d;
+}
 
 .bg-blue-animate {
   animation: blur-animate 200ms ease-in;
@@ -9,7 +21,6 @@
   from {
     backdrop-filter: blur(1px);
   }
-
   to {
     backdrop-filter: blur(10px);
   }
@@ -23,29 +34,29 @@
   from {
     transform: rotate(0deg);
   }
-
   to {
     transform: rotate(360deg);
   }
 }
 
+// ---------------------------------------------------------------------------
+// Panels and tables: square, dense, terminal-like
+// ---------------------------------------------------------------------------
 table thead {
   th:first-of-type {
-    border-top-left-radius: 8px;
+    border-top-left-radius: 4px;
   }
-
   th:last-of-type {
-    border-top-right-radius: 8px;
+    border-top-right-radius: 4px;
   }
 }
 
 .last-row {
   td:first-of-type {
-    border-bottom-left-radius: 8px;
+    border-bottom-left-radius: 4px;
   }
-
   td:last-of-type {
-    border-bottom-right-radius: 8px;
+    border-bottom-right-radius: 4px;
   }
 }
 
@@ -71,24 +82,31 @@ table thead {
   width: 100%;
 }
 
-// data picker
+// Monospace code surfaces used by the core/config editors
+.monaco-editor,
+.monaco-editor .margin {
+  background-color: var(--term-surface) !important;
+}
+
+// ---------------------------------------------------------------------------
+// Date picker
+// ---------------------------------------------------------------------------
 .react-datepicker__navigation.react-datepicker__navigation--previous,
 .react-datepicker__navigation.react-datepicker__navigation--next {
   padding-top: 6px;
 }
 
 .react-datepicker {
+  font-family: "JetBrains Mono", monospace !important;
   background-color: var(--chakra-colors-white) !important;
   border: 1px solid var(--chakra-colors-gray-200);
-  border-radius: var(--chakra-radii-md) !important;
+  border-radius: 4px !important;
   position: relative;
 }
 
 .chakra-ui-dark .react-datepicker {
-  background-color: var(--chakra-colors-gray-700) !important;
-  border: 1px solid var(--chakra-colors-gray-600);
-  border-radius: var(--chakra-radii-md) !important;
-  position: relative;
+  background-color: var(--term-overlay) !important;
+  border: 1px solid var(--term-border);
 }
 
 .react-datepicker__header {
@@ -99,27 +117,27 @@ table thead {
 }
 
 .chakra-ui-dark .react-datepicker__header {
-  border-bottom: 1px solid var(--chakra-colors-gray-600);
+  border-bottom: 1px solid var(--term-border);
 }
 
-.react-datepicker-popper[data-placement^=bottom] .react-datepicker__triangle::after {
+.react-datepicker-popper[data-placement^="bottom"] .react-datepicker__triangle::after {
   border-top: none;
   border-bottom-color: var(--chakra-colors-white);
 }
 
-.react-datepicker-popper[data-placement^=bottom] .react-datepicker__triangle::before {
+.react-datepicker-popper[data-placement^="bottom"] .react-datepicker__triangle::before {
   top: -1px;
   border-bottom-color: var(--chakra-colors-gray-200);
 }
 
-.chakra-ui-dark .react-datepicker-popper[data-placement^=bottom] .react-datepicker__triangle::after {
+.chakra-ui-dark .react-datepicker-popper[data-placement^="bottom"] .react-datepicker__triangle::after {
   border-top: none;
-  border-bottom-color: var(--chakra-colors-gray-700);
+  border-bottom-color: var(--term-overlay);
 }
 
-.chakra-ui-dark .react-datepicker-popper[data-placement^=bottom] .react-datepicker__triangle::before {
+.chakra-ui-dark .react-datepicker-popper[data-placement^="bottom"] .react-datepicker__triangle::before {
   top: -1px;
-  border-bottom-color: var(--chakra-colors-gray-600);
+  border-bottom-color: var(--term-border);
 }
 
 .react-datepicker__current-month,
@@ -135,15 +153,15 @@ table thead {
 }
 
 .react-datepicker__day:hover {
-  border-radius: 0.3rem;
+  border-radius: 2px;
   background-color: var(--chakra-colors-primary-300) !important;
-  color: var(--chakra-colors-white) !important;
+  color: #04150d !important;
 }
 
 .chakra-ui-dark .react-datepicker__day:hover {
-  border-radius: 0.3rem;
-  background-color: var(--chakra-colors-primary-500) !important;
-  color: var(--chakra-colors-gray-800) !important;
+  border-radius: 2px;
+  background-color: var(--term-overlay) !important;
+  color: var(--term-accent) !important;
 }
 
 .react-datepicker__day--disabled {
@@ -156,40 +174,35 @@ table thead {
 }
 
 .chakra-ui-dark .react-datepicker__day--disabled {
-  color: var(--chakra-colors-gray-500) !important;
+  color: var(--term-dim) !important;
 }
 
 .chakra-ui-dark .react-datepicker__day--disabled:hover {
   background-color: transparent !important;
-  color: var(--chakra-colors-gray-500) !important;
+  color: var(--term-dim) !important;
 }
 
 .react-datepicker__day--keyboard-selected,
 .react-datepicker__day--selected,
 .react-datepicker__day--in-selecting-range,
 .react-datepicker__day--in-range {
-  border-radius: 0.3rem;
-  background-color: var(--chakra-colors-primary-500) !important;
-  color: var(--chakra-colors-white) !important;
+  border-radius: 2px;
+  background-color: var(--term-accent) !important;
+  color: #04150d !important;
 }
 
 .chakra-ui-dark .react-datepicker__day--keyboard-selected,
 .chakra-ui-dark .react-datepicker__day--selected,
 .chakra-ui-dark .react-datepicker__day--in-selecting-range,
 .chakra-ui-dark .react-datepicker__day--in-range {
-  border-radius: 0.3rem;
-  background-color: var(--chakra-colors-primary-200) !important;
-  color: var(--chakra-colors-gray-800) !important;
+  border-radius: 2px;
+  background-color: var(--term-accent) !important;
+  color: #04150d !important;
 }
 
 .react-datepicker__day--in-selecting-range:not(.react-datepicker__day--in-range) {
-  border-radius: 0.3rem;
-  background-color: var(--chakra-colors-primary-400) !important;
-}
-
-.chakra-ui-dark .react-datepicker__day--in-selecting-range:not(.react-datepicker__day--in-range) {
-  border-radius: 0.3rem;
-  background-color: var(--chakra-colors-primary-400) !important;
+  border-radius: 2px;
+  background-color: var(--chakra-colors-primary-700) !important;
 }
 
 .react-datepicker__day--outside-month {
@@ -204,28 +217,30 @@ table thead {
   position: relative;
 }
 
+// ---------------------------------------------------------------------------
+// Status indicators
+// ---------------------------------------------------------------------------
 .green {
-  background: #66ff99;
+  background: #00e08c;
 }
 
 .red {
-  background: #e53e3e;
+  background: #ff4d5e;
 }
 
 .orange {
-  background: #fbd38d;
+  background: #ffb020;
 }
 
 .bx-shadow {
-  box-shadow: 0px 0px 8px 3px rgb(230 221 221 / 10%);
+  box-shadow: 0 8px 24px -18px rgba(0, 0, 0, 0.9);
 }
 
 .circle {
-  min-width: 10px;
-  min-height: 10px;
-  border-radius: 50%;
-
-  box-shadow: 0px 0px 1px 1px #0000001a;
+  min-width: 8px;
+  min-height: 8px;
+  border-radius: 1px;
+  box-shadow: 0 0 6px 0 currentColor;
 }
 
 .pulse {
@@ -234,47 +249,43 @@ table thead {
 .pulse.green {
   animation: green-pulse-animation 3s infinite;
 }
-.pulse.red{
+.pulse.red {
   animation: red-pulse-animation 3s infinite;
 }
-.pulse.orange{
+.pulse.orange {
   animation: orange-pulse-animation 3s infinite;
 }
 
 @keyframes pulse-animation {
   0% {
-    box-shadow: 0 0 0 0px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.3);
   }
-
   100% {
-    box-shadow: 0 0 0 10px rgba(0, 0, 0, 0);
+    box-shadow: 0 0 0 8px rgba(255, 255, 255, 0);
   }
 }
 @keyframes green-pulse-animation {
   0% {
-    box-shadow: 0 0 0 0px #66ff9975;
+    box-shadow: 0 0 0 0 rgba(0, 224, 140, 0.5);
   }
-
   100% {
-    box-shadow: 0 0 0 10px #66ff9900;
+    box-shadow: 0 0 0 8px rgba(0, 224, 140, 0);
   }
 }
 @keyframes red-pulse-animation {
   0% {
-    box-shadow: 0 0 0 0px #e53e3e8c;
+    box-shadow: 0 0 0 0 rgba(255, 77, 94, 0.5);
   }
-
   100% {
-    box-shadow: 0 0 0 10px #e53e3e00;
+    box-shadow: 0 0 0 8px rgba(255, 77, 94, 0);
   }
 }
 @keyframes orange-pulse-animation {
   0% {
-    box-shadow: 0 0 0 0px #fbd38d85;
+    box-shadow: 0 0 0 0 rgba(255, 176, 32, 0.5);
   }
-
   100% {
-    box-shadow: 0 0 0 10px #fbd38d00;
+    box-shadow: 0 0 0 8px rgba(255, 176, 32, 0);
   }
 }
 
@@ -282,5 +293,6 @@ table thead {
   display: flex;
   align-items: center;
   justify-content: start;
-  gap: .7rem;
+  gap: 0.6rem;
+  font-family: "JetBrains Mono", monospace;
 }
