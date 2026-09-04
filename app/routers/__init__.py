@@ -10,6 +10,7 @@ from . import (
     user,
     user_template,
     wireguard,
+    wireguard_reconcile,
 )
 
 api_router = APIRouter()
@@ -19,6 +20,7 @@ routers = [
     core.router,
     node.router,
     wireguard.router,
+    wireguard_reconcile.router,
     subscription.router,
     system.router,
     user_template.router,
