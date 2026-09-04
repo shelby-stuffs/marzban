@@ -3,6 +3,9 @@ from .config import WireGuardConfig
 from .models import WireGuardPeerSettings
 from .subscription import WireGuardSubscription, render_wireguard_client_config
 
+# Register SQLAlchemy lifecycle listeners when the WireGuard package is loaded.
+from . import lifecycle as _lifecycle
+
 __all__ = [
     "WireGuardConfig",
     "WireGuardNamespace",
