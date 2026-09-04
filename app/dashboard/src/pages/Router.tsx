@@ -6,6 +6,7 @@ import { Layout } from "./Layout";
 import { Login } from "./Login";
 import { CoreRoute, HostsRoute, NodesRoute } from "./sections";
 import { WireGuardOutbounds } from "./WireGuardOutbounds";
+import { XHTTPSettingsPage } from "./XHTTPSettings";
 
 const fetchAdminLoader = () => {
   return fetch("/admin", {
@@ -27,10 +28,8 @@ export const router = createHashRouter([
       { path: "nodes", element: <NodesRoute /> },
       { path: "core", element: <CoreRoute /> },
       { path: "wireguard", element: <WireGuardOutbounds /> },
+      { path: "xhttp", element: <XHTTPSettingsPage /> },
     ],
   },
-  {
-    path: "/login/",
-    element: <Login />,
-  },
+  { path: "/login/", element: <Login /> },
 ]);
