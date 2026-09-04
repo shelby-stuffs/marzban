@@ -1,6 +1,7 @@
 import {
   Box,
   chakra,
+  Flex,
   HStack,
   IconButton,
   Menu,
@@ -40,10 +41,10 @@ const iconProps = {
 const DarkIcon = chakra(MoonIcon, iconProps);
 const LightIcon = chakra(SunIcon, iconProps);
 const MoreIcon: FC = () => (
-  <HStack spacing="1" h="4" align="center" justify="center">
-    <Box boxSize="1" borderRadius="full" bg="currentColor" />
-    <Box boxSize="1" borderRadius="full" bg="currentColor" />
-    <Box boxSize="1" borderRadius="full" bg="currentColor" />
+  <HStack spacing="0.5" h="4" align="center" justify="center">
+    <Box w="3px" h="3px" bg="currentColor" />
+    <Box w="3px" h="3px" bg="currentColor" />
+    <Box w="3px" h="3px" bg="currentColor" />
   </HStack>
 );
 const LogoutIcon = chakra(ArrowLeftOnRectangleIcon, iconProps);
@@ -52,16 +53,17 @@ const ResetUsageIcon = chakra(DocumentMinusIcon, iconProps);
 const GitHubIcon = chakra(ArrowTopRightOnSquareIcon, iconProps);
 const NotificationCircle = chakra(Box, {
   baseStyle: {
-    bg: "yellow.500",
+    bg: "accent.500",
     w: "2",
     h: "2",
-    rounded: "full",
+    rounded: "1px",
     position: "absolute",
   },
 });
 
-const titleSize = { base: "xl", md: "2xl" };
+const titleSize = { base: "lg", md: "xl" };
 const controlsWrap = "nowrap" as const;
+const headerBorder = { borderColor: "light-border" };
 
 const NOTIFICATION_KEY = "marzban-menu-notification";
 
@@ -102,19 +104,37 @@ export const Header: FC<HeaderProps> = ({ title, actions }) => {
       gap={2}
       justifyContent="space-between"
       position="relative"
-      mb="4"
+      mb="5"
+      pb="3"
+      borderBottom="1px solid"
+      borderColor="terminal.border"
+      _light={headerBorder}
       flexWrap="wrap"
       w="full"
     >
-      <Text
-        as="h1"
-        fontWeight="semibold"
-        fontSize={titleSize}
-        minW="0"
-        noOfLines={1}
-      >
-        {title ?? t("users")}
-      </Text>
+      <Flex align="center" gap="2" minW="0">
+        <Text
+          as="span"
+          fontFamily="mono"
+          fontSize="sm"
+          color="primary.500"
+          userSelect="none"
+          flexShrink={0}
+        >
+          &gt;
+        </Text>
+        <Text
+          as="h1"
+          fontFamily="mono"
+          fontWeight="600"
+          letterSpacing="0.01em"
+          fontSize={titleSize}
+          minW="0"
+          noOfLines={1}
+        >
+          {title ?? t("users")}
+        </Text>
+      </Flex>
       <HStack
         alignItems="center"
         justifyContent="flex-end"

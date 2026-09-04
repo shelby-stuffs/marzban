@@ -3,14 +3,6 @@ import { extendTheme } from "@chakra-ui/react";
 const mono = `"JetBrains Mono","SFMono-Regular",Menlo,Consolas,"Liberation Mono",monospace`;
 const sans = `Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",sans-serif`;
 
-const surface = {
-  base: "#06080b",
-  raised: "#0b0f15",
-  overlay: "#101620",
-  border: "#1c2634",
-  borderStrong: "#2a3purple",
-};
-
 export const theme = extendTheme({
   config: {
     initialColorMode: "dark",
@@ -37,7 +29,6 @@ export const theme = extendTheme({
       surface: "#0b0f15",
       overlay: "#101620",
       border: "#1c2634",
-      grid: "rgba(0, 255, 156, 0.05)",
       dim: "#5b6b7d",
       text: "#c8d6e2",
     },
