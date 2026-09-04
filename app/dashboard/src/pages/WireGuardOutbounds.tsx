@@ -116,8 +116,9 @@ export const WireGuardOutbounds: FC = () => {
         setEditingTag(form.tag);
         toast({ title: "WireGuard outbound saved and Xray restarted", status: "success", position: "top" });
       },
-      onError: (error) =>
-        toast({ title: errorMessage(error), status: "error", position: "top", isClosable: true }),
+      onError: (error) => {
+        toast({ title: errorMessage(error), status: "error", position: "top", isClosable: true });
+      },
     }
   );
 
@@ -131,8 +132,9 @@ export const WireGuardOutbounds: FC = () => {
         setForm(emptyForm);
         toast({ title: "WireGuard outbound deleted", status: "success", position: "top" });
       },
-      onError: (error) =>
-        toast({ title: errorMessage(error), status: "error", position: "top", isClosable: true }),
+      onError: (error) => {
+        toast({ title: errorMessage(error), status: "error", position: "top", isClosable: true });
+      },
     }
   );
 
