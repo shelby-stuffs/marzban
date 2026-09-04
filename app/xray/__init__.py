@@ -5,13 +5,23 @@ from app.models.proxy import ProxyHostSecurity
 from app.utils.store import DictStorage
 from app.utils.system import check_port
 from app.xray import operations
-from app.xray.config import XRayConfig
+from app.xray.config import XRayConfig as BaseXRayConfig
 from app.xray.core import XRayCore
 from app.xray.node import XRayNode
+from app.xray.xhttp import enrich_xhttp_inbound_metadata
 from config import XRAY_ASSETS_PATH, XRAY_EXECUTABLE_PATH, XRAY_JSON
 from xray_api import XRay as XRayAPI
 from xray_api import exceptions, types
 from xray_api import exceptions as exc
+
+
+class XRayConfig(BaseXRayConfig):
+    """Xray config with complete v26 xHTTP subscription metadata."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        enrich_xhttp_inbound_metadata(self)
+
 
 core = XRayCore(XRAY_EXECUTABLE_PATH, XRAY_ASSETS_PATH)
 
