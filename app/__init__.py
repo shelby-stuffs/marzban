@@ -33,6 +33,7 @@ app.add_middleware(
 )
 from app import dashboard, jobs, routers, telegram  # noqa
 from app.routers import api_router  # noqa
+from app.wireguard.startup import restore_wireguard_runtime  # noqa
 
 app.include_router(api_router)
 
@@ -55,6 +56,10 @@ def on_startup():
             f"you can't use /{XRAY_SUBSCRIPTION_PATH}/ as subscription path it reserved for {app.title}"
         )
     scheduler.start()
+    try:
+        restore_wireguard_runtime()
+    except Exception:
+        logger.exception("Could not restore WireGuard runtime during startup")
 
 
 @app.on_event("shutdown")
