@@ -34,7 +34,7 @@ def test_reconcile_provisions_created_users_and_releases_deleted_users(monkeypat
         deleted_user_ids={11, 12},
     )
 
-    assert deleted == [11, 12]
+    assert set(deleted) == {11, 12}
     assert allocated == [10]
 
 
