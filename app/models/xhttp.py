@@ -81,6 +81,13 @@ class XHTTPHostSettings(BaseModel):
         return value
 
 
+class XHTTPInboundSettings(XHTTPHostSettings):
+    """Complete runtime xHTTP inbound transport settings."""
+
+    path: str | None = None
+    host: str | list[str] | None = None
+
+
 class XHTTPProxyHost(ProxyHost):
     """Proxy host with optional per-host xHTTP subscription overrides."""
 
