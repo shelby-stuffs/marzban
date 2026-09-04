@@ -13,12 +13,12 @@ class GetDB:  # Context Manager
 
     def __exit__(self, exc_type, exc_value, traceback):
         if isinstance(exc_value, SQLAlchemyError):
-            self.db.rollback()  # rollback on exception
+            self.db.rollback()
 
         self.db.close()
 
 
-def get_db():  # Dependency
+def get_db():
     with GetDB() as db:
         yield db
 
@@ -34,6 +34,9 @@ from .crud import (create_admin, create_notification_reminder,  # noqa
                    get_admin_by_telegram_id)
 
 from .models import JWT, System, User  # noqa
+from .xhttp import install_xhttp_host_storage  # noqa
+
+install_xhttp_host_storage()
 
 __all__ = [
     "get_or_create_inbound",
@@ -60,18 +63,14 @@ __all__ = [
     "get_admins",
     "get_admin_by_id",
     "get_admin_by_telegram_id",
-
     "create_notification_reminder",
     "get_notification_reminder",
     "delete_notification_reminder",
-
     "GetDB",
     "get_db",
-
     "User",
     "System",
     "JWT",
-
     "Base",
     "Session",
 ]
