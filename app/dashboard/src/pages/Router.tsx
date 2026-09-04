@@ -5,6 +5,7 @@ import { Dashboard } from "./Dashboard";
 import { Layout } from "./Layout";
 import { Login } from "./Login";
 import { CoreRoute, HostsRoute, NodesRoute } from "./sections";
+import { WireGuardOutbounds } from "./WireGuardOutbounds";
 
 const fetchAdminLoader = () => {
   return fetch("/admin", {
@@ -25,6 +26,7 @@ export const router = createHashRouter([
       { path: "hosts", element: <HostsRoute /> },
       { path: "nodes", element: <NodesRoute /> },
       { path: "core", element: <CoreRoute /> },
+      { path: "wireguard", element: <WireGuardOutbounds /> },
     ],
   },
   {
