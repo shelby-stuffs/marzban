@@ -4,7 +4,7 @@ import base64
 import json
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
-from app.xray.xhttp import xhttp_extra_from_metadata
+from app.utils.xhttp import xhttp_extra_from_metadata
 
 from .v2ray import V2rayJsonConfig as BaseV2rayJsonConfig
 from .v2ray import V2rayShareLink as BaseV2rayShareLink

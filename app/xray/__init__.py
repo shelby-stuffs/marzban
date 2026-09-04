@@ -4,11 +4,11 @@ from typing import TYPE_CHECKING, Dict, Sequence
 from app.models.proxy import ProxyHostSecurity
 from app.utils.store import DictStorage
 from app.utils.system import check_port
+from app.utils.xhttp import enrich_xhttp_inbound_metadata
 from app.xray import operations
 from app.xray.config import XRayConfig as BaseXRayConfig
 from app.xray.core import XRayCore
 from app.xray.node import XRayNode
-from app.xray.xhttp import enrich_xhttp_inbound_metadata
 from config import XRAY_ASSETS_PATH, XRAY_EXECUTABLE_PATH, XRAY_JSON
 from xray_api import XRay as XRayAPI
 from xray_api import exceptions, types
@@ -62,8 +62,6 @@ def hosts(storage: dict):
                     "host": [i.strip() for i in host.host.split(',')] if host.host else [],
                     "alpn": host.alpn.value,
                     "fingerprint": host.fingerprint.value,
-                    # None means the tls is not specified by host itself and
-                    #  complies with its inbound's settings.
                     "tls": None
                     if host.security == ProxyHostSecurity.inbound_default
                     else host.security.value,

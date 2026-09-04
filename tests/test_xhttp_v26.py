@@ -2,7 +2,7 @@ import json
 from urllib.parse import parse_qs, urlsplit
 
 from app.subscription.xhttp import enrich_xhttp_share_link
-from app.xray.xhttp import enrich_xhttp_inbound_metadata, get_xhttp_settings
+from app.utils.xhttp import enrich_xhttp_inbound_metadata, get_xhttp_settings
 
 
 class FakeConfig(dict):
