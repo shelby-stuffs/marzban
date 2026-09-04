@@ -6,6 +6,7 @@ from app.dependencies import get_validated_sub, get_validated_user
 from app.models.admin import Admin
 from app.wireguard import WireGuardConfig, WireGuardPeerSettings, WireGuardSubscription
 from app.wireguard.storage import (
+    allocate_wireguard_peer,
     delete_wireguard_peer,
     get_wireguard_peer,
     get_wireguard_server,
@@ -42,6 +43,20 @@ class WireGuardServerResponse(BaseModel):
     config: dict
 
 
+def _allocate_or_http_error(
+    db: Session,
+    *,
+    user_id: int,
+    settings: WireGuardPeerSettings | None = None,
+):
+    try:
+        return allocate_wireguard_peer(db, user_id=user_id, settings=settings)
+    except ValueError as exc:
+        detail = str(exc)
+        status_code = 404 if detail == "WireGuard server is not configured" else 409
+        raise HTTPException(status_code=status_code, detail=detail) from exc
+
+
 @router.put("/api/wireguard/server", response_model=WireGuardServerResponse)
 def configure_wireguard_server(
     payload: WireGuardServerRequest,
@@ -75,7 +90,20 @@ def configure_wireguard_peer(
     dbuser=Depends(get_validated_user),
     _admin: Admin = Depends(Admin.get_current),
 ):
-    record = save_wireguard_peer(db, user_id=dbuser.id, settings=payload)
+    if payload.peer_ips:
+        record = save_wireguard_peer(db, user_id=dbuser.id, settings=payload)
+    else:
+        record = _allocate_or_http_error(db, user_id=dbuser.id, settings=payload)
+    return WireGuardPeerSettings.model_validate(record.settings)
+
+
+@router.post("/api/user/{username}/wireguard/allocate", response_model=WireGuardPeerSettings)
+def allocate_user_wireguard_peer(
+    db: Session = Depends(get_db),
+    dbuser=Depends(get_validated_user),
+    _admin: Admin = Depends(Admin.get_current),
+):
+    record = _allocate_or_http_error(db, user_id=dbuser.id)
     return WireGuardPeerSettings.model_validate(record.settings)
 
 

@@ -7,6 +7,8 @@ from sqlalchemy.orm import Session
 
 from app.db.base import Base
 
+from .allocator import allocate_peer_ips
+from .config import WireGuardConfig
 from .models import WireGuardPeerSettings
 
 
@@ -52,6 +54,18 @@ def get_wireguard_peer(db: Session, user_id: int) -> WireGuardPeerRecord | None:
     return db.query(WireGuardPeerRecord).filter(WireGuardPeerRecord.user_id == user_id).first()
 
 
+def get_occupied_wireguard_peer_ips(db: Session, *, exclude_user_id: int | None = None) -> list[str]:
+    query = db.query(WireGuardPeerRecord)
+    if exclude_user_id is not None:
+        query = query.filter(WireGuardPeerRecord.user_id != exclude_user_id)
+
+    occupied = []
+    for record in query.all():
+        settings = WireGuardPeerSettings.model_validate(record.settings)
+        occupied.extend(settings.peer_ips)
+    return occupied
+
+
 def save_wireguard_peer(db: Session, *, user_id: int, settings: WireGuardPeerSettings) -> WireGuardPeerRecord:
     settings.ensure_keypair()
     record = get_wireguard_peer(db, user_id)
@@ -65,6 +79,34 @@ def save_wireguard_peer(db: Session, *, user_id: int, settings: WireGuardPeerSet
     db.commit()
     db.refresh(record)
     return record
+
+
+def allocate_wireguard_peer(
+    db: Session,
+    *,
+    user_id: int,
+    settings: WireGuardPeerSettings | None = None,
+) -> WireGuardPeerRecord:
+    server_record = get_wireguard_server(db)
+    if server_record is None:
+        raise ValueError("WireGuard server is not configured")
+
+    current_record = get_wireguard_peer(db, user_id)
+    if settings is None:
+        settings = (
+            WireGuardPeerSettings.model_validate(current_record.settings)
+            if current_record is not None
+            else WireGuardPeerSettings()
+        )
+
+    current_peer_ips = settings.peer_ips
+    settings.peer_ips = allocate_peer_ips(
+        WireGuardConfig(server_record.config)["address"],
+        occupied_peer_ips=get_occupied_wireguard_peer_ips(db, exclude_user_id=user_id),
+        current_peer_ips=current_peer_ips,
+    )
+    settings.ensure_keypair()
+    return save_wireguard_peer(db, user_id=user_id, settings=settings)
 
 
 def delete_wireguard_peer(db: Session, user_id: int) -> bool:
