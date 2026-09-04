@@ -8,6 +8,14 @@ from app.db.models import ProxyHost
 _installed = False
 
 
+def _serialize_settings(settings):
+    if settings is None:
+        return None
+    if hasattr(settings, "model_dump"):
+        return settings.model_dump(by_alias=True, exclude_none=True)
+    return settings
+
+
 def install_xhttp_host_storage() -> None:
     """Attach the optional JSON column and preserve it in host replacements."""
     global _installed
@@ -23,7 +31,7 @@ def install_xhttp_host_storage() -> None:
     def add_host(db, inbound_tag, host):
         rows = original_add_host(db, inbound_tag, host)
         if rows:
-            rows[-1].xhttp_settings = host.xhttp_settings
+            rows[-1].xhttp_settings = _serialize_settings(host.xhttp_settings)
             db.commit()
             db.refresh(rows[-1])
         return rows
@@ -31,7 +39,7 @@ def install_xhttp_host_storage() -> None:
     def update_hosts(db, inbound_tag, modified_hosts):
         rows = original_update_hosts(db, inbound_tag, modified_hosts)
         for row, modified in zip(rows, modified_hosts):
-            row.xhttp_settings = modified.xhttp_settings
+            row.xhttp_settings = _serialize_settings(modified.xhttp_settings)
         db.commit()
         for row in rows:
             db.refresh(row)
