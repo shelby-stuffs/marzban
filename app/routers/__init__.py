@@ -18,11 +18,11 @@ routers = [
     admin.router,
     core.router,
     node.router,
+    wireguard.router,
     subscription.router,
     system.router,
     user_template.router,
     user.router,
-    wireguard.router,
     home.router,
 ]
 
