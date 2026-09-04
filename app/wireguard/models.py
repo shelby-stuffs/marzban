@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from ipaddress import ip_network
+from ipaddress import ip_interface
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
@@ -46,9 +46,9 @@ class WireGuardPeerSettings(BaseModel):
         for peer_ip in value:
             if not isinstance(peer_ip, str) or not peer_ip.strip():
                 continue
-            network = ip_network(peer_ip.strip(), strict=False)
-            host_prefix = 32 if network.version == 4 else 128
-            canonical = f"{network.network_address}/{host_prefix}"
+            interface = ip_interface(peer_ip.strip())
+            host_prefix = 32 if interface.version == 4 else 128
+            canonical = f"{interface.ip}/{host_prefix}"
             if canonical not in normalized:
                 normalized.append(canonical)
         return normalized
