@@ -45,6 +45,30 @@ def render_wireguard_server_config(
     return "\n".join(lines) + "\n"
 
 
+def parse_wireguard_dump(output: str) -> list[dict]:
+    lines = [line for line in output.splitlines() if line]
+    if not lines:
+        return []
+
+    peers = []
+    for line in lines[1:]:
+        fields = line.split("\t")
+        if len(fields) < 8:
+            continue
+        peers.append(
+            {
+                "public_key": fields[0],
+                "endpoint": None if fields[2] == "(none)" else fields[2],
+                "allowed_ips": [] if fields[3] == "(none)" else fields[3].split(","),
+                "latest_handshake": int(fields[4]),
+                "transfer_rx": int(fields[5]),
+                "transfer_tx": int(fields[6]),
+                "persistent_keepalive": int(fields[7]),
+            }
+        )
+    return peers
+
+
 class WireGuardRuntime:
     def __init__(
         self,
@@ -66,6 +90,10 @@ class WireGuardRuntime:
     def config_path(self, interface_name: str) -> Path:
         interface_name = self.validate_interface_name(interface_name)
         return self.config_dir / f"{interface_name}.conf"
+
+    def desired_state_path(self, interface_name: str) -> Path:
+        interface_name = self.validate_interface_name(interface_name)
+        return self.config_dir / f".{interface_name}.marzban-enabled"
 
     def _run(self, args: list[str], *, input_text: str | None = None):
         try:
@@ -109,6 +137,18 @@ class WireGuardRuntime:
                 temporary_path.unlink()
         return path
 
+    def set_desired_state(self, interface_name: str, enabled: bool) -> None:
+        marker = self.desired_state_path(interface_name)
+        if enabled:
+            self.config_dir.mkdir(mode=0o700, parents=True, exist_ok=True)
+            marker.touch(mode=0o600, exist_ok=True)
+            os.chmod(marker, 0o600)
+        elif marker.exists():
+            marker.unlink()
+
+    def should_restore(self, interface_name: str) -> bool:
+        return self.desired_state_path(interface_name).exists()
+
     def active_interfaces(self) -> list[str]:
         result = self._run(["wg", "show", "interfaces"])
         return result.stdout.split()
@@ -130,7 +170,8 @@ class WireGuardRuntime:
             self._run(["wg-quick", "up", str(path)])
             action = "started"
 
-        return {"interface_name": interface_name, "active": True, "action": action}
+        self.set_desired_state(interface_name, True)
+        return {"interface_name": interface_name, "active": True, "desired": True, "action": action}
 
     def stop(self, interface_name: str) -> dict:
         interface_name = self.validate_interface_name(interface_name)
@@ -140,7 +181,13 @@ class WireGuardRuntime:
             action = "stopped"
         else:
             action = "already_stopped"
-        return {"interface_name": interface_name, "active": False, "action": action}
+        self.set_desired_state(interface_name, False)
+        return {"interface_name": interface_name, "active": False, "desired": False, "action": action}
+
+    def peer_telemetry(self, interface_name: str) -> list[dict]:
+        interface_name = self.validate_interface_name(interface_name)
+        result = self._run(["wg", "show", interface_name, "dump"])
+        return parse_wireguard_dump(result.stdout)
 
     def status(self, interface_name: str) -> dict:
         interface_name = self.validate_interface_name(interface_name)
@@ -148,5 +195,6 @@ class WireGuardRuntime:
         return {
             "interface_name": interface_name,
             "active": active,
+            "desired": self.should_restore(interface_name),
             "config_path": str(self.config_path(interface_name)),
         }
