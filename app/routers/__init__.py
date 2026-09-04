@@ -10,6 +10,7 @@ from . import (
     user,
     user_template,
     wireguard_outbound,
+    xhttp_inbound,
 )
 
 api_router = APIRouter()
@@ -19,6 +20,7 @@ routers = [
     core.router,
     node.router,
     wireguard_outbound.router,
+    xhttp_inbound.router,
     subscription.router,
     system.router,
     user_template.router,
