@@ -1,0 +1,60 @@
+name: Python foundation
+
+on:
+  push:
+    branches:
+      - "master/refactor"
+      - "feat/pasarguard-parity-*"
+    paths:
+      - "**/*.py"
+      - "pyproject.toml"
+      - "pytest.ini"
+      - "Makefile"
+      - ".github/workflows/python-foundation.yml"
+
+  pull_request:
+    branches:
+      - "master/refactor"
+    paths:
+      - "**/*.py"
+      - "pyproject.toml"
+      - "pytest.ini"
+      - "Makefile"
+      - ".github/workflows/python-foundation.yml"
+
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: python-foundation-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --group dev
+
+      - name: Check critical Python errors
+        run: uv run ruff check .
+
+      - name: Compile Python sources
+        run: uv run python -m compileall -q app cli xray_api
