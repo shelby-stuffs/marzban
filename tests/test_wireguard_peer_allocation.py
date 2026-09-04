@@ -28,7 +28,7 @@ def test_peer_settings_normalize_and_deduplicate_addresses():
         peer_ips=["10.0.0.9/24", "10.0.0.9/32", "fd42::9/64", "fd42::9/128"]
     )
 
-    assert settings.peer_ips == ["10.0.0.0/32", "10.0.0.9/32", "fd42::/128", "fd42::9/128"]
+    assert settings.peer_ips == ["10.0.0.9/32", "fd42::9/128"]
 
 
 def test_namespaces_reserve_interface_and_boundary_addresses():
