@@ -2,8 +2,14 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
-from app.db import transfer
+from app.db import timescale, transfer
 from app.db.base import DATABASE_URI
+from config import (
+    TIMESCALE_CHUNK_INTERVAL_DAYS,
+    TIMESCALE_COMPRESS_AFTER_DAYS,
+    TIMESCALE_ENABLED,
+    TIMESCALE_RETENTION_DAYS,
+)
 
 from . import utils
 
@@ -208,3 +214,134 @@ def verify(
     finally:
         source_engine.dispose()
         target_engine.dispose()
+
+
+@app.command(name="timescale-status")
+def timescale_status():
+    """
+    Shows the TimescaleDB state of the configured database.
+
+    Reports whether the extension is installed, which usage tables have been
+    converted into hypertables, how many chunks they hold, and which background
+    jobs (compression, retention, aggregate refresh) are registered.
+    """
+    engine = transfer.make_engine(DATABASE_URI)
+    try:
+        try:
+            report = timescale.status(engine)
+        except RuntimeError as exc:
+            utils.error(str(exc))
+            return
+
+        console.print(f"[bold]Database:[/bold] {transfer.describe(DATABASE_URI)}")
+        console.print(f"[bold]Extension available:[/bold] {'yes' if report['available'] else 'no'}")
+        console.print(f"[bold]Extension installed:[/bold] {report['extension'] or '-'}")
+
+        if not report["extension"]:
+            console.print("Nothing has been applied yet. Run 'marzban-cli db timescale-setup'.")
+            return
+
+        tables = Table("Table", "Hypertable", "Chunks", "Compression", "Jobs", title="Usage tables")
+        for item in report["hypertables"]:
+            tables.add_row(
+                item["name"],
+                "yes" if item["converted"] else "no",
+                str(item["chunks"]),
+                "on" if item["compressed"] else "off",
+                ", ".join(item["jobs"]) or "-",
+            )
+        console.print(tables)
+
+        views = Table("Continuous aggregate", "", title="Aggregates")
+        for item in report["aggregates"]:
+            views.add_row(item["name"], "ok" if item["created"] else "missing")
+        console.print(views)
+    finally:
+        engine.dispose()
+
+
+@app.command(name="timescale-setup")
+def timescale_setup(
+    chunk_days: int = typer.Option(
+        TIMESCALE_CHUNK_INTERVAL_DAYS,
+        "--chunk-days",
+        min=1,
+        help="Time span covered by a single chunk.",
+    ),
+    compress_after_days: int = typer.Option(
+        TIMESCALE_COMPRESS_AFTER_DAYS,
+        "--compress-after",
+        min=0,
+        help="Compress chunks older than this. 0 disables compression.",
+    ),
+    retention_days: int = typer.Option(
+        TIMESCALE_RETENTION_DAYS,
+        "--retention-days",
+        min=0,
+        help="Drop raw usage rows older than this. 0 keeps them forever.",
+    ),
+    skip_aggregates: bool = typer.Option(
+        False,
+        "--skip-aggregates",
+        is_flag=True,
+        help="Do not create the daily continuous aggregates.",
+    ),
+    yes_to_all: bool = typer.Option(
+        False, *utils.FLAGS["yes_to_all"], is_flag=True, help="Skips the confirmation prompt."
+    ),
+):
+    """
+    Turns the usage tables into TimescaleDB hypertables.
+
+    Converts node_user_usages and node_usages, adds daily continuous aggregates
+    for the usage charts, and registers the compression and retention policies.
+    Existing rows are migrated in place, so this can be run on a database that
+    already holds history.
+
+    Requires PostgreSQL with the timescaledb extension. Set TIMESCALE_ENABLED=True
+    first. The panel should be stopped: converting a table takes an exclusive
+    lock on it. Safe to re-run.
+    """
+    if not TIMESCALE_ENABLED:
+        utils.error(
+            "TIMESCALE_ENABLED is not set. Add TIMESCALE_ENABLED=True to the .env file "
+            "to confirm that this database is meant to run on TimescaleDB."
+        )
+
+    console.print(f"[bold]Database:[/bold] {transfer.describe(DATABASE_URI)}")
+
+    if retention_days > 0:
+        console.print(
+            f"[yellow]Warning:[/yellow] raw usage rows older than {retention_days} days will be "
+            "deleted permanently. The daily aggregates keep their totals, but per-hour detail "
+            "is lost."
+        )
+
+    if not yes_to_all:
+        typer.confirm(
+            "The panel should be stopped before continuing. Proceed?", abort=True
+        )
+
+    engine = transfer.make_engine(DATABASE_URI)
+    try:
+        try:
+            log = timescale.setup(
+                engine,
+                chunk_days=chunk_days,
+                compress_after_days=compress_after_days,
+                retention_days=retention_days,
+                aggregates=not skip_aggregates,
+            )
+        except RuntimeError as exc:
+            utils.error(str(exc))
+            return
+        except Exception as exc:
+            utils.error(f"Setup failed: {exc}")
+            return
+
+        for line in log:
+            console.print(f"  {line}")
+
+        utils.success("TimescaleDB is set up. Start the panel again.", auto_exit=False)
+    finally:
+        engine.dispose()

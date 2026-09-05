@@ -1,0 +1,36 @@
+# Optional overlay that runs the panel against a local TimescaleDB instance.
+#
+#   docker compose -f docker-compose.yml -f docker-compose.postgres.yml up -d
+#
+# The database is published on the loopback interface only; the panel uses the
+# host network, so it reaches it at 127.0.0.1:5432. Set POSTGRES_PASSWORD in
+# .env, and point SQLALCHEMY_DATABASE_URL at the same credentials.
+#
+# See docs/postgresql.md for the full migration procedure.
+
+services:
+  marzban:
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: timescale/timescaledb:latest-pg16
+    restart: always
+    ports:
+      - "127.0.0.1:5432:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-marzban}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:-marzban}
+    volumes:
+      - /var/lib/marzban-db:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-marzban} -d ${POSTGRES_DB:-marzban}",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
