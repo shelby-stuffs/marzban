@@ -24,7 +24,6 @@ import { Outlet } from "react-router-dom";
 const MenuIcon = chakra(Bars3Icon, { baseStyle: { w: 5, h: 5 } });
 const contentPad = { base: 4, md: 6 };
 const topbarDisplay = { base: "flex", md: "none" };
-const darkPanel = { bg: "gray.800", borderColor: "gray.700" };
 
 export const Layout: FC = () => {
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -38,12 +37,11 @@ export const Layout: FC = () => {
         px="4"
         py="3"
         borderBottom="1px solid"
-        borderColor="light-border"
-        _dark={darkPanel}
+        borderColor="terminal.border"
+        bg="terminal.surface"
         position="sticky"
         top="0"
         zIndex={20}
-        bg="white"
       >
         <IconButton
           aria-label="open menu"
@@ -53,8 +51,9 @@ export const Layout: FC = () => {
         >
           <MenuIcon />
         </IconButton>
-        <Text fontWeight="bold" fontSize="lg">
-          Marzban
+        <Box boxSize="2" borderRadius="1px" bg="primary.500" boxShadow="glow" />
+        <Text fontFamily="mono" fontWeight="600" fontSize="md" letterSpacing="0.04em">
+          marzban
         </Text>
       </Flex>
       <Flex flex="1" align="stretch">
@@ -65,7 +64,7 @@ export const Layout: FC = () => {
       </Flex>
       <Drawer isOpen={isOpen} placement="left" onClose={onClose}>
         <DrawerOverlay />
-        <DrawerContent maxW="260px">
+        <DrawerContent maxW="240px">
           <DrawerBody p="0">
             <SidebarContent onNavigate={onClose} />
           </DrawerBody>
