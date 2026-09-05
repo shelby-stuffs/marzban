@@ -24,23 +24,47 @@ exist on PostgreSQL; `CITEXT` is the portable equivalent.
 
 ## 2. Start a database
 
-With the bundled overlay, having set `POSTGRES_PASSWORD` in `.env`:
+`docker-compose.yml` ships a `db` service running TimescaleDB. It sits in the
+`postgres` Compose profile, so it stays down unless the profile is active and
+SQLite installs are unaffected.
 
-```bash
-docker compose -f docker-compose.yml -f docker-compose.postgres.yml up -d db
+Set the credentials in `.env`:
+
+```env
+COMPOSE_PROFILES = "postgres"
+POSTGRES_USER = "marzban"
+POSTGRES_PASSWORD = "secret"
+POSTGRES_DB = "marzban"
 ```
 
-Or standalone:
+Then bring it up:
 
 ```bash
-docker run -d --name marzban-db --restart always \
-  -p 127.0.0.1:5432:5432 \
-  -e POSTGRES_USER=marzban \
-  -e POSTGRES_PASSWORD=secret \
-  -e POSTGRES_DB=marzban \
-  -v /var/lib/marzban-db:/var/lib/postgresql/data \
-  timescale/timescaledb:latest-pg16
+docker compose up -d
 ```
+
+Without `COMPOSE_PROFILES` in `.env`, activate the profile per command instead:
+
+```bash
+docker compose --profile postgres up -d
+```
+
+The database is published on `127.0.0.1:5432` only. The panel runs in the host
+network, so it reaches it there.
+
+> An installed panel runs from `/opt/marzban/docker-compose.yml`, which the
+> installer wrote and which `marzban update` does not overwrite. Copy the `db`
+> service into that file, or manage the database as a standalone container:
+>
+> ```bash
+> docker run -d --name marzban-db --restart always \
+>   -p 127.0.0.1:5432:5432 \
+>   -e POSTGRES_USER=marzban \
+>   -e POSTGRES_PASSWORD=secret \
+>   -e POSTGRES_DB=marzban \
+>   -v /var/lib/marzban-db:/var/lib/postgresql/data \
+>   timescale/timescaledb:latest-pg16
+> ```
 
 The extensions have to exist in the database that will be used. The panel
 creates `citext` on its first connection when it has the rights to; if the user
@@ -185,6 +209,9 @@ superuser. Run the `CREATE EXTENSION` statements manually as `postgres`.
 image is plain PostgreSQL. Switch to a `timescale/timescaledb` image; the data
 directory is compatible for the same major version, but read the TimescaleDB
 notes before swapping images in place.
+
+**The `db` service does not start** — the profile is not active. Check that
+`COMPOSE_PROFILES=postgres` is in `.env`, or pass `--profile postgres`.
 
 **Verification mismatch after `migrate`** — do not switch the panel over. The
 source is intact; drop the target database, check that the panel was really

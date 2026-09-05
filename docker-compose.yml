@@ -6,3 +6,42 @@ services:
     network_mode: host
     volumes:
       - /var/lib/marzban:/var/lib/marzban
+
+  # PostgreSQL with TimescaleDB for the panel. Does not start by default: it
+  # belongs to the "postgres" profile, so plain SQLite installs are unaffected.
+  #
+  # Enable it either per command:
+  #   docker compose --profile postgres up -d
+  # or permanently, by putting COMPOSE_PROFILES=postgres in .env.
+  #
+  # Published on the loopback interface only. The panel runs in the host
+  # network, so it reaches the database at 127.0.0.1:5432. Point
+  # SQLALCHEMY_DATABASE_URL at the same credentials as POSTGRES_* below.
+  #
+  # There is deliberately no depends_on: the panel would then require this
+  # profile to be active. Instead the panel retries, which pool_pre_ping and
+  # restart: always already handle.
+  #
+  # See docs/postgresql.md for the migration procedure.
+  db:
+    profiles:
+      - postgres
+    image: timescale/timescaledb:latest-pg16
+    restart: always
+    ports:
+      - "127.0.0.1:5432:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-marzban}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-}
+      POSTGRES_DB: ${POSTGRES_DB:-marzban}
+    volumes:
+      - /var/lib/marzban-db:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-marzban} -d ${POSTGRES_DB:-marzban}",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
