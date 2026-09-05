@@ -13,12 +13,15 @@ from config import (
 logger = logging.getLogger(__name__)
 
 
-def _normalize_url(raw: str):
-    """Parse the configured URL and pick a sane default driver.
+def normalize_url(raw: str):
+    """Parse a database URL and pick a sane default driver.
 
     A bare ``postgresql://`` URL makes SQLAlchemy reach for psycopg2, while the
     dependency we ship is psycopg 3, so the driver is filled in explicitly. An
     URL that already names a driver is left untouched.
+
+    Returns the parsed URL (or the raw string when it cannot be parsed) and the
+    backend name.
     """
 
     try:
@@ -33,14 +36,18 @@ def _normalize_url(raw: str):
     return url, backend
 
 
-DATABASE_URL, DATABASE_BACKEND = _normalize_url(SQLALCHEMY_DATABASE_URL)
+def render_url(url, hide_password: bool = True) -> str:
+    """Turn a URL object (or plain string) into a printable string."""
+
+    if isinstance(url, str):
+        return url
+    return url.render_as_string(hide_password=hide_password)
+
+
+DATABASE_URL, DATABASE_BACKEND = normalize_url(SQLALCHEMY_DATABASE_URL)
 
 # Full URL as a string, credentials included. Alembic needs it in this form.
-DATABASE_URI = (
-    DATABASE_URL
-    if isinstance(DATABASE_URL, str)
-    else DATABASE_URL.render_as_string(hide_password=False)
-)
+DATABASE_URI = render_url(DATABASE_URL, hide_password=False)
 
 IS_SQLITE = DATABASE_BACKEND == "sqlite"
 IS_MYSQL = DATABASE_BACKEND == "mysql"
