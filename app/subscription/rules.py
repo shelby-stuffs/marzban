@@ -31,6 +31,8 @@ CONFIG_FORMATS: Tuple[str, ...] = (
     "clash-meta",
     "sing-box",
     "outline",
+    "hysteria2",
+    "happ",
 )
 
 MEDIA_TYPES: Dict[str, str] = {
@@ -40,6 +42,8 @@ MEDIA_TYPES: Dict[str, str] = {
     "clash-meta": "text/yaml",
     "sing-box": "application/json",
     "outline": "application/json",
+    "hysteria2": "text/plain",
+    "happ": "application/json",
 }
 
 #: Mutable so tests and runtime reloads can flip the custom-JSON switches
@@ -181,6 +185,14 @@ DEFAULT_RULES: Tuple[ClientRule, ...] = (
         pattern=r"^([Cc]lash|[Ss]tash)",
         config_format="clash",
         priority=20,
+    ),
+    # Native Hysteria clients only understand hysteria2:// links, so they get a
+    # filtered link list instead of the mixed one.
+    ClientRule(
+        name="hysteria",
+        pattern=r"^[Hh]ysteria",
+        config_format="hysteria2",
+        priority=25,
     ),
     ClientRule(
         name="sing-box",
