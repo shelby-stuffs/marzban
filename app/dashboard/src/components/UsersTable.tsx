@@ -80,6 +80,22 @@ const SortIcon = chakra(ChevronDownIcon, {
     height: "15px",
   },
 });
+
+// Row actions must stay legible on the dark canvas, so they are always ghost
+// buttons with an explicit foreground instead of inheriting the solid variant.
+const actionButtonStyle = {
+  variant: "ghost",
+  color: "gray.400",
+  _hover: {
+    bg: "terminal.overlay",
+    color: "primary.300",
+  },
+  _active: {
+    bg: "terminal.overlay",
+    color: "primary.400",
+  },
+} as const;
+
 type UsageSliderProps = {
   used: number;
   total: number | null;
@@ -97,17 +113,14 @@ const getResetStrategy = (strategy: string): string => {
   return "No";
 };
 const UsageSliderCompact: FC<UsageSliderProps> = (props) => {
-  const { used, total, dataLimitResetStrategy, totalUsedTraffic } = props;
+  const { used, total } = props;
   const isUnlimited = total === 0 || total === null;
   return (
     <HStack
       justifyContent="space-between"
       fontSize="xs"
-      fontWeight="medium"
-      color="gray.600"
-      _dark={{
-        color: "gray.400",
-      }}
+      fontFamily="mono"
+      color="gray.400"
     >
       <Text>
         {formatBytes(used)} /{" "}
@@ -140,18 +153,15 @@ const UsageSlider: FC<UsageSliderProps> = (props) => {
         colorScheme={isReached ? "red" : "primary"}
         {...restOfProps}
       >
-        <SliderTrack h="6px" borderRadius="full">
-          <SliderFilledTrack borderRadius="full" />
+        <SliderTrack h="4px" borderRadius="2px" bg="terminal.overlay">
+          <SliderFilledTrack borderRadius="2px" />
         </SliderTrack>
       </Slider>
       <HStack
         justifyContent="space-between"
         fontSize="xs"
-        fontWeight="medium"
-        color="gray.600"
-        _dark={{
-          color: "gray.400",
-        }}
+        fontFamily="mono"
+        color="gray.400"
       >
         <Text>
           {formatBytes(used)} /{" "}
@@ -309,12 +319,7 @@ export const UsersTable: FC<UsersTableProps> = (props) => {
                 <HStack spacing={0} position="relative">
                   <Text
                     position="absolute"
-                    _dark={{
-                      bg: "gray.750",
-                    }}
-                    _light={{
-                      bg: "#F9FAFB",
-                    }}
+                    bg="gray.750"
                     userSelect="none"
                     pointerEvents="none"
                     zIndex={1}
@@ -413,10 +418,7 @@ export const UsersTable: FC<UsersTableProps> = (props) => {
                       </Td>
                       <Td p={0} borderBottom={0} w="32px" minW="32px">
                         <AccordionArrowIcon
-                          color="gray.600"
-                          _dark={{
-                            color: "gray.400",
-                          }}
+                          color="gray.400"
                           transition="transform .2s ease-out"
                           transform={
                             selectedRow === i ? "rotate(180deg)" : "0deg"
@@ -444,13 +446,11 @@ export const UsersTable: FC<UsersTableProps> = (props) => {
                                 spacing={-1}
                               >
                                 <Text
-                                  textTransform="capitalize"
+                                  textTransform="uppercase"
                                   fontSize="xs"
-                                  fontWeight="bold"
-                                  color="gray.600"
-                                  _dark={{
-                                    color: "gray.400",
-                                  }}
+                                  fontFamily="mono"
+                                  letterSpacing="0.08em"
+                                  color="gray.500"
                                 >
                                   {t("usersTable.dataUsage")}
                                 </Text>
@@ -483,11 +483,11 @@ export const UsersTable: FC<UsersTableProps> = (props) => {
                                       ]
                                     ).map(({ key, speed, label }) => (
                                       <VStack key={key} align="start" spacing={0} flex={1}>
-                                        <Text fontSize="xs" fontWeight="bold" color="gray.600" _dark={{ color: "gray.400" }}>
+                                        <Text fontSize="xs" fontFamily="mono" textTransform="uppercase" letterSpacing="0.08em" color="gray.500">
                                           {label}
                                         </Text>
-                                        <Text fontSize="sm">{formatBytes(stat[key])}</Text>
-                                        <Text fontSize="xs" color="gray.500" _dark={{ color: "gray.400" }}>
+                                        <Text fontSize="sm" fontFamily="mono">{formatBytes(stat[key])}</Text>
+                                        <Text fontSize="xs" color="gray.500">
                                           {t("usersTable.avgSpeedPrefix")} {formatSpeed(stat[speed])}
                                         </Text>
                                       </VStack>
@@ -513,16 +513,11 @@ export const UsersTable: FC<UsersTableProps> = (props) => {
                                     <IconButton
                                       p="0 !important"
                                       aria-label="Edit user"
-                                      bg="transparent"
-                                      _dark={{
-                                        _hover: {
-                                          bg: "gray.700",
-                                        },
-                                      }}
                                       size={{
                                         base: "sm",
                                         md: "md",
                                       }}
+                                      {...actionButtonStyle}
                                       onClick={(e) => {
                                         e.stopPropagation();
                                         onEditingUser(user);
@@ -572,12 +567,7 @@ export const UsersTable: FC<UsersTableProps> = (props) => {
             >
               <HStack position="relative" gap={"5px"}>
                 <Text
-                  _dark={{
-                    bg: "gray.750",
-                  }}
-                  _light={{
-                    bg: "#F9FAFB",
-                  }}
+                  bg="gray.750"
                   userSelect="none"
                   pointerEvents="none"
                   zIndex={1}
@@ -716,13 +706,13 @@ export const UsersTable: FC<UsersTableProps> = (props) => {
                       <Td key={key} minW="110px">
                         {stat ? (
                           <VStack spacing={0} align="start">
-                            <Text fontSize="sm">{formatBytes(bytes!)}</Text>
-                            <Text fontSize="xs" color="gray.500" _dark={{ color: "gray.400" }}>
+                            <Text fontSize="sm" fontFamily="mono">{formatBytes(bytes!)}</Text>
+                            <Text fontSize="xs" color="gray.500">
                               {t("usersTable.avgSpeedPrefix")} {formatSpeed(speed!)}
                             </Text>
                           </VStack>
                         ) : (
-                          <Text color="gray.400">—</Text>
+                          <Text color="gray.600">—</Text>
                         )}
                       </Td>
                     );
@@ -794,16 +784,11 @@ const ActionButtons: FC<ActionButtonsProps> = ({ user }) => {
             <IconButton
               p="0 !important"
               aria-label="copy subscription link"
-              bg="transparent"
-              _dark={{
-                _hover: {
-                  bg: "gray.700",
-                },
-              }}
               size={{
                 base: "sm",
                 md: "md",
               }}
+              {...actionButtonStyle}
             >
               {copied[0] == 0 && copied[1] ? (
                 <CopiedIcon />
@@ -832,16 +817,11 @@ const ActionButtons: FC<ActionButtonsProps> = ({ user }) => {
             <IconButton
               p="0 !important"
               aria-label="copy configs"
-              bg="transparent"
-              _dark={{
-                _hover: {
-                  bg: "gray.700",
-                },
-              }}
               size={{
                 base: "sm",
                 md: "md",
               }}
+              {...actionButtonStyle}
             >
               {copied[0] == 1 && copied[1] ? <CopiedIcon /> : <CopyIcon />}
             </IconButton>
@@ -852,16 +832,11 @@ const ActionButtons: FC<ActionButtonsProps> = ({ user }) => {
         <IconButton
           p="0 !important"
           aria-label="qr code"
-          bg="transparent"
-          _dark={{
-            _hover: {
-              bg: "gray.700",
-            },
-          }}
           size={{
             base: "sm",
             md: "md",
           }}
+          {...actionButtonStyle}
           onClick={() => {
             setQRCode(user.links);
             setSubLink(user.subscription_url);
@@ -893,27 +868,19 @@ const EmptySection: FC<EmptySectionProps> = ({ isFiltered }) => {
       <EmptySectionIcon
         maxHeight="200px"
         maxWidth="200px"
-        _dark={{
+        sx={{
           'path[fill="#fff"]': {
-            fill: "gray.800",
+            fill: "terminal.overlay",
           },
           'path[fill="#f2f2f2"], path[fill="#e6e6e6"], path[fill="#ccc"]': {
-            fill: "gray.700",
+            fill: "terminal.border",
           },
           'circle[fill="#3182CE"]': {
-            fill: "primary.300",
-          },
-        }}
-        _light={{
-          'path[fill="#f2f2f2"], path[fill="#e6e6e6"], path[fill="#ccc"]': {
-            fill: "gray.300",
-          },
-          'circle[fill="#3182CE"]': {
-            fill: "primary.500",
+            fill: "primary.400",
           },
         }}
       />
-      <Text fontWeight="medium" color="gray.600" _dark={{ color: "gray.400" }}>
+      <Text fontFamily="mono" fontSize="sm" color="gray.400">
         {isFiltered ? t("usersTable.noUserMatched") : t("usersTable.noUser")}
       </Text>
       {!isFiltered && (
