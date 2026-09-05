@@ -1,4 +1,4 @@
-import { Box, BoxProps, Card, chakra, HStack, Text } from "@chakra-ui/react";
+import { Box, BoxProps, chakra, Flex, HStack, Text } from "@chakra-ui/react";
 import {
   ArrowDownIcon,
   ArrowUpIcon,
@@ -14,24 +14,13 @@ import { useQuery } from "react-query";
 import { fetch } from "service/http";
 import { formatBytes, numberWithCommas } from "utils/formatByte";
 
-const TotalUsersIcon = chakra(UsersIcon, {
-  baseStyle: { w: 5, h: 5, position: "relative", zIndex: "2" },
-});
-const NetworkIcon = chakra(ChartBarIcon, {
-  baseStyle: { w: 5, h: 5, position: "relative", zIndex: "2" },
-});
-const MemoryIcon = chakra(ChartPieIcon, {
-  baseStyle: { w: 5, h: 5, position: "relative", zIndex: "2" },
-});
-const CpuIcon = chakra(CpuChipIcon, {
-  baseStyle: { w: 5, h: 5, position: "relative", zIndex: "2" },
-});
-const DownloadIcon = chakra(ArrowDownIcon, {
-  baseStyle: { w: 5, h: 5, position: "relative", zIndex: "2" },
-});
-const UploadIcon = chakra(ArrowUpIcon, {
-  baseStyle: { w: 5, h: 5, position: "relative", zIndex: "2" },
-});
+const iconStyle = { baseStyle: { w: 4, h: 4 } };
+const TotalUsersIcon = chakra(UsersIcon, iconStyle);
+const NetworkIcon = chakra(ChartBarIcon, iconStyle);
+const MemoryIcon = chakra(ChartPieIcon, iconStyle);
+const CpuIcon = chakra(CpuChipIcon, iconStyle);
+const DownloadIcon = chakra(ArrowDownIcon, iconStyle);
+const UploadIcon = chakra(ArrowUpIcon, iconStyle);
 
 type StatisticCardProps = {
   title: string;
@@ -45,70 +34,67 @@ const StatisticCard: FC<PropsWithChildren<StatisticCardProps>> = ({
   icon,
 }) => {
   return (
-    <Card
-      p={6}
+    <Box
+      position="relative"
+      px="4"
+      py="3.5"
       borderWidth="1px"
-      borderColor="light-border"
-      bg="#F9FAFB"
-      _dark={{ borderColor: "gray.600", bg: "gray.750" }}
-      borderStyle="solid"
-      boxShadow="none"
-      borderRadius="12px"
-      width="full"
-      display="flex"
-      justifyContent="space-between"
-      flexDirection="row"
+      borderColor="terminal.border"
+      bg="terminal.surface"
+      borderRadius="6px"
+      boxShadow="panel"
+      overflow="hidden"
+      transition="border-color .12s ease-out"
+      _hover={{ borderColor: "primary.700" }}
     >
-      <HStack alignItems="center" columnGap="4">
-        <Box
-          p="2"
-          position="relative"
-          color="white"
-          _before={{
-            content: `""`,
-            position: "absolute",
-            top: 0,
-            left: 0,
-            bg: "primary.400",
-            display: "block",
-            w: "full",
-            h: "full",
-            borderRadius: "5px",
-            opacity: ".5",
-            z: "1",
-          }}
-          _after={{
-            content: `""`,
-            position: "absolute",
-            top: "-5px",
-            left: "-5px",
-            bg: "primary.400",
-            display: "block",
-            w: "calc(100% + 10px)",
-            h: "calc(100% + 10px)",
-            borderRadius: "8px",
-            opacity: ".4",
-            z: "1",
-          }}
-        >
-          {icon}
-        </Box>
+      <Box
+        position="absolute"
+        left="0"
+        top="0"
+        bottom="0"
+        w="2px"
+        bg="primary.500"
+        opacity="0.6"
+      />
+      <HStack align="center" spacing="2" color="gray.400" mb="2">
+        <Flex color="primary.400">{icon}</Flex>
         <Text
-          color="gray.600"
-          _dark={{ color: "gray.300" }}
-          fontWeight="medium"
-          textTransform="capitalize"
-          fontSize="sm"
+          fontFamily="mono"
+          fontSize="10px"
+          fontWeight="500"
+          textTransform="uppercase"
+          letterSpacing="0.14em"
+          noOfLines={1}
         >
           {title}
         </Text>
       </HStack>
-      <Box fontSize="3xl" fontWeight="semibold" mt="2">
+      <Box
+        fontFamily="mono"
+        fontSize="2xl"
+        fontWeight="600"
+        letterSpacing="-0.01em"
+        color="terminal.text"
+      >
         {content}
       </Box>
-    </Card>
+    </Box>
   );
 };
+
+const Unit: FC<PropsWithChildren> = ({ children }) => (
+  <Text
+    as="span"
+    fontFamily="mono"
+    fontWeight="400"
+    fontSize="sm"
+    color="gray.500"
+    display="inline-block"
+    pb="3px"
+  >
+    {children}
+  </Text>
+);
 
 export const StatisticsQueryKey = "statistics-query-key";
 export const Statistics: FC<BoxProps> = (props) => {
@@ -127,18 +113,16 @@ export const Statistics: FC<BoxProps> = (props) => {
     <Box
       display="grid"
       gridTemplateColumns={{ base: "1fr", md: "repeat(3, 1fr)" }}
-      gap={4}
+      gap={3}
       {...props}
     >
       <StatisticCard
         title={t("activeUsers")}
         content={
           systemData && (
-            <HStack alignItems="flex-end">
+            <HStack alignItems="flex-end" spacing="1.5">
               <Text>{numberWithCommas(systemData.users_active)}</Text>
-              <Text fontWeight="normal" fontSize="lg" as="span" display="inline-block" pb="5px">
-                / {numberWithCommas(systemData.total_user)}
-              </Text>
+              <Unit>/ {numberWithCommas(systemData.total_user)}</Unit>
             </HStack>
           )
         }
@@ -148,7 +132,9 @@ export const Statistics: FC<BoxProps> = (props) => {
         title={t("dataUsage")}
         content={
           systemData &&
-          formatBytes(systemData.incoming_bandwidth + systemData.outgoing_bandwidth)
+          formatBytes(
+            systemData.incoming_bandwidth + systemData.outgoing_bandwidth
+          )
         }
         icon={<NetworkIcon />}
       />
@@ -156,12 +142,12 @@ export const Statistics: FC<BoxProps> = (props) => {
         title={t("memoryUsage")}
         content={
           systemData && (
-            <HStack alignItems="flex-end">
+            <HStack alignItems="flex-end" spacing="1.5">
               <Text>{formatBytes(systemData.mem_used, 1, true)[0]}</Text>
-              <Text fontWeight="normal" fontSize="lg" as="span" display="inline-block" pb="5px">
+              <Unit>
                 {formatBytes(systemData.mem_used, 1, true)[1]} /{" "}
                 {formatBytes(systemData.mem_total, 1)}
-              </Text>
+              </Unit>
             </HStack>
           )
         }
@@ -171,11 +157,9 @@ export const Statistics: FC<BoxProps> = (props) => {
         title={t("cpuUsage")}
         content={
           systemData && (
-            <HStack alignItems="flex-end">
+            <HStack alignItems="flex-end" spacing="1.5">
               <Text>{systemData.cpu_usage.toFixed(1)}%</Text>
-              <Text fontWeight="normal" fontSize="lg" as="span" display="inline-block" pb="5px">
-                {systemData.cpu_cores} cores
-              </Text>
+              <Unit>{systemData.cpu_cores} cores</Unit>
             </HStack>
           )
         }
@@ -185,11 +169,14 @@ export const Statistics: FC<BoxProps> = (props) => {
         title={t("downloadSpeed")}
         content={
           systemData && (
-            <HStack alignItems="flex-end">
-              <Text>{(systemData.incoming_bandwidth_speed * 8 / 1_000_000).toFixed(1)}</Text>
-              <Text fontWeight="normal" fontSize="lg" as="span" display="inline-block" pb="5px">
-                Mbit/s
+            <HStack alignItems="flex-end" spacing="1.5">
+              <Text>
+                {(
+                  (systemData.incoming_bandwidth_speed * 8) /
+                  1_000_000
+                ).toFixed(1)}
               </Text>
+              <Unit>Mbit/s</Unit>
             </HStack>
           )
         }
@@ -199,11 +186,14 @@ export const Statistics: FC<BoxProps> = (props) => {
         title={t("uploadSpeed")}
         content={
           systemData && (
-            <HStack alignItems="flex-end">
-              <Text>{(systemData.outgoing_bandwidth_speed * 8 / 1_000_000).toFixed(1)}</Text>
-              <Text fontWeight="normal" fontSize="lg" as="span" display="inline-block" pb="5px">
-                Mbit/s
+            <HStack alignItems="flex-end" spacing="1.5">
+              <Text>
+                {(
+                  (systemData.outgoing_bandwidth_speed * 8) /
+                  1_000_000
+                ).toFixed(1)}
               </Text>
+              <Unit>Mbit/s</Unit>
             </HStack>
           )
         }

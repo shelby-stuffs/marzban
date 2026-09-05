@@ -2,14 +2,23 @@
 
 // ---------------------------------------------------------------------------
 // Terminal design tokens mirrored from chakra.config.ts
+// The dashboard is dark-only, so there are no light-mode overrides here.
 // ---------------------------------------------------------------------------
 :root {
+  color-scheme: dark;
   --term-bg: #06080b;
   --term-surface: #0b0f15;
   --term-overlay: #101620;
   --term-border: #1c2634;
   --term-accent: #00e08c;
+  --term-text: #c8d6e2;
   --term-dim: #5b6b7d;
+}
+
+html,
+body {
+  background-color: var(--term-bg);
+  color: var(--term-text);
 }
 
 .bg-blue-animate {
@@ -89,7 +98,7 @@ table thead {
 }
 
 // ---------------------------------------------------------------------------
-// Date picker
+// Date picker (dark only)
 // ---------------------------------------------------------------------------
 .react-datepicker__navigation.react-datepicker__navigation--previous,
 .react-datepicker__navigation.react-datepicker__navigation--next {
@@ -98,44 +107,25 @@ table thead {
 
 .react-datepicker {
   font-family: "JetBrains Mono", monospace !important;
-  background-color: var(--chakra-colors-white) !important;
-  border: 1px solid var(--chakra-colors-gray-200);
-  border-radius: 4px !important;
-  position: relative;
-}
-
-.chakra-ui-dark .react-datepicker {
   background-color: var(--term-overlay) !important;
   border: 1px solid var(--term-border);
+  border-radius: 4px !important;
+  position: relative;
 }
 
 .react-datepicker__header {
   text-align: center;
   background-color: unset;
   position: relative;
-  border-bottom: 1px solid var(--chakra-colors-gray-200);
-}
-
-.chakra-ui-dark .react-datepicker__header {
   border-bottom: 1px solid var(--term-border);
 }
 
 .react-datepicker-popper[data-placement^="bottom"] .react-datepicker__triangle::after {
   border-top: none;
-  border-bottom-color: var(--chakra-colors-white);
-}
-
-.react-datepicker-popper[data-placement^="bottom"] .react-datepicker__triangle::before {
-  top: -1px;
-  border-bottom-color: var(--chakra-colors-gray-200);
-}
-
-.chakra-ui-dark .react-datepicker-popper[data-placement^="bottom"] .react-datepicker__triangle::after {
-  border-top: none;
   border-bottom-color: var(--term-overlay);
 }
 
-.chakra-ui-dark .react-datepicker-popper[data-placement^="bottom"] .react-datepicker__triangle::before {
+.react-datepicker-popper[data-placement^="bottom"] .react-datepicker__triangle::before {
   top: -1px;
   border-bottom-color: var(--term-border);
 }
@@ -143,41 +133,24 @@ table thead {
 .react-datepicker__current-month,
 .react-datepicker__day-name,
 .react-datepicker__day {
-  color: var(--chakra-colors-chakra-body-text) !important;
+  color: var(--term-text) !important;
 }
 
-.chakra-ui-dark .react-datepicker__current-month,
-.chakra-ui-dark .react-datepicker__day-name,
-.chakra-ui-dark .react-datepicker__day {
-  color: var(--chakra-colors-gray-300) !important;
+.react-datepicker__day-name {
+  color: var(--term-dim) !important;
+  text-transform: uppercase;
+  font-size: 10px;
+  letter-spacing: 0.08em;
 }
 
 .react-datepicker__day:hover {
   border-radius: 2px;
-  background-color: var(--chakra-colors-primary-300) !important;
-  color: #04150d !important;
-}
-
-.chakra-ui-dark .react-datepicker__day:hover {
-  border-radius: 2px;
-  background-color: var(--term-overlay) !important;
+  background-color: var(--term-border) !important;
   color: var(--term-accent) !important;
 }
 
-.react-datepicker__day--disabled {
-  color: var(--chakra-colors-gray-400) !important;
-}
-
+.react-datepicker__day--disabled,
 .react-datepicker__day--disabled:hover {
-  background-color: transparent !important;
-  color: var(--chakra-colors-gray-400) !important;
-}
-
-.chakra-ui-dark .react-datepicker__day--disabled {
-  color: var(--term-dim) !important;
-}
-
-.chakra-ui-dark .react-datepicker__day--disabled:hover {
   background-color: transparent !important;
   color: var(--term-dim) !important;
 }
@@ -186,15 +159,6 @@ table thead {
 .react-datepicker__day--selected,
 .react-datepicker__day--in-selecting-range,
 .react-datepicker__day--in-range {
-  border-radius: 2px;
-  background-color: var(--term-accent) !important;
-  color: #04150d !important;
-}
-
-.chakra-ui-dark .react-datepicker__day--keyboard-selected,
-.chakra-ui-dark .react-datepicker__day--selected,
-.chakra-ui-dark .react-datepicker__day--in-selecting-range,
-.chakra-ui-dark .react-datepicker__day--in-range {
   border-radius: 2px;
   background-color: var(--term-accent) !important;
   color: #04150d !important;

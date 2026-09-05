@@ -1,4 +1,4 @@
-import { Box, useColorMode } from "@chakra-ui/react";
+import { Box } from "@chakra-ui/react";
 import Editor, { OnMount } from "@monaco-editor/react";
 import { forwardRef, useEffect, useRef } from "react";
 
@@ -11,7 +11,6 @@ const stringify = (value: any) => JSON.stringify(value ?? {}, null, 2);
 
 export const JsonEditor = forwardRef<HTMLDivElement, JSONEditorProps>(
   ({ json, onChange }, ref) => {
-    const { colorMode } = useColorMode();
     const editorRef = useRef<Parameters<OnMount>[0] | null>(null);
 
     const handleMount: OnMount = (editor) => {
@@ -30,9 +29,8 @@ export const JsonEditor = forwardRef<HTMLDivElement, JSONEditorProps>(
       <Box
         ref={ref}
         border="1px solid"
-        borderColor="gray.300"
-        _dark={{ borderColor: "gray.500" }}
-        borderRadius={5}
+        borderColor="terminal.border"
+        borderRadius="4px"
         h="full"
         overflow="hidden"
       >
@@ -40,12 +38,13 @@ export const JsonEditor = forwardRef<HTMLDivElement, JSONEditorProps>(
           height="500px"
           defaultLanguage="json"
           defaultValue={stringify(json)}
-          theme={colorMode === "dark" ? "vs-dark" : "vs"}
+          theme="vs-dark"
           onMount={handleMount}
           onChange={(value) => onChange(value ?? "")}
           options={{
             minimap: { enabled: false },
             fontSize: 12,
+            fontFamily: "JetBrains Mono, monospace",
             tabSize: 2,
             scrollBeyondLastLine: false,
             automaticLayout: true,

@@ -5,8 +5,8 @@ import {
   Box,
   Button,
   chakra,
+  Flex,
   FormControl,
-  FormLabel,
   HStack,
   Text,
   VStack,
@@ -33,15 +33,15 @@ const schema = z.object({
 export const LogoIcon = chakra(Logo, {
   baseStyle: {
     strokeWidth: "10px",
-    w: 12,
-    h: 12,
+    w: 10,
+    h: 10,
   },
 });
 
 const LoginIcon = chakra(ArrowRightOnRectangleIcon, {
   baseStyle: {
-    w: 5,
-    h: 5,
+    w: 4,
+    h: 4,
     strokeWidth: "2px",
   },
 });
@@ -88,57 +88,95 @@ export const Login: FC = () => {
         <HStack justifyContent="end" w="full">
           <Language />
         </HStack>
-        <HStack w="full" justifyContent="center" alignItems="center">
-          <Box w="full" maxW="340px" mt="6">
-            <VStack alignItems="center" w="full">
-              <LogoIcon />
-              <Text fontSize="2xl" fontWeight="semibold">
-                {t("login.loginYourAccount")}
+        <Flex w="full" justifyContent="center" mt={{ base: "8", md: "16" }}>
+          <Box
+            w="full"
+            maxW="360px"
+            borderWidth="1px"
+            borderColor="terminal.border"
+            bg="terminal.surface"
+            borderRadius="6px"
+            boxShadow="panel"
+            overflow="hidden"
+          >
+            <HStack
+              px="4"
+              py="2.5"
+              spacing="2"
+              borderBottom="1px solid"
+              borderColor="terminal.border"
+              bg="terminal.overlay"
+            >
+              <Box
+                boxSize="2"
+                borderRadius="1px"
+                bg="primary.500"
+                boxShadow="glow"
+              />
+              <Text
+                fontFamily="mono"
+                fontSize="10px"
+                textTransform="uppercase"
+                letterSpacing="0.14em"
+                color="gray.400"
+              >
+                marzban / auth
               </Text>
-              <Text color="gray.600" _dark={{ color: "gray.400" }}>
-                {t("login.welcomeBack")}
-              </Text>
-            </VStack>
-            <Box w="full" maxW="300px" m="auto" pt="4">
-              <form onSubmit={handleSubmit(login)}>
-                <VStack mt={4} rowGap={2}>
-                  <FormControl>
-                    <Input
+            </HStack>
+
+            <Box p="6">
+              <VStack alignItems="center" w="full" spacing="1">
+                <Box color="primary.400" mb="1">
+                  <LogoIcon />
+                </Box>
+                <Text fontFamily="mono" fontSize="lg" fontWeight="600">
+                  {t("login.loginYourAccount")}
+                </Text>
+                <Text fontSize="sm" color="gray.500">
+                  {t("login.welcomeBack")}
+                </Text>
+              </VStack>
+              <Box w="full" pt="5">
+                <form onSubmit={handleSubmit(login)}>
+                  <VStack rowGap={3}>
+                    <FormControl>
+                      <Input
+                        w="full"
+                        placeholder={t("username")}
+                        {...register("username")}
+                        error={t(errors?.username?.message as string)}
+                      />
+                    </FormControl>
+                    <FormControl>
+                      <Input
+                        w="full"
+                        type="password"
+                        placeholder={t("password")}
+                        {...register("password")}
+                        error={t(errors?.password?.message as string)}
+                      />
+                    </FormControl>
+                    {error && (
+                      <Alert status="error" rounded="md">
+                        <AlertIcon />
+                        <AlertDescription>{error}</AlertDescription>
+                      </Alert>
+                    )}
+                    <Button
+                      isLoading={loading}
+                      type="submit"
                       w="full"
-                      placeholder={t("username")}
-                      {...register("username")}
-                      error={t(errors?.username?.message as string)}
-                    />
-                  </FormControl>
-                  <FormControl>
-                    <Input
-                      w="full"
-                      type="password"
-                      placeholder={t("password")}
-                      {...register("password")}
-                      error={t(errors?.password?.message as string)}
-                    />
-                  </FormControl>
-                  {error && (
-                    <Alert status="error" rounded="md">
-                      <AlertIcon />
-                      <AlertDescription>{error}</AlertDescription>
-                    </Alert>
-                  )}
-                  <Button
-                    isLoading={loading}
-                    type="submit"
-                    w="full"
-                    colorScheme="primary"
-                  >
-                    {<LoginIcon marginRight={1} />}
-                    {t("login")}
-                  </Button>
-                </VStack>
-              </form>
+                      colorScheme="primary"
+                    >
+                      {<LoginIcon marginRight={2} />}
+                      {t("login")}
+                    </Button>
+                  </VStack>
+                </form>
+              </Box>
             </Box>
           </Box>
-        </HStack>
+        </Flex>
       </Box>
       <Footer />
     </VStack>

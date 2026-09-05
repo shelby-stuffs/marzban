@@ -1,29 +1,22 @@
-import { Box, VStack } from "@chakra-ui/react";
+import { VStack } from "@chakra-ui/react";
 import { CoreSettingsPanel } from "components/CoreSettingsModal";
 import { Header } from "components/Header";
 import { HostsDialog } from "components/HostsDialog";
 import { NodesDialog } from "components/NodesModal";
 import { NodesUsage } from "components/NodesUsage";
+import { Panel } from "components/Panel";
 import { Statistics } from "components/Statistics";
 import { FC } from "react";
 import { useTranslation } from "react-i18next";
-
-const darkBorder = { borderColor: "gray.600" };
 
 export const HostsRoute: FC = () => {
   const { t } = useTranslation();
   return (
     <VStack align="stretch" spacing="4" w="full">
       <Header title={t("header.hostSettings", "Hosts")} />
-      <Box
-        borderWidth="1px"
-        borderColor="light-border"
-        _dark={darkBorder}
-        borderRadius="10px"
-        p="4"
-      >
+      <Panel label="proxy hosts">
         <HostsDialog />
-      </Box>
+      </Panel>
     </VStack>
   );
 };
@@ -33,24 +26,12 @@ export const NodesRoute: FC = () => {
   return (
     <VStack align="stretch" spacing="4" w="full">
       <Header title={t("header.nodeSettings", "Nodes")} />
-      <Box
-        borderWidth="1px"
-        borderColor="light-border"
-        _dark={darkBorder}
-        borderRadius="10px"
-        p="4"
-      >
+      <Panel label="nodes">
         <NodesDialog />
-      </Box>
-      <Box
-        borderWidth="1px"
-        borderColor="light-border"
-        _dark={darkBorder}
-        borderRadius="10px"
-        p="4"
-      >
+      </Panel>
+      <Panel label="traffic per node">
         <NodesUsage />
-      </Box>
+      </Panel>
     </VStack>
   );
 };
@@ -61,15 +42,9 @@ export const CoreRoute: FC = () => {
     <VStack align="stretch" spacing="4" w="full">
       <Header title={t("core.title", "Core")} />
       <Statistics />
-      <Box
-        borderWidth="1px"
-        borderColor="light-border"
-        _dark={darkBorder}
-        borderRadius="10px"
-        p="4"
-      >
+      <Panel label="xray core">
         <CoreSettingsPanel />
-      </Box>
+      </Panel>
     </VStack>
   );
 };

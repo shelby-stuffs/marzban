@@ -72,28 +72,34 @@ export const Filters: FC<FilterProps> = ({ ...props }) => {
       top={0}
       mx="-6"
       px="6"
-      rowGap={4}
+      rowGap={3}
       gap={{
-        lg: 4,
+        lg: 3,
         base: 0,
       }}
-      bg="var(--chakra-colors-chakra-body-bg)"
-      py={4}
+      bg="terminal.bg"
+      borderBottom="1px solid"
+      borderColor="terminal.border"
+      py={3}
       zIndex="docked"
       {...props}
     >
       <GridItem colSpan={{ base: 1, md: 2, lg: 1 }} order={{ base: 2, md: 1 }}>
-        <InputGroup>
-          <InputLeftElement pointerEvents="none" children={<SearchIcon />} />
+        <InputGroup size="sm">
+          <InputLeftElement
+            pointerEvents="none"
+            color="gray.500"
+            children={<SearchIcon />}
+          />
           <Input
             placeholder={t("search")}
             value={search}
-            borderColor="light-border"
+            fontFamily="mono"
             onChange={onChange}
           />
 
           <InputRightElement>
-            {loading && <Spinner size="xs" />}
+            {loading && <Spinner size="xs" color="primary.400" />}
             {filters.search && filters.search.length > 0 && (
               <IconButton
                 onClick={clear}
@@ -108,7 +114,7 @@ export const Filters: FC<FilterProps> = ({ ...props }) => {
         </InputGroup>
       </GridItem>
       <GridItem colSpan={2} order={{ base: 1, md: 2 }}>
-        <HStack justifyContent="flex-end" alignItems="center" h="full">
+        <HStack justifyContent="flex-end" alignItems="center" h="full" gap="2">
           <IconButton
             aria-label="refresh users"
             disabled={loading}
@@ -126,7 +132,7 @@ export const Filters: FC<FilterProps> = ({ ...props }) => {
             colorScheme="primary"
             size="sm"
             onClick={() => onCreateUser(true)}
-            px={5}
+            px={4}
           >
             {t("createUser")}
           </Button>
