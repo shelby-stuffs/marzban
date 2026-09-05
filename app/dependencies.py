@@ -1,7 +1,9 @@
-from typing import Optional, Union
+from dataclasses import dataclass
+from typing import Any, Optional, Tuple, Union
 from app.models.admin import AdminInDB, AdminValidationResult, Admin
 from app.models.user import UserResponse, UserStatus
 from app.db import Session, crud, get_db
+from app.db import subscription as subscription_store
 from config import SUDOERS
 from fastapi import Depends, HTTPException
 from datetime import datetime, timezone, timedelta
@@ -64,22 +66,74 @@ def get_user_template(template_id: int, db: Session = Depends(get_db)):
     return dbuser_template
 
 
+@dataclass
+class SubscriptionContext:
+    """Everything the subscription endpoints need about the caller.
+
+    ``token`` is set only for tokens issued through the token manager; legacy
+    signed tokens keep working and simply leave it empty.
+    """
+
+    dbuser: Any
+    token: Optional[Any] = None
+
+
+def _not_found() -> HTTPException:
+    return HTTPException(status_code=404, detail="Not Found")
+
+
+def _resolve_managed_token(token: str, db: Session) -> Tuple[Any, Any]:
+    dbtoken = subscription_store.get_token(db, token)
+    if not dbtoken or not dbtoken.is_active:
+        raise _not_found()
+
+    dbuser = crud.get_user_by_id(db, dbtoken.user_id)
+    if not dbuser:
+        raise _not_found()
+
+    # A global revocation invalidates every token issued before it.
+    if dbuser.sub_revoked_at and dbtoken.created_at and dbuser.sub_revoked_at > dbtoken.created_at:
+        raise _not_found()
+
+    return dbuser, dbtoken
+
+
+def _resolve_legacy_token(token: str, db: Session) -> Tuple[Any, None]:
+    sub = get_subscription_payload(token)
+    if not sub:
+        raise _not_found()
+
+    dbuser = crud.get_user(db, sub['username'])
+    if not dbuser or dbuser.created_at > sub['created_at']:
+        raise _not_found()
+
+    if dbuser.sub_revoked_at and dbuser.sub_revoked_at > sub['created_at']:
+        raise _not_found()
+
+    return dbuser, None
+
+
+def resolve_subscription(token: str, db: Session) -> SubscriptionContext:
+    """Resolve any subscription token, new or legacy, to its owner."""
+    if subscription_store.is_managed_token(token):
+        dbuser, dbtoken = _resolve_managed_token(token, db)
+    else:
+        dbuser, dbtoken = _resolve_legacy_token(token, db)
+    return SubscriptionContext(dbuser=dbuser, token=dbtoken)
+
+
+def get_subscription_context(
+        token: str,
+        db: Session = Depends(get_db)
+) -> SubscriptionContext:
+    return resolve_subscription(token, db)
+
+
 def get_validated_sub(
         token: str,
         db: Session = Depends(get_db)
 ) -> UserResponse:
-    sub = get_subscription_payload(token)
-    if not sub:
-        raise HTTPException(status_code=404, detail="Not Found")
-
-    dbuser = crud.get_user(db, sub['username'])
-    if not dbuser or dbuser.created_at > sub['created_at']:
-        raise HTTPException(status_code=404, detail="Not Found")
-
-    if dbuser.sub_revoked_at and dbuser.sub_revoked_at > sub['created_at']:
-        raise HTTPException(status_code=404, detail="Not Found")
-
-    return dbuser
+    return resolve_subscription(token, db).dbuser
 
 
 def get_validated_user(
