@@ -82,10 +82,9 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
           rounded="md"
           _focusWithin={{
             outline: "2px solid",
-            outlineColor: "primary.200",
+            outlineColor: "primary.500",
           }}
-          bg={disabled ? "gray.100" : "transparent"}
-          _dark={{ bg: disabled ? "gray.600" : "transparent" }}
+          bg={disabled ? "terminal.overlay" : "transparent"}
         >
           {startAdornment && <InputLeftAddon>{startAdornment}</InputLeftAddon>}
           {/* @ts-ignore */}
@@ -109,6 +108,7 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
             }}
             _disabled={{
               cursor: "not-allowed",
+              opacity: 0.6,
             }}
             {...props}
             roundedLeft={startAdornment ? "0" : "md"}
@@ -128,6 +128,8 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
               borderLeftRadius={0}
               borderRightRadius="6px"
               bg="transparent"
+              color="gray.400"
+              _hover={{ color: "primary.300" }}
               onClick={clear}
               cursor="pointer"
             >
