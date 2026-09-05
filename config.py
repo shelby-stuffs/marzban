@@ -8,6 +8,15 @@ SQLALCHEMY_DATABASE_URL = config("SQLALCHEMY_DATABASE_URL", default="sqlite:///d
 SQLALCHEMY_POOL_SIZE = config("SQLALCHEMY_POOL_SIZE", cast=int, default=10)
 SQLIALCHEMY_MAX_OVERFLOW = config("SQLIALCHEMY_MAX_OVERFLOW", cast=int, default=30)
 
+# TimescaleDB for the usage tables. PostgreSQL only and entirely opt-in: the
+# panel works on plain PostgreSQL without any of this. Applied by
+# "marzban-cli db timescale-setup", see docs/postgresql.md.
+TIMESCALE_ENABLED = config("TIMESCALE_ENABLED", cast=bool, default=False)
+TIMESCALE_CHUNK_INTERVAL_DAYS = config("TIMESCALE_CHUNK_INTERVAL_DAYS", cast=int, default=7)
+TIMESCALE_COMPRESS_AFTER_DAYS = config("TIMESCALE_COMPRESS_AFTER_DAYS", cast=int, default=30)
+# 0 keeps every raw usage row forever. Anything else deletes history.
+TIMESCALE_RETENTION_DAYS = config("TIMESCALE_RETENTION_DAYS", cast=int, default=0)
+
 UVICORN_HOST = config("UVICORN_HOST", default="0.0.0.0")
 UVICORN_PORT = config("UVICORN_PORT", cast=int, default=8000)
 UVICORN_UDS = config("UVICORN_UDS", default=None)
