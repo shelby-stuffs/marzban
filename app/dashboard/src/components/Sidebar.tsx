@@ -3,6 +3,7 @@ import {
   CloudIcon,
   Cog6ToothIcon,
   LinkIcon,
+  QueueListIcon,
   ShieldCheckIcon,
   SquaresPlusIcon,
   UsersIcon,
@@ -19,6 +20,7 @@ const NodesNavIcon = chakra(SquaresPlusIcon, navIconStyle);
 const CoreNavIcon = chakra(Cog6ToothIcon, navIconStyle);
 const WireGuardNavIcon = chakra(ShieldCheckIcon, navIconStyle);
 const XHTTPNavIcon = chakra(CloudIcon, navIconStyle);
+const SubscriptionsNavIcon = chakra(QueueListIcon, navIconStyle);
 
 const railDisplay = { base: "none", md: "flex" };
 const hoverStyle = { bg: "terminal.overlay", color: "primary.300" };
@@ -100,6 +102,14 @@ export const SidebarContent: FC<{ onNavigate?: () => void }> = ({ onNavigate }) 
 
       {isSudo && (
         <>
+          <SectionLabel>delivery</SectionLabel>
+          <NavItem
+            to="/subscriptions"
+            icon={SubscriptionsNavIcon}
+            label={t("subscription.title", "Subscriptions")}
+            onClick={onNavigate}
+          />
+
           <SectionLabel>transport</SectionLabel>
           <NavItem to="/hosts" icon={HostsNavIcon} label={t("hosts", "Hosts")} onClick={onNavigate} />
           <NavItem to="/xhttp" icon={XHTTPNavIcon} label={t("xhttp.title", "XHTTP")} onClick={onNavigate} />
