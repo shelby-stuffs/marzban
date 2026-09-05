@@ -4,13 +4,13 @@ from datetime import datetime
 from operator import attrgetter
 from typing import Union
 
-from pymysql.err import OperationalError
-from sqlalchemy import and_, bindparam, insert, select, update
+from sqlalchemy import and_, bindparam, select, update
+from sqlalchemy.exc import DBAPIError
 from sqlalchemy.orm import Session
-from sqlalchemy.sql.dml import Insert
 
 from app import scheduler, xray
 from app.db import GetDB
+from app.db.dialect import insert_ignore, is_retryable_error
 from app.db.models import Admin, NodeUsage, NodeUserUsage, System, User
 from config import (
     DISABLE_RECORDING_NODE_USAGE,
@@ -20,29 +20,24 @@ from config import (
 from xray_api import XRay as XRayAPI
 from xray_api import exc as xray_exc
 
+# How many times a statement is retried when the backend reports a transient
+# serialization failure (MySQL deadlock, PostgreSQL 40P01/40001).
+MAX_RETRIES = 3
+
 
 def safe_execute(db: Session, stmt, params=None):
-    if db.bind.name == 'mysql':
-        if isinstance(stmt, Insert):
-            stmt = stmt.prefix_with('IGNORE')
-
-        tries = 0
-        done = False
-        while not done:
-            try:
-                db.connection().execute(stmt, params)
-                db.commit()
-                done = True
-            except OperationalError as err:
-                if err.args[0] == 1213 and tries < 3:  # Deadlock
-                    db.rollback()
-                    tries += 1
-                    continue
-                raise err
-
-    else:
-        db.connection().execute(stmt, params)
-        db.commit()
+    tries = 0
+    while True:
+        try:
+            db.connection().execute(stmt, params)
+            db.commit()
+            return
+        except DBAPIError as err:
+            db.rollback()
+            tries += 1
+            if tries <= MAX_RETRIES and is_retryable_error(err, db):
+                continue
+            raise
 
 
 def record_user_stats(params: list, node_id: Union[int, None],
@@ -66,12 +61,12 @@ def record_user_stats(params: list, node_id: Union[int, None],
             uids_to_insert.add(uid)
 
         if uids_to_insert:
-            stmt = insert(NodeUserUsage).values(
-                user_id=bindparam('uid'),
-                created_at=created_at,
-                node_id=node_id,
-                used_traffic=0
-            )
+            stmt = insert_ignore(db, NodeUserUsage, {
+                "user_id": bindparam('uid'),
+                "created_at": created_at,
+                "node_id": node_id,
+                "used_traffic": 0,
+            })
             safe_execute(db, stmt, [{'uid': uid} for uid in uids_to_insert])
 
         # record
@@ -96,7 +91,12 @@ def record_node_stats(params: dict, node_id: Union[int, None]):
             where(and_(NodeUsage.node_id == node_id, NodeUsage.created_at == created_at))
         notfound = db.execute(select_stmt).first() is None
         if notfound:
-            stmt = insert(NodeUsage).values(created_at=created_at, node_id=node_id, uplink=0, downlink=0)
+            stmt = insert_ignore(db, NodeUsage, {
+                "created_at": created_at,
+                "node_id": node_id,
+                "uplink": 0,
+                "downlink": 0,
+            })
             safe_execute(db, stmt)
 
         # record
