@@ -9,15 +9,12 @@ import {
   MenuItem,
   MenuList,
   Text,
-  useColorMode,
 } from "@chakra-ui/react";
 import {
   ArrowLeftOnRectangleIcon,
   ArrowTopRightOnSquareIcon,
   CurrencyDollarIcon,
   DocumentMinusIcon,
-  MoonIcon,
-  SunIcon,
 } from "@heroicons/react/24/outline";
 import { DONATION_URL, REPO_URL } from "constants/Project";
 import { useDashboard } from "contexts/DashboardContext";
@@ -27,7 +24,6 @@ import useGetUser from "hooks/useGetUser";
 import { FC, ReactNode, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
-import { updateThemeColor } from "utils/themeColor";
 import { Language } from "./Language";
 
 type HeaderProps = {
@@ -38,8 +34,6 @@ type HeaderProps = {
 const iconProps = {
   baseStyle: { w: 4, h: 4 },
 };
-const DarkIcon = chakra(MoonIcon, iconProps);
-const LightIcon = chakra(SunIcon, iconProps);
 const MoreIcon: FC = () => (
   <HStack spacing="0.5" h="4" align="center" justify="center">
     <Box w="3px" h="3px" bg="currentColor" />
@@ -63,7 +57,6 @@ const NotificationCircle = chakra(Box, {
 
 const titleSize = { base: "lg", md: "xl" };
 const controlsWrap = "nowrap" as const;
-const headerBorder = { borderColor: "light-border" };
 
 const NOTIFICATION_KEY = "marzban-menu-notification";
 
@@ -89,7 +82,6 @@ export const Header: FC<HeaderProps> = ({ title, actions }) => {
 
   const { onResetAllUsage } = useDashboard();
   const { t } = useTranslation();
-  const { colorMode, toggleColorMode } = useColorMode();
   const [showDonationNotif, setShowDonationNotif] = useState(
     shouldShowDonation()
   );
@@ -108,7 +100,6 @@ export const Header: FC<HeaderProps> = ({ title, actions }) => {
       pb="3"
       borderBottom="1px solid"
       borderColor="terminal.border"
-      _light={headerBorder}
       flexWrap="wrap"
       w="full"
     >
@@ -145,17 +136,6 @@ export const Header: FC<HeaderProps> = ({ title, actions }) => {
       >
         {actions}
         <Language />
-        <IconButton
-          size="sm"
-          variant="outline"
-          aria-label="switch theme"
-          onClick={() => {
-            updateThemeColor(colorMode === "dark" ? "light" : "dark");
-            toggleColorMode();
-          }}
-        >
-          {colorMode === "light" ? <DarkIcon /> : <LightIcon />}
-        </IconButton>
         <Menu placement="bottom-end">
           <MenuButton
             as={IconButton}

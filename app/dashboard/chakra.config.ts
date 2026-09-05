@@ -3,6 +3,14 @@ import { extendTheme } from "@chakra-ui/react";
 const mono = `"JetBrains Mono","SFMono-Regular",Menlo,Consolas,"Liberation Mono",monospace`;
 const sans = `Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",sans-serif`;
 
+const BG = "#06080b";
+const SURFACE = "#0b0f15";
+const OVERLAY = "#101620";
+const BORDER = "#1c2634";
+const TEXT = "#c8d6e2";
+
+// The dashboard is dark-only. There is no light color mode, so every component
+// style below targets a single dark canvas and no _light branches exist.
 export const theme = extendTheme({
   config: {
     initialColorMode: "dark",
@@ -20,17 +28,20 @@ export const theme = extendTheme({
     lg: "16px",
     xl: "19px",
     "2xl": "23px",
+    "3xl": "28px",
   },
   radii: { sm: "3px", md: "4px", lg: "6px", xl: "8px" },
   colors: {
-    "light-border": "#d6dae0",
+    // Kept as an alias so legacy references still resolve to the dark border.
+    "light-border": BORDER,
+    white: TEXT,
     terminal: {
-      bg: "#06080b",
-      surface: "#0b0f15",
-      overlay: "#101620",
-      border: "#1c2634",
+      bg: BG,
+      surface: SURFACE,
+      overlay: OVERLAY,
+      border: BORDER,
       dim: "#5b6b7d",
-      text: "#c8d6e2",
+      text: TEXT,
     },
     primary: {
       50: "#e6fff5",
@@ -50,46 +61,42 @@ export const theme = extendTheme({
       600: "#0ea5c4",
     },
     gray: {
-      50: "#f6f8fa",
-      100: "#e7ecf1",
-      200: "#cfd8e3",
+      50: "#e7ecf1",
+      100: "#cfd8e3",
+      200: "#a9b7c6",
       300: "#a9b7c6",
       400: "#7d8fa3",
       500: "#5b6b7d",
-      600: "#1c2634",
-      700: "#101620",
+      600: BORDER,
+      700: OVERLAY,
       750: "#0e141c",
-      800: "#0b0f15",
-      900: "#06080b",
+      800: SURFACE,
+      900: BG,
     },
   },
   shadows: {
-    outline: "0 0 0 1px var(--chakra-colors-primary-500)",
+    outline: `0 0 0 1px #00e08c`,
     glow: "0 0 0 1px rgba(0, 224, 140, 0.35), 0 0 18px -6px rgba(0, 224, 140, 0.45)",
     panel: "0 1px 0 rgba(255, 255, 255, 0.02) inset, 0 8px 24px -18px rgba(0, 0, 0, 0.9)",
   },
   styles: {
     global: {
-      html: { fontSize: "15px" },
+      html: { fontSize: "15px", bg: BG, colorScheme: "dark" },
       body: {
         lineHeight: 1.45,
-        bg: "terminal.bg",
-        color: "terminal.text",
+        bg: BG,
+        color: TEXT,
         backgroundImage:
           "linear-gradient(rgba(0,255,156,0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(0,255,156,0.035) 1px, transparent 1px)",
         backgroundSize: "32px 32px",
         backgroundAttachment: "fixed",
-        _light: {
-          bg: "gray.50",
-          color: "gray.800",
-          backgroundImage: "none",
-        },
       },
-      "*::selection": { bg: "primary.500", color: "terminal.bg" },
+      "*::selection": { bg: "primary.500", color: BG },
+      "*::placeholder": { color: "gray.500" },
       "::-webkit-scrollbar": { width: "10px", height: "10px" },
       "::-webkit-scrollbar-track": { bg: "transparent" },
       "::-webkit-scrollbar-thumb": {
-        bg: "gray.600",
+        bg: BORDER,
         borderRadius: "0",
         _hover: { bg: "primary.700" },
       },
@@ -101,7 +108,16 @@ export const theme = extendTheme({
         fontFamily: mono,
         fontWeight: "600",
         letterSpacing: "-0.01em",
-        textTransform: "none",
+      },
+    },
+    Card: {
+      baseStyle: {
+        container: {
+          bg: SURFACE,
+          borderColor: BORDER,
+          borderRadius: "6px",
+          boxShadow: "none",
+        },
       },
     },
     Button: {
@@ -121,16 +137,16 @@ export const theme = extendTheme({
           _active: { bg: "primary.600" },
         },
         outline: {
-          borderColor: "terminal.border",
-          color: "terminal.text",
+          borderColor: BORDER,
+          color: TEXT,
           bg: "transparent",
-          _hover: { bg: "terminal.overlay", borderColor: "primary.600", color: "primary.300" },
-          _light: { borderColor: "light-border", color: "gray.700" },
+          _hover: { bg: OVERLAY, borderColor: "primary.600", color: "primary.300" },
+          _active: { bg: OVERLAY },
         },
         ghost: {
-          color: "gray.300",
-          _hover: { bg: "terminal.overlay", color: "primary.300" },
-          _light: { color: "gray.600", _hover: { bg: "gray.100" } },
+          color: "gray.400",
+          _hover: { bg: OVERLAY, color: "primary.300" },
+          _active: { bg: OVERLAY },
         },
       },
     },
@@ -146,13 +162,15 @@ export const theme = extendTheme({
       },
     },
     Tag: {
-      baseStyle: { container: { borderRadius: "2px", fontFamily: mono } },
+      baseStyle: {
+        container: { borderRadius: "2px", fontFamily: mono, bg: OVERLAY, color: TEXT },
+      },
       defaultProps: { size: "sm" },
     },
     Code: {
       baseStyle: {
         fontFamily: mono,
-        bg: "terminal.overlay",
+        bg: OVERLAY,
         color: "primary.300",
         borderRadius: "2px",
       },
@@ -166,7 +184,6 @@ export const theme = extendTheme({
         letterSpacing: "0.08em",
         mb: "1.5",
         color: "gray.400",
-        _light: { color: "gray.600" },
       },
     },
     FormHelperText: { baseStyle: { fontSize: "xs", color: "gray.500" } },
@@ -176,24 +193,19 @@ export const theme = extendTheme({
         field: {
           fontFamily: mono,
           borderRadius: "4px",
-          bg: "terminal.surface",
-          borderColor: "terminal.border",
+          bg: SURFACE,
+          borderColor: BORDER,
+          color: TEXT,
           _hover: { borderColor: "gray.500" },
-          _focusVisible: {
-            boxShadow: "none",
-            borderColor: "primary.500",
-            bg: "terminal.overlay",
-          },
+          _focusVisible: { boxShadow: "none", borderColor: "primary.500", bg: OVERLAY },
           _placeholder: { color: "gray.500" },
-          _disabled: { color: "gray.500", borderColor: "terminal.border" },
-          _light: { bg: "white", borderColor: "light-border" },
+          _disabled: { color: "gray.500", borderColor: BORDER },
         },
         addon: {
           fontFamily: mono,
-          bg: "terminal.overlay",
-          borderColor: "terminal.border",
+          bg: OVERLAY,
+          borderColor: BORDER,
           color: "gray.400",
-          _light: { bg: "gray.100", borderColor: "light-border", color: "gray.600" },
         },
       },
     },
@@ -202,10 +214,12 @@ export const theme = extendTheme({
       baseStyle: {
         field: {
           fontFamily: mono,
-          bg: "terminal.surface",
-          borderColor: "terminal.border",
-          _light: { bg: "white", borderColor: "light-border" },
+          bg: SURFACE,
+          borderColor: BORDER,
+          color: TEXT,
+          _focusVisible: { boxShadow: "none", borderColor: "primary.500" },
         },
+        stepper: { borderColor: BORDER, color: "gray.400" },
       },
     },
     Textarea: {
@@ -213,11 +227,11 @@ export const theme = extendTheme({
       baseStyle: {
         fontFamily: mono,
         borderRadius: "4px",
-        bg: "terminal.surface",
-        borderColor: "terminal.border",
+        bg: SURFACE,
+        borderColor: BORDER,
+        color: TEXT,
         _focusVisible: { boxShadow: "none", borderColor: "primary.500" },
         _placeholder: { color: "gray.500" },
-        _light: { bg: "white", borderColor: "light-border" },
       },
     },
     Select: {
@@ -226,18 +240,19 @@ export const theme = extendTheme({
         field: {
           fontFamily: mono,
           borderRadius: "4px",
-          bg: "terminal.surface",
-          borderColor: "terminal.border",
+          bg: SURFACE,
+          borderColor: BORDER,
+          color: TEXT,
           _focusVisible: { boxShadow: "none", borderColor: "primary.500" },
-          _light: { bg: "white", borderColor: "light-border" },
-          "> option": { bg: "terminal.overlay" },
+          "> option": { bg: OVERLAY, color: TEXT },
         },
+        icon: { color: "gray.500" },
       },
     },
     Checkbox: {
       defaultProps: { size: "sm", colorScheme: "primary" },
       baseStyle: {
-        control: { borderRadius: "2px", borderColor: "gray.500" },
+        control: { borderRadius: "2px", borderColor: "gray.500", bg: SURFACE },
         label: { fontSize: "sm" },
       },
     },
@@ -250,9 +265,11 @@ export const theme = extendTheme({
           fontSize: "xs",
           textTransform: "uppercase",
           letterSpacing: "0.08em",
+          color: "gray.400",
           _selected: { color: "primary.300", borderColor: "primary.500" },
+          _hover: { color: TEXT },
         },
-        tablist: { borderColor: "terminal.border" },
+        tablist: { borderColor: BORDER },
       },
     },
     Alert: {
@@ -271,19 +288,18 @@ export const theme = extendTheme({
           minW: "auto",
           py: "1",
           borderRadius: "4px",
-          bg: "terminal.overlay",
-          borderColor: "terminal.border",
+          bg: OVERLAY,
+          borderColor: BORDER,
           boxShadow: "panel",
-          _light: { bg: "white", borderColor: "light-border" },
         },
         item: {
           fontFamily: mono,
           fontSize: "sm",
           py: "1.5",
           bg: "transparent",
-          _hover: { bg: "terminal.surface", color: "primary.300" },
-          _focus: { bg: "terminal.surface" },
-          _light: { _hover: { bg: "gray.100" } },
+          color: TEXT,
+          _hover: { bg: SURFACE, color: "primary.300" },
+          _focus: { bg: SURFACE },
         },
       },
     },
@@ -291,13 +307,12 @@ export const theme = extendTheme({
       baseStyle: {
         dialog: {
           borderRadius: "6px",
-          bg: "terminal.surface",
+          bg: SURFACE,
           border: "1px solid",
-          borderColor: "terminal.border",
+          borderColor: BORDER,
           boxShadow: "panel",
-          _light: { bg: "white", borderColor: "light-border" },
         },
-        overlay: { bg: "rgba(3, 5, 8, 0.75)", backdropFilter: "blur(3px)" },
+        overlay: { bg: "rgba(3, 5, 8, 0.78)", backdropFilter: "blur(3px)" },
         header: {
           fontFamily: mono,
           fontSize: "sm",
@@ -305,10 +320,28 @@ export const theme = extendTheme({
           letterSpacing: "0.08em",
           py: "3",
           borderBottom: "1px solid",
-          borderColor: "terminal.border",
+          borderColor: BORDER,
         },
         body: { py: "4" },
-        footer: { py: "3", borderTop: "1px solid", borderColor: "terminal.border" },
+        footer: { py: "3", borderTop: "1px solid", borderColor: BORDER },
+        closeButton: { borderRadius: "2px", _hover: { bg: OVERLAY } },
+      },
+    },
+    Drawer: {
+      baseStyle: {
+        dialog: { bg: SURFACE, borderRight: "1px solid", borderColor: BORDER },
+        overlay: { bg: "rgba(3, 5, 8, 0.78)" },
+      },
+    },
+    Popover: {
+      baseStyle: {
+        content: {
+          bg: OVERLAY,
+          borderColor: BORDER,
+          borderRadius: "4px",
+          boxShadow: "panel",
+          _focusVisible: { boxShadow: "panel" },
+        },
       },
     },
     Tooltip: {
@@ -316,12 +349,13 @@ export const theme = extendTheme({
         fontFamily: mono,
         fontSize: "xs",
         borderRadius: "3px",
-        bg: "terminal.overlay",
-        color: "terminal.text",
+        bg: OVERLAY,
+        color: TEXT,
         border: "1px solid",
-        borderColor: "terminal.border",
+        borderColor: BORDER,
       },
     },
+    Divider: { baseStyle: { borderColor: BORDER, opacity: 1 } },
     Table: {
       defaultProps: { size: "sm" },
       baseStyle: {
@@ -335,14 +369,9 @@ export const theme = extendTheme({
           textTransform: "uppercase",
           letterSpacing: "0.08em",
           color: "gray.400",
-          background: "terminal.overlay",
+          background: OVERLAY,
           borderBottom: "1px solid",
-          borderColor: "terminal.border !important",
-          _light: {
-            background: "#f3f5f8",
-            color: "gray.600",
-            borderColor: "light-border !important",
-          },
+          borderColor: `${BORDER} !important`,
         },
         td: {
           px: "3",
@@ -350,18 +379,12 @@ export const theme = extendTheme({
           fontSize: "sm",
           transition: "background .1s ease-out",
           borderBottom: "1px solid",
-          borderColor: "terminal.border !important",
-          _light: { borderColor: "light-border !important" },
+          borderColor: `${BORDER} !important`,
         },
         tr: {
           "&.interactive": {
             cursor: "pointer",
-            _hover: {
-              "& > td": {
-                bg: "terminal.overlay",
-                _light: { bg: "gray.100" },
-              },
-            },
+            _hover: { "& > td": { bg: OVERLAY } },
           },
         },
       },

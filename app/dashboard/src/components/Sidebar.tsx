@@ -21,19 +21,7 @@ const WireGuardNavIcon = chakra(ShieldCheckIcon, navIconStyle);
 const XHTTPNavIcon = chakra(CloudIcon, navIconStyle);
 
 const railDisplay = { base: "none", md: "flex" };
-const railBorder = { borderColor: "light-border" };
-const railBg = { bg: "white" };
-const dimText = { color: "gray.600" };
-const hoverStyle = {
-  bg: "terminal.overlay",
-  color: "primary.300",
-  _light: { bg: "gray.100", color: "gray.900" },
-};
-const activeStyle = {
-  bg: "rgba(0, 224, 140, 0.08)",
-  color: "primary.300",
-  _light: { bg: "gray.100", color: "gray.900" },
-};
+const hoverStyle = { bg: "terminal.overlay", color: "primary.300" };
 
 type NavItemProps = {
   to: string;
@@ -58,7 +46,7 @@ const NavItem: FC<NavItemProps> = ({ to, end, icon: IconEl, label, onClick }) =>
         letterSpacing="0.01em"
         cursor="pointer"
         transition="background .12s ease-out, color .12s ease-out"
-        sx={navData.isActive ? activeStyle : undefined}
+        bg={navData.isActive ? "rgba(0, 224, 140, 0.08)" : "transparent"}
         color={navData.isActive ? "primary.300" : "gray.400"}
         _hover={navData.isActive ? undefined : hoverStyle}
       >
@@ -145,7 +133,6 @@ export const Sidebar: FC = () => (
     top="0"
     h="100vh"
     overflowY="auto"
-    _light={{ ...railBorder, ...railBg, ...dimText }}
   >
     <SidebarContent />
   </Flex>
