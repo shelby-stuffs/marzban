@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING, List, Literal, Union
 from jdatetime import date as jd
 
 from app import xray
+from app.subscription.linkfilter import HYSTERIA2_SCHEMES, filter_links
 from app.utils.system import get_public_ip, get_public_ipv6, readable_size
 
 from . import *
@@ -98,10 +99,40 @@ def generate_v2ray_json_subscription(
     )
 
 
+def generate_hysteria2_subscription(
+        proxies: dict, inbounds: dict, extra_data: dict, reverse: bool,
+) -> str:
+    """A link list containing only the user's Hysteria2 nodes.
+
+    Native Hysteria2 clients choke on vless/vmess lines, so the shared share-link
+    generator is reused and then filtered down to the hysteria2 scheme.
+    """
+    links = generate_v2ray_links(proxies, inbounds, extra_data, reverse)
+    return "\n".join(filter_links(links, HYSTERIA2_SCHEMES))
+
+
+def generate_happ_subscription(
+        proxies: dict, inbounds: dict, extra_data: dict, reverse: bool,
+) -> str:
+    """Happ 1.11+ imports the Xray JSON profile, same as the v2ray-json format.
+
+    It exists as its own format so it can be requested explicitly and evolve
+    independently of the generic JSON output.
+    """
+    return generate_v2ray_json_subscription(proxies, inbounds, extra_data, reverse)
+
+
 DUMMY_NOTICE_UUID = "00000000-0000-0000-0000-000000000000"
 EXPIRED_NOTICE_LINES = [
     "🔴 Подписка закончилась",
 ]
+
+#: Formats that can carry the expired notice, mapped to the notice renderer.
+EXPIRED_NOTICE_FORMATS = {
+    "v2ray": "v2ray",
+    "v2ray-json": "v2ray-json",
+    "happ": "v2ray-json",
+}
 
 
 def _generate_expired_notice(config_format: str) -> str:
@@ -132,7 +163,9 @@ def _generate_expired_notice(config_format: str) -> str:
 
 def generate_subscription(
         user: "UserResponse",
-        config_format: Literal["v2ray", "clash-meta", "clash", "sing-box", "outline", "v2ray-json"],
+        config_format: Literal[
+            "v2ray", "clash-meta", "clash", "sing-box", "outline", "v2ray-json", "hysteria2", "happ"
+        ],
         as_base64: bool,
         reverse: bool,
 ) -> str:
@@ -146,11 +179,8 @@ def generate_subscription(
     from app.models.user import UserStatus
     # Raw vless:// lines are only valid for link-list formats; returning them
     # for clash/clash-meta/sing-box/outline breaks those clients entirely.
-    if getattr(user, "status", None) == UserStatus.expired and config_format in (
-        "v2ray",
-        "v2ray-json",
-    ):
-        config = _generate_expired_notice(config_format)
+    if getattr(user, "status", None) == UserStatus.expired and config_format in EXPIRED_NOTICE_FORMATS:
+        config = _generate_expired_notice(EXPIRED_NOTICE_FORMATS[config_format])
         if as_base64:
             config = base64.b64encode(config.encode()).decode()
         return config
@@ -167,6 +197,10 @@ def generate_subscription(
         config = generate_outline_subscription(**kwargs)
     elif config_format == "v2ray-json":
         config = generate_v2ray_json_subscription(**kwargs)
+    elif config_format == "hysteria2":
+        config = generate_hysteria2_subscription(**kwargs)
+    elif config_format == "happ":
+        config = generate_happ_subscription(**kwargs)
     else:
         raise ValueError(f'Unsupported format "{config_format}"')
 
