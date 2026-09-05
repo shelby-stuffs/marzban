@@ -140,6 +140,21 @@ SUB_UPDATE_INTERVAL = config("SUB_UPDATE_INTERVAL", default="12")
 SUB_SUPPORT_URL = config("SUB_SUPPORT_URL", default="https://t.me/")
 SUB_PROFILE_TITLE = config("SUB_PROFILE_TITLE", default="Subscription")
 
+# subscription delivery: response cache and ETag/304 handling.
+# SUB_CACHE_TTL = 0 disables caching entirely.
+SUB_CACHE_TTL = config("SUB_CACHE_TTL", cast=int, default=30)
+SUB_CACHE_MAX_ENTRIES = config("SUB_CACHE_MAX_ENTRIES", cast=int, default=2048)
+SUB_ETAG_ENABLED = config("SUB_ETAG_ENABLED", cast=bool, default=True)
+
+# subscription client rules: when enabled, rules stored in the database take
+# precedence over the built-in User-Agent defaults.
+SUB_RULES_FROM_DB = config("SUB_RULES_FROM_DB", cast=bool, default=True)
+
+# multi-token subscriptions
+# SUB_TOKEN_DEFAULT_TTL_DAYS = 0 issues tokens that never expire.
+SUB_TOKEN_DEFAULT_TTL_DAYS = config("SUB_TOKEN_DEFAULT_TTL_DAYS", cast=int, default=0)
+SUB_TOKEN_MAX_PER_USER = config("SUB_TOKEN_MAX_PER_USER", cast=int, default=10)
+
 # discord webhook log
 DISCORD_WEBHOOK_URL = config("DISCORD_WEBHOOK_URL", default="")
 

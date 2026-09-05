@@ -34,6 +34,8 @@ from .crud import (create_admin, create_notification_reminder,  # noqa
                    get_admin_by_telegram_id)
 
 from .models import JWT, System, User  # noqa
+from .subscription import SubscriptionRule, SubscriptionToken  # noqa
+from . import subscription as subscription_store  # noqa
 from .xhttp import install_xhttp_host_storage  # noqa
 
 install_xhttp_host_storage()
@@ -71,6 +73,9 @@ __all__ = [
     "User",
     "System",
     "JWT",
+    "SubscriptionRule",
+    "SubscriptionToken",
+    "subscription_store",
     "Base",
     "Session",
 ]

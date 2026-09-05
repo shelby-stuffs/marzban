@@ -128,10 +128,10 @@ class ClientRule:
         if self.min_version is None and self.max_version is None:
             return True
 
-        try:
-            raw_version = match.group(1)
-        except (IndexError, error_types()):
+        # Version gates need a capture group holding the client version.
+        if match.re.groups < 1:
             return False
+        raw_version = match.group(1)
         if not raw_version:
             return False
 
@@ -157,10 +157,6 @@ class ClientRule:
             reverse=self.reverse,
             source=self.source,
         )
-
-
-def error_types():  # pragma: no cover - tiny helper kept for readability
-    return re.error
 
 
 #: Anything that does not match a rule keeps receiving base64 share links, which
