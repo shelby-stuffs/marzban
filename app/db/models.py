@@ -21,7 +21,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.sql.expression import select, text
 
 from app import xray
-from app.db.base import Base
+from app.db.base import IS_POSTGRES, IS_SQLITE, Base
 from app.models.node import NodeStatus
 from app.models.proxy import (
     ProxyHostALPN,
@@ -30,6 +30,26 @@ from app.models.proxy import (
     ProxyTypes,
 )
 from app.models.user import ReminderType, UserDataLimitResetStrategy, UserStatus
+
+try:  # CITEXT is a PostgreSQL-only type.
+    from sqlalchemy.dialects.postgresql import CITEXT
+except ImportError:  # pragma: no cover - older SQLAlchemy
+    CITEXT = None
+
+
+def ci_string(length: int):
+    """Case-insensitive text column, portable across the supported backends.
+
+    SQLite gets the NOCASE collation, PostgreSQL gets CITEXT (the NOCASE
+    collation simply does not exist there), and MySQL needs nothing because its
+    default collations are already case-insensitive.
+    """
+
+    if IS_SQLITE:
+        return String(length, collation='NOCASE')
+    if IS_POSTGRES and CITEXT is not None:
+        return CITEXT()
+    return String(length)
 
 
 class Admin(Base):
@@ -62,7 +82,7 @@ class User(Base):
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True)
-    username = Column(String(34, collation='NOCASE'), unique=True, index=True)
+    username = Column(ci_string(34), unique=True, index=True)
     proxies = relationship("Proxy", back_populates="user", cascade="all, delete-orphan")
     status = Column(Enum(UserStatus), nullable=False, default=UserStatus.active)
     used_traffic = Column(BigInteger, default=0)
@@ -297,7 +317,7 @@ class Node(Base):
     __tablename__ = "nodes"
 
     id = Column(Integer, primary_key=True)
-    name = Column(String(256, collation='NOCASE'), unique=True)
+    name = Column(ci_string(256), unique=True)
     address = Column(String(256), unique=False, nullable=False)
     port = Column(Integer, unique=False, nullable=False)
     api_port = Column(Integer, unique=False, nullable=False)
