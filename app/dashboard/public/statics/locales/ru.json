@@ -203,5 +203,9 @@
   "userDialog.hysteriaPassword": "Пароль пользователя Hysteria 2",
   "userDialog.generatePassword": "Сгенерировать",
   "userDialog.hysteriaPasswordRequired": "Укажите пароль пользователя Hysteria 2",
-  "userDialog.hysteriaPasswordHelp": "Уникален для этого пользователя. Смена пароля отзывает старые конфигурации Hysteria 2. Salamander настраивается в Hosts/inbound."
+  "userDialog.hysteriaPasswordHelp": "Уникален для этого пользователя. Смена пароля отзывает старые конфигурации Hysteria 2. Salamander настраивается в Hosts/inbound.",
+  "userDialog.hysteriaObfsInherit": "Наследовать от Hosts/inbound",
+  "userDialog.hysteriaObfsNone": "Без obfs",
+  "userDialog.hysteriaObfsPasswordPlaceholder": "Пусто = наследовать пароль Hosts/inbound",
+  "userDialog.hysteriaObfsPasswordHelp": "Пользовательское переопределение для совместимости. Пароль должен совпадать с сервером Hysteria. Изменение также обновляет кэш подписки."
 }

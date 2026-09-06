@@ -94,12 +94,12 @@ class Hysteria2ProfileTests(unittest.TestCase):
             with self.subTest(fields=fields), self.assertRaises(ValueError):
                 self.profile(**fields)
 
-    def test_server_host_obfs_wins_over_legacy_user_fields(self):
-        p = self.profile(settings={"auth": "user-secret", "obfs": "salamander", "obfs_password": "legacy-secret"})
-        self.assertEqual(p.obfs_password, "server-secret")
+    def test_user_password_override_is_preserved_for_compatibility(self):
+        p = self.profile(settings={"auth": "user-secret", "obfs": "salamander", "obfs_password": "user-secret-obfs"})
+        self.assertEqual(p.obfs_password, "user-secret-obfs")
 
-    def test_explicit_no_obfs_suppresses_legacy_user_settings(self):
-        p = self.profile(obfs="", obfs_password="", settings={"auth": "user-secret", "obfs": "salamander", "obfs_password": "legacy-secret"})
+    def test_explicit_user_none_suppresses_inherited_obfs(self):
+        p = self.profile(settings={"auth": "user-secret", "obfs": "none", "obfs_password": "stale"})
         self.assertNotIn("finalmask", p.xray()["streamSettings"])
         self.assertNotIn("obfs", p.clash("node"))
         self.assertNotIn("obfs", p.singbox("node"))

@@ -201,5 +201,9 @@
   "userDialog.hysteriaPassword": "Hysteria 2 user password",
   "userDialog.generatePassword": "Generate",
   "userDialog.hysteriaPasswordRequired": "Hysteria 2 user password is required",
-  "userDialog.hysteriaPasswordHelp": "Unique per user. Changing it revokes old Hysteria 2 configs. Configure Salamander in Hosts/inbound."
+  "userDialog.hysteriaPasswordHelp": "Unique per user. Changing it revokes old Hysteria 2 configs. Configure Salamander in Hosts/inbound.",
+  "userDialog.hysteriaObfsInherit": "Inherit from host/inbound",
+  "userDialog.hysteriaObfsNone": "No obfs",
+  "userDialog.hysteriaObfsPasswordPlaceholder": "Empty = inherit host/inbound password",
+  "userDialog.hysteriaObfsPasswordHelp": "Compatibility override. Must match the Hysteria server. Changing it refreshes the subscription cache."
 }

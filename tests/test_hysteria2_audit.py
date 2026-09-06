@@ -26,7 +26,7 @@ class AuditTests(unittest.TestCase):
         users=[{"proxies":{"hysteria":{"auth":"sensitive","obfs_password":"private-obfs"}}},{"proxies":{"hysteria":{"auth":"sensitive"}}}]
         report=A["audit"](valid_config(),{},users)
         codes={i["code"] for i in report["issues"]}
-        self.assertIn("legacy_user_obfs",codes); self.assertIn("duplicate_user_auth",codes)
+        self.assertIn("user_obfs_override",codes); self.assertIn("duplicate_user_auth",codes)
         self.assertNotIn("sensitive",json.dumps(report)); self.assertNotIn("private-obfs",json.dumps(report))
 
     def test_partial_inputs_are_not_claimed_complete(self):

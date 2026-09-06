@@ -9,6 +9,7 @@ from starlette.websockets import WebSocketDisconnect
 from app import logger, xray
 from app.db import Session, crud, get_db
 from app.dependencies import get_dbnode, validate_dates
+from app.subscription import cache as subscription_cache
 from app.models.admin import Admin
 from app.models.node import (
     NodeCreate,
@@ -36,6 +37,7 @@ def add_host_if_needed(new_node: NodeCreate, db: Session):
         for inbound_tag in xray.config.inbounds_by_tag:
             crud.add_host(db, inbound_tag, host)
         xray.hosts.update()
+        subscription_cache.invalidate()
 
 
 @router.get("/node/settings", response_model=NodeSettings)

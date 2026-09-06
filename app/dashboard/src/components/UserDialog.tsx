@@ -127,7 +127,11 @@ const getDefaultValues = (): FormType => {
       vmess: { id: "" },
       trojan: { password: "" },
       shadowsocks: { password: "", method: "chacha20-ietf-poly1305" },
-      hysteria: { auth: generateHysteriaPassword() },
+      hysteria: {
+        auth: generateHysteriaPassword(),
+        obfs: "",
+        obfs_password: "",
+      },
     },
   };
 };
@@ -835,6 +839,53 @@ export const UserDialog: FC<UserDialogProps> = () => {
                         {t("userDialog.hysteriaPasswordHelp")}
                       </FormHelperText>
                     </FormControl>
+                    <FormControl mt="10px">
+                      <FormLabel>{t("userDialog.hysteriaObfs")}</FormLabel>
+                      <Select
+                        size="sm"
+                        disabled={disabled}
+                        {...form.register("proxies.hysteria.obfs")}
+                      >
+                        <option value="">{t("userDialog.hysteriaObfsInherit")}</option>
+                        <option value="none">{t("userDialog.hysteriaObfsNone")}</option>
+                        <option value="salamander">Salamander</option>
+                      </Select>
+                    </FormControl>
+                    <FormControl mt="10px">
+                      <FormLabel>
+                        <Flex gap={2} alignItems="center" justifyContent="space-between">
+                          <span>{t("userDialog.hysteriaObfsPassword")}</span>
+                          <Button
+                            type="button"
+                            size="xs"
+                            variant="outline"
+                            isDisabled={disabled}
+                            onClick={() => {
+                              form.setValue("proxies.hysteria.obfs", "salamander", { shouldDirty: true });
+                              form.setValue("proxies.hysteria.obfs_password", generateHysteriaPassword(), {
+                                shouldDirty: true,
+                                shouldValidate: true,
+                              });
+                            }}
+                          >
+                            <ReloadIcon mr={1} />
+                            {t("userDialog.generatePassword")}
+                          </Button>
+                        </Flex>
+                      </FormLabel>
+                      <Input
+                        size="sm"
+                        type="text"
+                        borderRadius="6px"
+                        autoComplete="new-password"
+                        disabled={disabled}
+                        placeholder={t("userDialog.hysteriaObfsPasswordPlaceholder")}
+                        {...form.register("proxies.hysteria.obfs_password")}
+                      />
+                      <FormHelperText color="terminal.dim">
+                        {t("userDialog.hysteriaObfsPasswordHelp")}
+                      </FormHelperText>
+                    </FormControl>
                   </Collapse>
                 </GridItem>
                 {isEditing && usageVisible && (
@@ -855,6 +906,8 @@ export const UserDialog: FC<UserDialogProps> = () => {
                           options={usage.options}
                           series={usage.series}
                           type="donut"
+                          width="100%"
+                          height={280}
                         />
                       </Box>
                     </VStack>

@@ -134,7 +134,7 @@ def audit(core, hosts=None, users=None):
                 issue("warning", "duplicate_user_auth", place, "Auth is reused by another exported user; review inbound assignments")
             seen.add(auth)
             if isinstance(settings, dict) and (settings.get("obfs") or settings.get("obfs_password")):
-                issue("warning", "legacy_user_obfs", place, "Per-user obfs is retained but does not override canonical host/inbound metadata")
+                issue("warning", "user_obfs_override", place, "Per-user obfs overrides inherited host/inbound values; confirm it matches the server")
     return {"read_only": True, "coverage": coverage,
             "errors": sum(i["level"] == "error" for i in issues),
             "warnings": sum(i["level"] == "warning" for i in issues), "issues": issues}

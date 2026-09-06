@@ -284,7 +284,7 @@ export const UsersTable: FC<UsersTableProps> = (props) => {
   };
 
   return (
-    <Box id="users-table" overflowX={{ base: "unset", md: "unset" }}>
+    <Box id="users-table" overflowX="auto" overscrollBehaviorX="contain">
       <Accordion
         allowMultiple
         display={{ base: "block", md: "none" }}
@@ -310,48 +310,25 @@ export const UsersTable: FC<UsersTableProps> = (props) => {
               <Th
                 position="sticky"
                 top={top}
-                minW="50px"
-                pl={0}
-                pr={0}
-                w="140px"
-                cursor={"pointer"}
+                minW="150px"
+                px={2}
               >
-                <HStack spacing={0} position="relative">
-                  <Text
-                    position="absolute"
-                    bg="gray.750"
-                    userSelect="none"
-                    pointerEvents="none"
-                    zIndex={1}
-                    w="100%"
-                  >
-                    {t("usersTable.status")}
-                    {filters.status ? ": " + filters.status : ""}
-                  </Text>
-                  <Select
-                    value={filters.sort}
-                    fontSize="xs"
-                    fontWeight="extrabold"
-                    textTransform="uppercase"
-                    cursor="pointer"
-                    p={0}
-                    border={0}
-                    h="auto"
-                    w="auto"
-                    icon={<></>}
-                    _focusVisible={{
-                      border: "0 !important",
-                    }}
-                    onChange={handleStatusFilter}
-                  >
-                    <option></option>
-                    <option>active</option>
-                    <option>on_hold</option>
-                    <option>disabled</option>
-                    <option>limited</option>
-                    <option>expired</option>
-                  </Select>
-                </HStack>
+                <Select
+                  aria-label={t("usersTable.status")}
+                  value={filters.status || ""}
+                  onChange={handleStatusFilter}
+                  size="xs"
+                  fontSize="xs"
+                  fontWeight="600"
+                  textTransform="uppercase"
+                >
+                  <option value="">{t("usersTable.status")}: all</option>
+                  <option value="active">active</option>
+                  <option value="on_hold">on hold</option>
+                  <option value="disabled">disabled</option>
+                  <option value="limited">limited</option>
+                  <option value="expired">expired</option>
+                </Select>
               </Th>
               <Th
                 position="sticky"
@@ -561,50 +538,41 @@ export const UsersTable: FC<UsersTableProps> = (props) => {
             <Th
               position="sticky"
               top={{ base: "unset", md: top }}
-              width="400px"
-              minW="150px"
-              cursor={"pointer"}
+              minW="300px"
+              w="300px"
             >
-              <HStack position="relative" gap={"5px"}>
-                <Text
-                  bg="gray.750"
-                  userSelect="none"
-                  pointerEvents="none"
-                  zIndex={1}
-                >
-                  {t("usersTable.status")}
-                  {filters.status ? ": " + filters.status : ""}
-                </Text>
-                <Text>/</Text>
-                <Sort sort={filters.sort} column="expire" />
-                <HStack onClick={handleSort.bind(null, "expire")}>
-                  <Text>Sort by expire</Text>
-                </HStack>
+              <HStack spacing={2} minW={0}>
                 <Select
-                  fontSize="xs"
-                  fontWeight="extrabold"
-                  textTransform="uppercase"
-                  cursor="pointer"
-                  position={"absolute"}
-                  p={0}
-                  left={"-40px"}
-                  border={0}
-                  h="auto"
-                  w="auto"
-                  icon={<></>}
-                  _focusVisible={{
-                    border: "0 !important",
-                  }}
-                  value={filters.sort}
+                  aria-label={t("usersTable.status")}
+                  value={filters.status || ""}
                   onChange={handleStatusFilter}
+                  size="xs"
+                  w="150px"
+                  minW="150px"
+                  fontSize="xs"
+                  fontWeight="600"
+                  textTransform="uppercase"
                 >
-                  <option></option>
-                  <option>active</option>
-                  <option>on_hold</option>
-                  <option>disabled</option>
-                  <option>limited</option>
-                  <option>expired</option>
+                  <option value="">{t("usersTable.status")}: all</option>
+                  <option value="active">active</option>
+                  <option value="on_hold">on hold</option>
+                  <option value="disabled">disabled</option>
+                  <option value="limited">limited</option>
+                  <option value="expired">expired</option>
                 </Select>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="xs"
+                  minW="0"
+                  px={2}
+                  onClick={() => handleSort("expire")}
+                >
+                  <HStack spacing={1}>
+                    <Text whiteSpace="nowrap">Sort by expire</Text>
+                    <Sort sort={filters.sort} column="expire" />
+                  </HStack>
+                </Button>
               </HStack>
             </Th>
             <Th

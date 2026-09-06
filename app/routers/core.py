@@ -13,6 +13,7 @@ from starlette.websockets import WebSocketDisconnect
 
 from app import xray
 from app.db import Session, get_db
+from app.subscription import cache as subscription_cache
 from app.models.admin import Admin
 from app.models.core import CoreStats
 from app.utils import responses
@@ -163,5 +164,6 @@ def modify_core_config(
             xray.operations.restart_node(node_id, startup_config)
 
     xray.hosts.update()
+    subscription_cache.invalidate()
 
     return normalized_payload

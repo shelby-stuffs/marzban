@@ -321,8 +321,10 @@ export function createUsageConfig(
       labels: labels,
       chart: {
         width: "100%",
-        height: "100%",
         type: "donut",
+        fontFamily: '"JetBrains Mono", "SFMono-Regular", Menlo, Consolas, monospace',
+        foreColor: colorMode === "dark" ? "#8b9bb0" : undefined,
+        parentHeightOffset: 0,
         animations: {
           enabled: false,
         },
@@ -332,12 +334,17 @@ export function createUsageConfig(
         align: "center",
         style: {
           fontWeight: "var(--chakra-fontWeights-medium)",
+          fontFamily: '"JetBrains Mono", "SFMono-Regular", Menlo, Consolas, monospace',
+          fontSize: "12px",
           color:
             colorMode === "dark" ? "var(--chakra-colors-gray-300)" : undefined,
         },
       },
       legend: {
         position: "bottom",
+        fontFamily: '"JetBrains Mono", "SFMono-Regular", Menlo, Consolas, monospace',
+        fontSize: "12px",
+        itemMargin: { horizontal: 8, vertical: 4 },
         labels: {
           colors: colorMode === "dark" ? "#CBD5E0" : undefined,
           useSeriesColors: false,
@@ -377,6 +384,15 @@ export function createUsageConfig(
         },
       },
       colors: generateDistinctColors(series.length),
+      responsive: [
+        {
+          breakpoint: 480,
+          options: {
+            chart: { height: 260 },
+            legend: { position: "bottom" },
+          },
+        },
+      ],
     } as ApexOptions,
   };
 }

@@ -139,7 +139,8 @@ class SaveValidationTests(unittest.TestCase):
         inbounds = {"first": inbound_metadata(), "second": inbound_metadata()}
         crud = SimpleNamespace(update_hosts=lambda *a: calls.append("write"), get_hosts=lambda *a: [])
         xray = SimpleNamespace(config=SimpleNamespace(inbounds_by_tag=inbounds), hosts=SimpleNamespace(update=lambda: calls.append("refresh")))
-        route = load_route("app/routers/system.py", "modify_hosts", {"xray": xray, "crud": crud, "Hysteria2Client": Client})
+        subscription_cache = SimpleNamespace(invalidate=lambda: calls.append("invalidate"))
+        route = load_route("app/routers/system.py", "modify_hosts", {"xray": xray, "crud": crud, "Hysteria2Client": Client, "subscription_cache": subscription_cache})
         return route, calls
 
     def test_all_hosts_validated_before_first_crud_write(self):
@@ -152,7 +153,7 @@ class SaveValidationTests(unittest.TestCase):
     def test_valid_host_request_reaches_existing_write_path(self):
         route, calls = self.host_route()
         route({"first": [{"address": "valid.example"}]}, db=None, admin=None)
-        self.assertEqual(calls, ["write", "refresh"])
+        self.assertEqual(calls, ["write", "refresh", "invalidate"])
 
     def core_route(self, relative, name):
         calls = []
@@ -164,7 +165,8 @@ class SaveValidationTests(unittest.TestCase):
             hosts=SimpleNamespace(update=lambda: calls.append("refresh")))
         ns = {"XRayConfig": Config, "xray": xray, "XRAY_JSON": "unused.json",
               "normalize_xray_v26_config": lambda p: p,
-              "_atomic_write_json": lambda *a: calls.append("write"), "atomic_write_json": lambda *a: calls.append("write")}
+              "_atomic_write_json": lambda *a: calls.append("write"), "atomic_write_json": lambda *a: calls.append("write"),
+              "subscription_cache": SimpleNamespace(invalidate=lambda: calls.append("invalidate"))}
         return load_route(relative, name, ns), calls
 
     def test_all_core_save_paths_reject_before_write_or_restart(self):
@@ -181,7 +183,7 @@ class SaveValidationTests(unittest.TestCase):
     def test_valid_core_still_gets_binary_test_before_persistence(self):
         route, calls = self.core_route("app/routers/core.py", "modify_core_config")
         route(valid_config())
-        self.assertEqual(calls, ["binary-test", "write", "restart", "refresh"])
+        self.assertEqual(calls, ["binary-test", "write", "restart", "refresh", "invalidate"])
 
     def test_user_auth_guard_only_affects_hysteria(self):
         for auth in (None, "", 123):

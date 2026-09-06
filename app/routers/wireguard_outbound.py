@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
 from app import xray
+from app.subscription import cache as subscription_cache
 from app.models.admin import Admin
 from app.xray import XRayConfig
 from app.xray.config import normalize_xray_v26_config
@@ -63,6 +64,7 @@ def _validate_and_apply(payload: dict) -> dict:
         if node.connected:
             xray.operations.restart_node(node_id, startup_config)
     xray.hosts.update()
+    subscription_cache.invalidate()
     return normalized
 
 

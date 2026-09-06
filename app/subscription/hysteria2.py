@@ -109,14 +109,23 @@ class Hysteria2Client:
         if isinstance(version, bool) or version not in (2, "2"):
             raise ValueError("Only Hysteria version 2 is supported")
 
-        canonical_obfs = "obfs" in inbound or "obfs_password" in inbound
-        obfs_source = inbound if canonical_obfs else settings
-        obfs = _text(obfs_source.get("obfs"), "obfs").strip().lower()
-        if obfs == "none":
+        # Compatibility: user-level values are an overlay, not a replacement.
+        # This matters for existing installations where every user stores the
+        # effective Salamander password while inheriting the mode from inbound.
+        user_obfs = _text(settings.get("obfs"), "user obfs").strip().lower()
+        inbound_obfs = _text(inbound.get("obfs"), "inbound obfs").strip().lower()
+        if user_obfs == "none":
             obfs = ""
+            obfs_password = ""
+        else:
+            obfs = user_obfs or inbound_obfs
+            if obfs == "none":
+                obfs = ""
+            user_password = _text(settings.get("obfs_password"), "user obfs password")
+            inbound_password = _text(inbound.get("obfs_password"), "inbound obfs password")
+            obfs_password = (user_password or inbound_password) if obfs else ""
         if obfs not in ("", "salamander"):
             raise ValueError("Hysteria2 subscriptions support only Salamander obfuscation")
-        obfs_password = _text(obfs_source.get("obfs_password"), "obfs password") if obfs else ""
         if obfs and not obfs_password:
             raise ValueError("Hysteria2 Salamander requires an obfuscation password")
 

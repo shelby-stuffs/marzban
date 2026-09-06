@@ -93,13 +93,14 @@ export const NodesUsage: FC<NodesUsageProps> = () => {
                 fetchUsageWithFilter(query);
               }}
             />
-            <Box justifySelf="center" w="full" maxW="300px" mt="4">
+            <Box justifySelf="center" w="full" maxW="420px" mt="2" minH="280px">
               <Suspense fallback={<CircularProgress isIndeterminate />}>
                 <ReactApexChart
                   options={usage.options}
                   series={usage.series}
                   type="donut"
-                  height="500px"
+                  width="100%"
+                  height={320}
                 />
               </Suspense>
             </Box>
