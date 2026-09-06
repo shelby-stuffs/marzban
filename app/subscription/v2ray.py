@@ -1003,21 +1003,10 @@ class V2rayJsonConfig(str):
         }
 
     @staticmethod
-    def hysteria2_config(address=None, port=None, auth=None, obfs: str = "", obfs_password: str = "") -> dict:
-        config = {
-            "servers": [
-                {
-                    "address": address,
-                    "port": port,
-                    "password": auth,
-                }
-            ]
-        }
-        if obfs:
-            config["obfs"] = obfs
-            if obfs_password:
-                config["obfs-password"] = obfs_password
-        return config
+    def hysteria2_config(address=None, port=None) -> dict:
+        # Xray separates the proxy endpoint from transport authentication.
+        # https://xtls.github.io/en/config/outbounds/hysteria.html
+        return {"version": 2, "address": address, "port": port}
 
     @staticmethod
     def make_fragment(fragment: str) -> dict:
@@ -1208,11 +1197,32 @@ class V2rayJsonConfig(str):
                                                            method=settings['method'])
 
         elif inbound['protocol'] == 'hysteria':
-            outbound["settings"] = self.hysteria2_config(address=address,
-                                                         port=port,
-                                                         auth=settings['auth'],
-                                                         obfs=inbound.get('obfs', ''),
-                                                         obfs_password=inbound.get('obfs_password', ''))
+            outbound["settings"] = self.hysteria2_config(address=address, port=port)
+            # Hysteria2 requires its QUIC transport and TLS. Credentials belong
+            # to the transport, not to a Shadowsocks-style settings.servers.
+            transport = self.hysteria_config(version=2)
+            transport["auth"] = settings["auth"]
+            alpn = inbound.get("alpn")
+            outbound["streamSettings"] = self.stream_setting_config(
+                network="hysteria",
+                security="tls",
+                network_setting=transport,
+                tls_settings=self.tls_config(
+                    sni=inbound.get("sni", ""),
+                    alpn=alpn.split(",") if alpn else None,
+                    ais=inbound.get("ais", False),
+                ),
+            )
+            # Xray's packet obfuscation lives in finalmask, not in the
+            # Hysteria proxy settings. Reuse the subscription obfs metadata.
+            obfs = inbound.get("obfs", "")
+            if obfs:
+                outbound["streamSettings"]["finalmask"] = {
+                    "udp": [{
+                        "type": obfs,
+                        "settings": {"password": inbound.get("obfs_password", "")},
+                    }]
+                }
 
         outbounds = [outbound]
         dialer_proxy = ''
@@ -1221,7 +1231,7 @@ class V2rayJsonConfig(str):
             dialer_proxy = extra_outbound['tag']
             outbounds.append(extra_outbound)
 
-        # Hysteria2 doesn't use streamSettings
+        # Hysteria2's streamSettings were constructed above.
         if inbound['protocol'] != 'hysteria':
             alpn = inbound.get('alpn', None)
             outbound["streamSettings"] = self.make_stream_setting(

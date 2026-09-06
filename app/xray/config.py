@@ -425,9 +425,31 @@ class XRayConfig(dict):
                     settings['hysteria_version'] = net_settings.get('version', 2)
                     settings['path'] = ''
                     settings['host'] = []
-                    # Add Hysteria2 obfs support
-                    settings['obfs'] = net_settings.get('obfs', '')
-                    settings['obfs_password'] = net_settings.get('obfsPassword', '')
+                    # Xray stores Salamander in streamSettings.finalmask.udp.
+                    # An explicit finalmask is authoritative, even when empty:
+                    # never revive stale legacy credentials in that case.
+                    settings['obfs'] = ''
+                    settings['obfs_password'] = ''
+                    if 'finalmask' in stream:
+                        finalmask = stream['finalmask']
+                        udp_masks = finalmask.get('udp', []) if isinstance(finalmask, dict) else []
+                        if isinstance(udp_masks, list):
+                            for mask in udp_masks:
+                                if not isinstance(mask, dict) or mask.get('type') != 'salamander':
+                                    continue
+                                mask_settings = mask.get('settings')
+                                if not isinstance(mask_settings, dict):
+                                    continue
+                                password = mask_settings.get('password')
+                                if isinstance(password, str) and password:
+                                    settings['obfs'] = 'salamander'
+                                    settings['obfs_password'] = password
+                                    break
+                    else:
+                        # Compatibility with metadata from older panel configs.
+                        # This does not migrate the server config for Xray.
+                        settings['obfs'] = net_settings.get('obfs', '')
+                        settings['obfs_password'] = net_settings.get('obfsPassword', '')
 
                 elif net == 'httpupgrade':
                     settings['path'] = net_settings.get('path', '')
