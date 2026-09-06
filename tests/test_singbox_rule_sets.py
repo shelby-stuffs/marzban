@@ -44,5 +44,7 @@ class SingBoxRuleSetTests(unittest.TestCase):
   self.assertEqual(ui.count('<Tab whiteSpace="nowrap">'),4); self.assertIn('/singbox/rule-sets/reload',ui)
   self.assertIn('@singbox_router.put("/rule-sets")',router); self.assertIn('@singbox_router.post("/rule-sets/reload")',router)
   self.assertIn('merge_rule_sets(combined, rule_sets)',runtime)
+  self.assertNotIn('key={`${item.tag}-${index}`}',ui)
+  self.assertIn('<Panel key={index}',ui)
 
 if __name__=="__main__": unittest.main()

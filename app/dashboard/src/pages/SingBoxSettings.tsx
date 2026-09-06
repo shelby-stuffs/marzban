@@ -557,7 +557,7 @@ export const SingBoxSettingsPage = () => {
 
         {ruleSets.items.length === 0 && <Alert status="info"><AlertIcon />{t("singbox.ruleSetsEmpty")}</Alert>}
         {ruleSets.items.map((item, index) => (
-          <Panel key={`${item.tag}-${index}`} label={`${t("singbox.ruleSet")} ${index + 1}: ${item.tag || "—"}`}>
+          <Panel key={index} label={`${t("singbox.ruleSet")} ${index + 1}: ${item.tag || "—"}`}>
             <VStack align="stretch" spacing="4">
               <HStack justify="space-between">
                 <Checkbox isChecked={item.enabled} onChange={(event) => updateRuleSet(index, "enabled", event.target.checked)}>{t("singbox.ruleSetEnabled")}</Checkbox>
