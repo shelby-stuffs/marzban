@@ -525,52 +525,52 @@ export const SingBoxSettingsPage = () => {
             </HStack>
           </TabPanel>
           <TabPanel px="0">
-      {ruleSetsLoading ? <Spinner /> : <VStack align="stretch" spacing="4">
-        <Panel label={t("singbox.ruleSetCache")}>
-          <VStack align="stretch" spacing="4">
+      {ruleSetsLoading ? <Spinner /> : <VStack align="stretch" spacing="3">
+        <Panel compact label={t("singbox.ruleSetCache")}>
+          <VStack align="stretch" spacing="3">
             <FormControl display="flex" justifyContent="space-between" alignItems="center">
-              <Box><FormLabel mb="0">{t("singbox.ruleSetCacheEnabled")}</FormLabel><FormHelperText>{t("singbox.ruleSetCacheHelp")}</FormHelperText></Box>
+              <Box><FormLabel mb="0" fontSize="xs">{t("singbox.ruleSetCacheEnabled")}</FormLabel><FormHelperText mt="1" fontSize="10px">{t("singbox.ruleSetCacheHelp")}</FormHelperText></Box>
               <Switch isChecked={ruleSets.cache_enabled} onChange={(event) => setRuleSets((current) => ({ ...current, cache_enabled: event.target.checked }))} />
             </FormControl>
-            <FormControl isRequired={ruleSets.cache_enabled}><FormLabel>{t("singbox.ruleSetCachePath")}</FormLabel><Input fontFamily="mono" value={ruleSets.cache_path} onChange={(event) => setRuleSets((current) => ({ ...current, cache_path: event.target.value }))} /></FormControl>
+            <FormControl isRequired={ruleSets.cache_enabled}><FormLabel fontSize="xs" mb="1">{t("singbox.ruleSetCachePath")}</FormLabel><Input size="sm" fontFamily="mono" value={ruleSets.cache_path} onChange={(event) => setRuleSets((current) => ({ ...current, cache_path: event.target.value }))} /></FormControl>
           </VStack>
         </Panel>
 
         <HStack justify="space-between" flexWrap="wrap">
-          <Text color="gray.500" fontFamily="mono" fontSize="sm">{t("singbox.ruleSetsHelp")}</Text>
-          <Button variant="outline" onClick={addRuleSet}>{t("singbox.ruleSetAdd")}</Button>
+          <Text color="gray.500" fontFamily="mono" fontSize="xs">{t("singbox.ruleSetsHelp")}</Text>
+          <Button size="sm" variant="outline" onClick={addRuleSet}>{t("singbox.ruleSetAdd")}</Button>
         </HStack>
 
-        {ruleSets.items.length === 0 && <Alert status="info"><AlertIcon />{t("singbox.ruleSetsEmpty")}</Alert>}
+        {ruleSets.items.length === 0 && <Alert status="info" py="2" fontSize="xs"><AlertIcon />{t("singbox.ruleSetsEmpty")}</Alert>}
         {ruleSets.items.map((item, index) => (
-          <Panel key={index} label={`${t("singbox.ruleSet")} ${index + 1}: ${item.tag || "—"}`}>
-            <VStack align="stretch" spacing="4">
-              <HStack justify="space-between">
+          <Panel key={index} compact label={`${t("singbox.ruleSet")} ${index + 1}: ${item.tag || "—"}`}>
+            <VStack align="stretch" spacing="2.5">
+              <HStack justify="space-between" minH="24px">
                 <Checkbox isChecked={item.enabled} onChange={(event) => updateRuleSet(index, "enabled", event.target.checked)}>{t("singbox.ruleSetEnabled")}</Checkbox>
-                <Button size="sm" variant="ghost" colorScheme="red" onClick={() => removeRuleSet(index)}>{t("delete")}</Button>
+                <Button size="xs" variant="ghost" colorScheme="red" onClick={() => removeRuleSet(index)}>{t("delete")}</Button>
               </HStack>
-              <Grid templateColumns={{ base: "1fr", md: "repeat(2, 1fr)", xl: "repeat(4, 1fr)" }} gap="4">
-                <FormControl isRequired><FormLabel>{t("singbox.ruleSetTag")}</FormLabel><Input fontFamily="mono" value={item.tag} onChange={(event) => updateRuleSet(index, "tag", event.target.value)} /></FormControl>
-                <FormControl><FormLabel>{t("singbox.ruleSetType")}</FormLabel><Select value={item.type} onChange={(event) => updateRuleSet(index, "type", event.target.value as "remote" | "local")}><option value="remote">remote</option><option value="local">local</option></Select></FormControl>
-                <FormControl><FormLabel>{t("singbox.ruleSetFormat")}</FormLabel><Select value={item.format} onChange={(event) => updateRuleSet(index, "format", event.target.value as "binary" | "source")}><option value="binary">binary (.srs)</option><option value="source">source (JSON)</option></Select></FormControl>
-                <FormControl><FormLabel>{t("singbox.ruleSetOutbound")}</FormLabel><Input fontFamily="mono" placeholder="direct" value={item.outbound} onChange={(event) => updateRuleSet(index, "outbound", event.target.value)} /><FormHelperText>{t("singbox.ruleSetOutboundHelp")}</FormHelperText></FormControl>
+              <Grid templateColumns={{ base: "1fr", md: "repeat(2, 1fr)", xl: "repeat(4, 1fr)" }} gap="3">
+                <FormControl isRequired><FormLabel fontSize="xs" mb="1">{t("singbox.ruleSetTag")}</FormLabel><Input size="sm" fontFamily="mono" value={item.tag} onChange={(event) => updateRuleSet(index, "tag", event.target.value)} /></FormControl>
+                <FormControl><FormLabel fontSize="xs" mb="1">{t("singbox.ruleSetType")}</FormLabel><Select size="sm" value={item.type} onChange={(event) => updateRuleSet(index, "type", event.target.value as "remote" | "local")}><option value="remote">remote</option><option value="local">local</option></Select></FormControl>
+                <FormControl><FormLabel fontSize="xs" mb="1">{t("singbox.ruleSetFormat")}</FormLabel><Select size="sm" value={item.format} onChange={(event) => updateRuleSet(index, "format", event.target.value as "binary" | "source")}><option value="binary">binary (.srs)</option><option value="source">source (JSON)</option></Select></FormControl>
+                <FormControl><FormLabel fontSize="xs" mb="1">{t("singbox.ruleSetOutbound")}</FormLabel><Input size="sm" fontFamily="mono" placeholder="direct" value={item.outbound} onChange={(event) => updateRuleSet(index, "outbound", event.target.value)} /><FormHelperText mt="1" fontSize="10px">{t("singbox.ruleSetOutboundHelp")}</FormHelperText></FormControl>
               </Grid>
-              {item.type === "remote" ? <Grid templateColumns={{ base: "1fr", lg: "2fr 1fr 1fr" }} gap="4">
-                <FormControl isRequired={item.enabled}><FormLabel>URL</FormLabel><Input fontFamily="mono" placeholder="https://example.com/rules.srs" value={item.url} onChange={(event) => updateRuleSet(index, "url", event.target.value)} /></FormControl>
-                <FormControl><FormLabel>{t("singbox.ruleSetDetour")}</FormLabel><Input fontFamily="mono" value={item.download_detour} onChange={(event) => updateRuleSet(index, "download_detour", event.target.value)} /></FormControl>
-                <FormControl><FormLabel>{t("singbox.ruleSetInterval")}</FormLabel><Input fontFamily="mono" placeholder="1d" value={item.update_interval} onChange={(event) => updateRuleSet(index, "update_interval", event.target.value)} /></FormControl>
-              </Grid> : <FormControl isRequired={item.enabled}><FormLabel>{t("singbox.ruleSetPath")}</FormLabel><Input fontFamily="mono" placeholder="/var/lib/marzban/rules/local.srs" value={item.path} onChange={(event) => updateRuleSet(index, "path", event.target.value)} /></FormControl>}
+              {item.type === "remote" ? <Grid templateColumns={{ base: "1fr", lg: "2fr 1fr 1fr" }} gap="3">
+                <FormControl isRequired={item.enabled}><FormLabel fontSize="xs" mb="1">URL</FormLabel><Input size="sm" fontFamily="mono" placeholder="https://example.com/rules.srs" value={item.url} onChange={(event) => updateRuleSet(index, "url", event.target.value)} /></FormControl>
+                <FormControl><FormLabel fontSize="xs" mb="1">{t("singbox.ruleSetDetour")}</FormLabel><Input size="sm" fontFamily="mono" value={item.download_detour} onChange={(event) => updateRuleSet(index, "download_detour", event.target.value)} /></FormControl>
+                <FormControl><FormLabel fontSize="xs" mb="1">{t("singbox.ruleSetInterval")}</FormLabel><Input size="sm" fontFamily="mono" placeholder="1d" value={item.update_interval} onChange={(event) => updateRuleSet(index, "update_interval", event.target.value)} /></FormControl>
+              </Grid> : <FormControl isRequired={item.enabled}><FormLabel fontSize="xs" mb="1">{t("singbox.ruleSetPath")}</FormLabel><Input size="sm" fontFamily="mono" placeholder="/var/lib/marzban/rules/local.srs" value={item.path} onChange={(event) => updateRuleSet(index, "path", event.target.value)} /></FormControl>}
             </VStack>
           </Panel>
         ))}
 
-        <Alert status="warning"><AlertIcon />{t("singbox.ruleSetReloadWarning")}</Alert>
+        <Alert status="warning" py="2" fontSize="xs"><AlertIcon />{t("singbox.ruleSetReloadWarning")}</Alert>
         <HStack justify="flex-end" flexWrap="wrap">
-          <Badge colorScheme={ruleSetsMeta?.persisted ? "green" : "gray"}>{ruleSetsMeta?.persisted ? t("singbox.editorSavedSource") : t("singbox.editorDefaultSource")}</Badge>
-          <Button variant="ghost" onClick={() => void loadRuleSets()}>{t("cancel")}</Button>
-          <Button variant="outline" isLoading={ruleSetsChecking} onClick={() => void checkRuleSets()}>{t("singbox.editorCheck")}</Button>
-          <Button variant="outline" isLoading={ruleSetsReloading} onClick={() => void reloadRuleSets()}>{t("singbox.ruleSetReload")}</Button>
-          <Button colorScheme="primary" isLoading={ruleSetsSaving} onClick={() => void saveRuleSets()}>{t("singbox.editorSave")}</Button>
+          <Badge fontSize="10px" colorScheme={ruleSetsMeta?.persisted ? "green" : "gray"}>{ruleSetsMeta?.persisted ? t("singbox.editorSavedSource") : t("singbox.editorDefaultSource")}</Badge>
+          <Button size="sm" variant="ghost" onClick={() => void loadRuleSets()}>{t("cancel")}</Button>
+          <Button size="sm" variant="outline" isLoading={ruleSetsChecking} onClick={() => void checkRuleSets()}>{t("singbox.editorCheck")}</Button>
+          <Button size="sm" variant="outline" isLoading={ruleSetsReloading} onClick={() => void reloadRuleSets()}>{t("singbox.ruleSetReload")}</Button>
+          <Button size="sm" colorScheme="primary" isLoading={ruleSetsSaving} onClick={() => void saveRuleSets()}>{t("singbox.editorSave")}</Button>
         </HStack>
       </VStack>}
           </TabPanel>

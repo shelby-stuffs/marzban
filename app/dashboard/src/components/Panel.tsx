@@ -4,6 +4,7 @@ import { FC, PropsWithChildren, ReactNode } from "react";
 export type PanelProps = {
   label?: string;
   actions?: ReactNode;
+  compact?: boolean;
 } & BoxProps;
 
 /**
@@ -13,6 +14,7 @@ export type PanelProps = {
 export const Panel: FC<PropsWithChildren<PanelProps>> = ({
   label,
   actions,
+  compact = false,
   children,
   ...props
 }) => (
@@ -32,18 +34,18 @@ export const Panel: FC<PropsWithChildren<PanelProps>> = ({
         justify="space-between"
         gap="3"
         flexWrap="wrap"
-        px="4"
-        py="2.5"
+        px={compact ? "3" : "4"}
+        py={compact ? "1.5" : "2.5"}
         borderBottom="1px solid"
         borderColor="terminal.border"
         bg="terminal.overlay"
       >
         <Text
           fontFamily="mono"
-          fontSize="xs"
+          fontSize={compact ? "10px" : "xs"}
           fontWeight="500"
           textTransform="uppercase"
-          letterSpacing="0.14em"
+          letterSpacing={compact ? "0.1em" : "0.14em"}
           color="gray.400"
           overflowWrap="anywhere"
         >
@@ -52,7 +54,7 @@ export const Panel: FC<PropsWithChildren<PanelProps>> = ({
         {actions}
       </Flex>
     )}
-    <Box p={{ base: "3", md: "4" }} minW="0">{children}</Box>
+    <Box p={compact ? "3" : { base: "3", md: "4" }} minW="0">{children}</Box>
   </Box>
 );
 
