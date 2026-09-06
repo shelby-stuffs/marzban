@@ -268,5 +268,17 @@
   "singbox.subscriptionPort": "Public UDP port",
   "singbox.subscriptionInsecure": "Allow insecure TLS",
   "singbox.subscriptionRemark": "Node name",
-  "singbox.subscriptionRemarkHelp": "Supports variables such as {USERNAME}, {SERVER_IP}, and {PROTOCOL}."
+  "singbox.subscriptionRemarkHelp": "Supports variables such as {USERNAME}, {SERVER_IP}, and {PROTOCOL}.",
+  "singbox.advancedEditor": "advanced sing-box JSON",
+  "singbox.editorWarning": "Managed Hysteria 2 inbounds and users are protected. Configure outbounds, route, DNS, logging and experimental features here. The complete merged config is checked before saving.",
+  "singbox.editorAllowed": "Allowed top-level sections",
+  "singbox.editorSavedSource": "saved",
+  "singbox.editorDefaultSource": "defaults",
+  "singbox.editorReset": "Reset to direct",
+  "singbox.editorCheck": "Check config",
+  "singbox.editorSave": "Save and apply",
+  "singbox.editorValid": "sing-box check passed",
+  "singbox.editorStructureValid": "JSON structure is valid; binary check is disabled",
+  "singbox.editorSaved": "Advanced sing-box config saved and applied",
+  "singbox.editorObjectRequired": "The editor must contain one JSON object"
 }

@@ -268,5 +268,17 @@
   "singbox.subscriptionPort": "Публичный UDP-порт",
   "singbox.subscriptionInsecure": "Разрешить небезопасный TLS",
   "singbox.subscriptionRemark": "Название узла",
-  "singbox.subscriptionRemarkHelp": "Поддерживаются переменные {USERNAME}, {SERVER_IP} и {PROTOCOL}."
+  "singbox.subscriptionRemarkHelp": "Поддерживаются переменные {USERNAME}, {SERVER_IP} и {PROTOCOL}.",
+  "singbox.advancedEditor": "расширенный JSON sing-box",
+  "singbox.editorWarning": "Управляемые inbound Hysteria 2 и пользователи защищены. Здесь настраиваются outbounds, route, DNS, логирование и experimental. Перед сохранением проверяется итоговый объединённый конфиг.",
+  "singbox.editorAllowed": "Разрешённые верхнеуровневые секции",
+  "singbox.editorSavedSource": "сохранён",
+  "singbox.editorDefaultSource": "по умолчанию",
+  "singbox.editorReset": "Сбросить на direct",
+  "singbox.editorCheck": "Проверить конфиг",
+  "singbox.editorSave": "Сохранить и применить",
+  "singbox.editorValid": "Проверка sing-box пройдена",
+  "singbox.editorStructureValid": "Структура JSON корректна; проверка бинарником выключена",
+  "singbox.editorSaved": "Расширенный конфиг sing-box сохранён и применён",
+  "singbox.editorObjectRequired": "В редакторе должен находиться один JSON-объект"
 }

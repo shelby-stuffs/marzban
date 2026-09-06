@@ -266,5 +266,17 @@
   "singbox.subscriptionPort": "公网 UDP 端口",
   "singbox.subscriptionInsecure": "允许不安全 TLS",
   "singbox.subscriptionRemark": "节点名称",
-  "singbox.subscriptionRemarkHelp": "支持 {USERNAME}、{SERVER_IP} 和 {PROTOCOL} 等变量。"
+  "singbox.subscriptionRemarkHelp": "支持 {USERNAME}、{SERVER_IP} 和 {PROTOCOL} 等变量。",
+  "singbox.advancedEditor": "高级 sing-box JSON",
+  "singbox.editorWarning": "托管的 Hysteria 2 入站和用户受到保护。可在此配置 outbounds、route、DNS、日志和 experimental。保存前会检查完整合并配置。",
+  "singbox.editorAllowed": "允许的顶级部分",
+  "singbox.editorSavedSource": "已保存",
+  "singbox.editorDefaultSource": "默认值",
+  "singbox.editorReset": "重置为 direct",
+  "singbox.editorCheck": "检查配置",
+  "singbox.editorSave": "保存并应用",
+  "singbox.editorValid": "sing-box 检查通过",
+  "singbox.editorStructureValid": "JSON 结构有效；二进制检查已禁用",
+  "singbox.editorSaved": "高级 sing-box 配置已保存并应用",
+  "singbox.editorObjectRequired": "编辑器必须包含一个 JSON 对象"
 }

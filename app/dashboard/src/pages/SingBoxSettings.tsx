@@ -21,6 +21,7 @@ import {
   useToast,
 } from "@chakra-ui/react";
 import { Header } from "components/Header";
+import { JsonEditor } from "components/JsonEditor";
 import { Panel } from "components/Panel";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -57,6 +58,14 @@ type SettingsResponse = {
 };
 
 
+type AdvancedConfigResponse = {
+  config: Record<string, unknown>;
+  persisted: boolean;
+  allowed_top_level_keys: string[];
+  reserved_top_level_keys: string[];
+};
+
+
 type LogsResponse = {
   feature_enabled: boolean;
   started: boolean;
@@ -88,6 +97,12 @@ export const SingBoxSettingsPage = () => {
   const [logsLoading, setLogsLoading] = useState(false);
   const [autoRefresh, setAutoRefresh] = useState(true);
   const logsRef = useRef<HTMLDivElement>(null);
+  const [advancedConfig, setAdvancedConfig] = useState<Record<string, unknown>>({});
+  const [advancedText, setAdvancedText] = useState("{}");
+  const [advancedMeta, setAdvancedMeta] = useState<AdvancedConfigResponse | null>(null);
+  const [advancedLoading, setAdvancedLoading] = useState(true);
+  const [advancedChecking, setAdvancedChecking] = useState(false);
+  const [advancedSaving, setAdvancedSaving] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -103,6 +118,67 @@ export const SingBoxSettingsPage = () => {
   };
 
   useEffect(() => { void load(); }, []);
+
+  const loadAdvanced = async () => {
+    setAdvancedLoading(true);
+    try {
+      const response = await fetch<AdvancedConfigResponse>("/singbox/advanced-config");
+      setAdvancedMeta(response);
+      setAdvancedConfig(response.config);
+      setAdvancedText(JSON.stringify(response.config, null, 2));
+    } catch (error) {
+      toast({ title: errorMessage(error), status: "error", position: "top" });
+    } finally {
+      setAdvancedLoading(false);
+    }
+  };
+
+  useEffect(() => { void loadAdvanced(); }, []);
+
+  const parseAdvanced = () => {
+    const parsed = JSON.parse(advancedText);
+    if (!parsed || Array.isArray(parsed) || typeof parsed !== "object") {
+      throw new Error(t("singbox.editorObjectRequired"));
+    }
+    return parsed as Record<string, unknown>;
+  };
+
+  const checkAdvanced = async () => {
+    setAdvancedChecking(true);
+    try {
+      const parsed = parseAdvanced();
+      const response = await fetch<{ valid: boolean; checked_by_binary: boolean }>("/singbox/advanced-config/check", { method: "POST", body: parsed });
+      toast({ title: response.checked_by_binary ? t("singbox.editorValid") : t("singbox.editorStructureValid"), status: "success", position: "top" });
+    } catch (error) {
+      toast({ title: errorMessage(error), status: "error", position: "top", isClosable: true });
+    } finally {
+      setAdvancedChecking(false);
+    }
+  };
+
+  const saveAdvanced = async () => {
+    setAdvancedSaving(true);
+    try {
+      const parsed = parseAdvanced();
+      const response = await fetch<AdvancedConfigResponse>("/singbox/advanced-config", { method: "PUT", body: parsed });
+      setAdvancedMeta(response);
+      setAdvancedConfig(response.config);
+      setAdvancedText(JSON.stringify(response.config, null, 2));
+      toast({ title: t("singbox.editorSaved"), status: "success", position: "top" });
+      await showPreview();
+      await loadLogs(true);
+    } catch (error) {
+      toast({ title: errorMessage(error), status: "error", position: "top", isClosable: true });
+    } finally {
+      setAdvancedSaving(false);
+    }
+  };
+
+  const resetAdvanced = () => {
+    const defaults = { outbounds: [{ type: "direct", tag: "direct" }], route: { rules: [], final: "direct" } };
+    setAdvancedConfig(defaults);
+    setAdvancedText(JSON.stringify(defaults, null, 2));
+  };
 
   const loadLogs = async (silent = false) => {
     if (!silent) setLogsLoading(true);
@@ -242,6 +318,22 @@ export const SingBoxSettingsPage = () => {
           {logsMeta?.logs.length ? logsMeta.logs.join("\n") : t("singbox.logsEmpty")}
         </Box>
         {logsMeta?.config_path && <Text mt="2" color="gray.500" fontFamily="mono" fontSize="xs">{t("singbox.configPath")}: {logsMeta.config_path}</Text>}
+      </Panel>
+
+      <Panel label={t("singbox.advancedEditor")}>
+        <Alert status="warning" mb="4"><AlertIcon />{t("singbox.editorWarning")}</Alert>
+        <HStack justify="space-between" mb="3" flexWrap="wrap" gap="2">
+          <Text color="gray.500" fontFamily="mono" fontSize="xs">
+            {t("singbox.editorAllowed")}: {(advancedMeta?.allowed_top_level_keys || ["log", "dns", "outbounds", "route", "experimental"]).join(", ")}
+          </Text>
+          <Badge colorScheme={advancedMeta?.persisted ? "green" : "gray"}>{advancedMeta?.persisted ? t("singbox.editorSavedSource") : t("singbox.editorDefaultSource")}</Badge>
+        </HStack>
+        {advancedLoading ? <Spinner /> : <JsonEditor json={advancedConfig} onChange={setAdvancedText} />}
+        <HStack justify="flex-end" mt="4" flexWrap="wrap">
+          <Button variant="ghost" onClick={resetAdvanced}>{t("singbox.editorReset")}</Button>
+          <Button variant="outline" isLoading={advancedChecking} onClick={() => void checkAdvanced()}>{t("singbox.editorCheck")}</Button>
+          <Button colorScheme="primary" isLoading={advancedSaving} onClick={() => void saveAdvanced()}>{t("singbox.editorSave")}</Button>
+        </HStack>
       </Panel>
 
       <Grid templateColumns={{ base: "1fr", xl: "1fr 1fr" }} gap="4" alignItems="start">

@@ -175,6 +175,16 @@ def build_hysteria2_settings_config(settings: Mapping, users: Iterable[Mapping])
     }
 
 
+def merge_advanced_config(managed: Mapping, advanced: Mapping | None) -> dict:
+    """Overlay editable top-level sections while preserving managed inbounds."""
+    result = deepcopy(dict(managed))
+    for key, value in (advanced or {}).items():
+        if key == "inbounds":
+            raise ValueError("sing-box inbounds are managed by Marzban")
+        result[key] = deepcopy(value)
+    return result
+
+
 def subscription_host_from_settings(settings: Mapping) -> dict | None:
     """Build one authoritative public endpoint for all subscription formats."""
     if not settings.get("subscription_enabled", True):

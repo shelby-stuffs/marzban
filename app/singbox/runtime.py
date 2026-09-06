@@ -6,10 +6,12 @@ from app import logger, xray
 from app.db import GetDB, crud
 from app.models.proxy import ProxyTypes
 from app.models.user import UserStatus
-from app.singbox.config import build_hysteria2_settings_config
+from app.singbox.advanced import load_advanced_config
+from app.singbox.config import build_hysteria2_settings_config, merge_advanced_config
 from app.singbox.core import SingBoxCore
 from app.singbox.settings import generate_settings, load_settings
 from config import (
+    SINGBOX_ADVANCED_CONFIG_PATH,
     SINGBOX_CONFIG_PATH,
     SINGBOX_EXECUTABLE_PATH,
     SINGBOX_HYSTERIA_SETTINGS_PATH,
@@ -54,11 +56,18 @@ class SingBoxHysteriaRuntime:
                 })
         return result
 
-    def build_current(self, settings=None) -> dict:
+    def current_advanced_config(self) -> dict:
+        config, _persisted = load_advanced_config(SINGBOX_ADVANCED_CONFIG_PATH)
+        return config
+
+    def build_current(self, settings=None, advanced_config=None) -> dict:
         settings = settings or self.current_settings()
-        return build_hysteria2_settings_config(
+        if advanced_config is None:
+            advanced_config = self.current_advanced_config()
+        managed = build_hysteria2_settings_config(
             settings.model_dump(), self._users(settings.tag)
         )
+        return merge_advanced_config(managed, advanced_config)
 
     def apply_current(self) -> bool:
         settings = self.current_settings()

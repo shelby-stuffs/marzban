@@ -270,5 +270,17 @@
   "singbox.subscriptionPort": "پورت عمومی UDP",
   "singbox.subscriptionInsecure": "TLS ناامن مجاز",
   "singbox.subscriptionRemark": "نام گره",
-  "singbox.subscriptionRemarkHelp": "متغیرهای {USERNAME}، {SERVER_IP} و {PROTOCOL} پشتیبانی می‌شوند."
+  "singbox.subscriptionRemarkHelp": "متغیرهای {USERNAME}، {SERVER_IP} و {PROTOCOL} پشتیبانی می‌شوند.",
+  "singbox.advancedEditor": "JSON پیشرفته sing-box",
+  "singbox.editorWarning": "ورودی‌های Hysteria 2 و کاربران مدیریت‌شده محافظت می‌شوند. outbounds، route، DNS، logging و experimental را اینجا تنظیم کنید.",
+  "singbox.editorAllowed": "بخش‌های سطح بالا مجاز",
+  "singbox.editorSavedSource": "ذخیره‌شده",
+  "singbox.editorDefaultSource": "پیش‌فرض",
+  "singbox.editorReset": "بازنشانی به direct",
+  "singbox.editorCheck": "بررسی پیکربندی",
+  "singbox.editorSave": "ذخیره و اعمال",
+  "singbox.editorValid": "بررسی sing-box موفق بود",
+  "singbox.editorStructureValid": "ساختار JSON معتبر است؛ بررسی باینری غیرفعال است",
+  "singbox.editorSaved": "پیکربندی پیشرفته ذخیره و اعمال شد",
+  "singbox.editorObjectRequired": "ویرایشگر باید یک شیء JSON داشته باشد"
 }
