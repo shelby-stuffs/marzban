@@ -5,11 +5,13 @@ ROOT = Path(__file__).resolve().parents[1]
 
 class DashboardTerminalPolishTests(unittest.TestCase):
     def test_status_filter_is_visible_and_uses_status_value(self):
-        source=(ROOT/"app/dashboard/src/components/UsersTable.tsx").read_text()
-        self.assertIn('value={filters.status || ""}', source)
-        self.assertNotIn('left={"-40px"}', source)
-        self.assertNotIn('value={filters.sort}', source)
-        self.assertIn('overflowX="auto"', source)
+        table=(ROOT/"app/dashboard/src/components/UsersTable.tsx").read_text()
+        filters=(ROOT/"app/dashboard/src/components/Filters.tsx").read_text()
+        self.assertIn('value={filters.status || ""}', filters)
+        self.assertNotIn('Sort by expire', table)
+        self.assertNotIn('position="sticky"', table)
+        self.assertIn('tableLayout="fixed"', table)
+        self.assertIn('overflowX="auto"', table)
 
     def test_charts_have_bounded_height(self):
         nodes=(ROOT/"app/dashboard/src/components/NodesUsage.tsx").read_text()

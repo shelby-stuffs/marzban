@@ -9,7 +9,6 @@ import {
   ExpandedIndex,
   HStack,
   IconButton,
-  Select,
   Slider,
   SliderFilledTrack,
   SliderProps,
@@ -215,18 +214,8 @@ export const UsersTable: FC<UsersTableProps> = (props) => {
   const [selectedRow, setSelectedRow] = useState<ExpandedIndex | undefined>(
     undefined
   );
-  const marginTop = useBreakpointValue({ base: 120, lg: 72 }) || 72;
-  const [top, setTop] = useState(`${marginTop}px`);
   const useTable = useBreakpointValue({ base: false, md: true });
 
-  useEffect(() => {
-    const calcTop = () => {
-      const el = document.querySelectorAll("#filters")[0] as HTMLElement;
-      setTop(`${el.offsetHeight}px`);
-    };
-    window.addEventListener("scroll", calcTop);
-    () => window.removeEventListener("scroll", calcTop);
-  }, []);
 
   const isFiltered = users.length !== totalUsers.total;
 
@@ -246,12 +235,6 @@ export const UsersTable: FC<UsersTableProps> = (props) => {
       sort: newSort,
     });
   };
-  const handleStatusFilter = (e: any) => {
-    onFilterChange({
-      status: e.target.value.length > 0 ? e.target.value : undefined,
-    });
-  };
-
   const [statsSort, setStatsSort] = useState<string>("");
 
   const handleStatsSort = (column: string) => {
@@ -294,8 +277,6 @@ export const UsersTable: FC<UsersTableProps> = (props) => {
           <Thead zIndex="docked" position="relative">
             <Tr>
               <Th
-                position="sticky"
-                top={top}
                 minW="120px"
                 pl={4}
                 pr={4}
@@ -308,8 +289,6 @@ export const UsersTable: FC<UsersTableProps> = (props) => {
                 </HStack>
               </Th>
               <Th
-                position="sticky"
-                top={top}
                 minW="150px"
                 px={2}
               >
@@ -331,8 +310,6 @@ export const UsersTable: FC<UsersTableProps> = (props) => {
                 </Select>
               </Th>
               <Th
-                position="sticky"
-                top={top}
                 minW="100px"
                 cursor={"pointer"}
                 pr={0}
@@ -344,8 +321,6 @@ export const UsersTable: FC<UsersTableProps> = (props) => {
                 </HStack>
               </Th>
               <Th
-                position="sticky"
-                top={top}
                 minW="32px"
                 w="32px"
                 p={0}
@@ -519,117 +494,31 @@ export const UsersTable: FC<UsersTableProps> = (props) => {
       <Table
         orientation="vertical"
         display={{ base: "none", md: "table" }}
+        tableLayout="fixed"
+        minW="1090px"
         {...props}
       >
-        <Thead zIndex="docked" position="relative">
+        <Thead>
           <Tr>
-            <Th
-              position="sticky"
-              top={{ base: "unset", md: top }}
-              minW="140px"
-              cursor={"pointer"}
-              onClick={handleSort.bind(null, "username")}
-            >
-              <HStack>
-                <span>{t("username")}</span>
-                <Sort sort={filters.sort} column="username" />
-              </HStack>
+            <Th w="160px" cursor="pointer" onClick={handleSort.bind(null, "username")}>
+              <HStack><span>{t("username")}</span><Sort sort={filters.sort} column="username" /></HStack>
             </Th>
-            <Th
-              position="sticky"
-              top={{ base: "unset", md: top }}
-              minW="300px"
-              w="300px"
-            >
-              <HStack spacing={2} minW={0}>
-                <Select
-                  aria-label={t("usersTable.status")}
-                  value={filters.status || ""}
-                  onChange={handleStatusFilter}
-                  size="xs"
-                  w="150px"
-                  minW="150px"
-                  fontSize="xs"
-                  fontWeight="600"
-                  textTransform="uppercase"
-                >
-                  <option value="">{t("usersTable.status")}: all</option>
-                  <option value="active">active</option>
-                  <option value="on_hold">on hold</option>
-                  <option value="disabled">disabled</option>
-                  <option value="limited">limited</option>
-                  <option value="expired">expired</option>
-                </Select>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="xs"
-                  minW="0"
-                  px={2}
-                  onClick={() => handleSort("expire")}
-                >
-                  <HStack spacing={1}>
-                    <Text whiteSpace="nowrap">Sort by expire</Text>
-                    <Sort sort={filters.sort} column="expire" />
-                  </HStack>
-                </Button>
-              </HStack>
+            <Th w="150px" cursor="pointer" onClick={handleSort.bind(null, "expire")}>
+              <HStack><span>{t("usersTable.status")}</span><Sort sort={filters.sort} column="expire" /></HStack>
             </Th>
-            <Th
-              position="sticky"
-              top={{ base: "unset", md: top }}
-              width="350px"
-              minW="230px"
-              cursor={"pointer"}
-              onClick={handleSort.bind(null, "used_traffic")}
-            >
-              <HStack>
-                <span>{t("usersTable.dataUsage")}</span>
-                <Sort sort={filters.sort} column="used_traffic" />
-              </HStack>
+            <Th w="260px" cursor="pointer" onClick={handleSort.bind(null, "used_traffic")}>
+              <HStack><span>{t("usersTable.dataUsage")}</span><Sort sort={filters.sort} column="used_traffic" /></HStack>
             </Th>
-            <Th
-              position="sticky"
-              top={{ base: "unset", md: top }}
-              minW="110px"
-              cursor="pointer"
-              onClick={() => handleStatsSort("bytes_prev_hour")}
-            >
-              <HStack>
-                <span>{t("usersTable.prevHour")}</span>
-                <Sort sort={statsSort} column="bytes_prev_hour" />
-              </HStack>
+            <Th w="120px" cursor="pointer" onClick={() => handleStatsSort("bytes_prev_hour")}>
+              <HStack><span>{t("usersTable.prevHour")}</span><Sort sort={statsSort} column="bytes_prev_hour" /></HStack>
             </Th>
-            <Th
-              position="sticky"
-              top={{ base: "unset", md: top }}
-              minW="110px"
-              cursor="pointer"
-              onClick={() => handleStatsSort("bytes_curr_hour")}
-            >
-              <HStack>
-                <span>{t("usersTable.currHour")}</span>
-                <Sort sort={statsSort} column="bytes_curr_hour" />
-              </HStack>
+            <Th w="120px" cursor="pointer" onClick={() => handleStatsSort("bytes_curr_hour")}>
+              <HStack><span>{t("usersTable.currHour")}</span><Sort sort={statsSort} column="bytes_curr_hour" /></HStack>
             </Th>
-            <Th
-              position="sticky"
-              top={{ base: "unset", md: top }}
-              minW="110px"
-              cursor="pointer"
-              onClick={() => handleStatsSort("bytes_today")}
-            >
-              <HStack>
-                <span>{t("usersTable.today")}</span>
-                <Sort sort={statsSort} column="bytes_today" />
-              </HStack>
+            <Th w="120px" cursor="pointer" onClick={() => handleStatsSort("bytes_today")}>
+              <HStack><span>{t("usersTable.today")}</span><Sort sort={statsSort} column="bytes_today" /></HStack>
             </Th>
-            <Th
-              position="sticky"
-              top={{ base: "unset", md: top }}
-              width="200px"
-              minW="180px"
-            />
+            <Th w="160px" />
           </Tr>
         </Thead>
         <Tbody>
@@ -643,20 +532,20 @@ export const UsersTable: FC<UsersTableProps> = (props) => {
                   })}
                   onClick={() => onEditingUser(user)}
                 >
-                  <Td minW="140px">
+                  <Td w="160px">
                     <div className="flex-status">
                       <OnlineBadge lastOnline={user.online_at} />
                       {user.username}
                       <OnlineStatus lastOnline={user.online_at} />
                     </div>
                   </Td>
-                  <Td width="400px" minW="150px">
+                  <Td w="150px">
                     <StatusBadge
                       expiryDate={user.expire}
                       status={user.status}
                     />
                   </Td>
-                  <Td width="350px" minW="230px">
+                  <Td w="260px">
                     <UsageSlider
                       totalUsedTraffic={user.lifetime_used_traffic}
                       dataLimitResetStrategy={user.data_limit_reset_strategy}
@@ -671,7 +560,7 @@ export const UsersTable: FC<UsersTableProps> = (props) => {
                     const bytes = stat ? stat[key] : null;
                     const speed = stat ? stat[speedKeys[idx]] : null;
                     return (
-                      <Td key={key} minW="110px">
+                      <Td key={key} w="120px">
                         {stat ? (
                           <VStack spacing={0} align="start">
                             <Text fontSize="sm" fontFamily="mono">{formatBytes(bytes!)}</Text>
@@ -685,7 +574,7 @@ export const UsersTable: FC<UsersTableProps> = (props) => {
                       </Td>
                     );
                   })}
-                  <Td width="200px" minW="180px">
+                  <Td w="160px">
                     <ActionButtons user={user} />
                   </Td>
                 </Tr>

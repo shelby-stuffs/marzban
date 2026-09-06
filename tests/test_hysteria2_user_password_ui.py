@@ -14,12 +14,11 @@ class Hysteria2UserPasswordUiTests(unittest.TestCase):
         self.assertIn('generateHysteriaPassword()', self.source)
         self.assertIn('shouldDirty: true, shouldValidate: true', self.source)
 
-    def test_user_dialog_keeps_legacy_user_salamander_override(self):
+    def test_user_dialog_does_not_expose_salamander_fields(self):
         dialog = self.source[self.source.index('in={(selectedProxies || []).includes("hysteria")}'):]
         dialog = dialog[:dialog.index("</Collapse>")]
-        self.assertIn('proxies.hysteria.obfs', dialog)
-        self.assertIn('proxies.hysteria.obfs_password', dialog)
-        self.assertIn('value="none"', dialog)
+        self.assertNotIn('proxies.hysteria.obfs', dialog)
+        self.assertNotIn('proxies.hysteria.obfs_password', dialog)
 
     def test_default_new_user_gets_individual_password(self):
         self.assertIn('auth: generateHysteriaPassword()', self.source)

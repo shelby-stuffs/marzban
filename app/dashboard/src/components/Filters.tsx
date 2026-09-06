@@ -10,6 +10,7 @@ import {
   InputGroup,
   InputLeftElement,
   InputRightElement,
+  Select,
   Spinner,
 } from "@chakra-ui/react";
 import {
@@ -64,9 +65,9 @@ export const Filters: FC<FilterProps> = ({ ...props }) => {
     <Grid
       id="filters"
       templateColumns={{
-        lg: "repeat(3, 1fr)",
-        md: "repeat(4, 1fr)",
-        base: "repeat(1, 1fr)",
+        lg: "minmax(260px, 1fr) 190px auto",
+        md: "minmax(240px, 1fr) 180px auto",
+        base: "1fr",
       }}
       position="sticky"
       top={0}
@@ -84,7 +85,7 @@ export const Filters: FC<FilterProps> = ({ ...props }) => {
       zIndex="docked"
       {...props}
     >
-      <GridItem colSpan={{ base: 1, md: 2, lg: 1 }} order={{ base: 2, md: 1 }}>
+      <GridItem order={{ base: 2, md: 1 }}>
         <InputGroup size="sm">
           <InputLeftElement
             pointerEvents="none"
@@ -113,7 +114,28 @@ export const Filters: FC<FilterProps> = ({ ...props }) => {
           </InputRightElement>
         </InputGroup>
       </GridItem>
-      <GridItem colSpan={2} order={{ base: 1, md: 2 }}>
+      <GridItem order={{ base: 3, md: 2 }}>
+        <Select
+          size="sm"
+          aria-label={t("usersTable.status")}
+          value={filters.status || ""}
+          onChange={(event) =>
+            onFilterChange({
+              ...filters,
+              offset: 0,
+              status: event.target.value || undefined,
+            })
+          }
+        >
+          <option value="">— {t("usersTable.status")} —</option>
+          <option value="active">{t("status.active")}</option>
+          <option value="on_hold">{t("userDialog.onHold")}</option>
+          <option value="disabled">{t("status.disabled")}</option>
+          <option value="limited">{t("status.limited")}</option>
+          <option value="expired">{t("status.expired")}</option>
+        </Select>
+      </GridItem>
+      <GridItem order={{ base: 1, md: 3 }}>
         <HStack justifyContent="flex-end" alignItems="center" h="full" gap="2">
           <IconButton
             aria-label="refresh users"
