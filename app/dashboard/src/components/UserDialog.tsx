@@ -101,6 +101,11 @@ const formatUser = (user: User): FormType => {
     selected_proxies: Object.keys(user.proxies) as ProxyKeys,
   };
 };
+const generateHysteriaPassword = () =>
+  Array.from(crypto.getRandomValues(new Uint8Array(16)))
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
+
 const getDefaultValues = (): FormType => {
   const defaultInbounds = Object.fromEntries(useDashboard.getState().inbounds);
   const inbounds: UserInbounds = {};
@@ -122,7 +127,7 @@ const getDefaultValues = (): FormType => {
       vmess: { id: "" },
       trojan: { password: "" },
       shadowsocks: { password: "", method: "chacha20-ietf-poly1305" },
-      hysteria: { auth: "", obfs: "", obfs_password: "" },
+      hysteria: { auth: generateHysteriaPassword() },
     },
   };
 };
@@ -790,35 +795,45 @@ export const UserDialog: FC<UserDialogProps> = () => {
                     in={(selectedProxies || []).includes("hysteria")}
                     animateOpacity
                   >
-                    <Text fontSize="sm" color="terminal.dim" mt={2}>
-                      Legacy fields: configure obfs in Hosts/inbound instead. / Устаревшие поля: настраивайте obfs в Hosts/inbound.
-                      These values do not override host settings. / Эти значения не переопределяют настройки хоста.
-                    </Text>
-                    <FormControl mt="10px">
-                      <FormLabel>{t("userDialog.hysteriaObfs")}</FormLabel>
-                      <Select
-                        size="sm"
-                        disabled={disabled}
-                        {...form.register("proxies.hysteria.obfs")}
-                      >
-                        <option value="">none</option>
-                        <option value="salamander">salamander</option>
-                      </Select>
-                    </FormControl>
-                    <FormControl mt="10px">
+                    <FormControl
+                      mt="10px"
+                      isRequired
+                      isInvalid={!!form.formState.errors.proxies?.message}
+                    >
                       <FormLabel>
-                        <Flex gap={2} alignItems={"center"}>
-                          {t("userDialog.hysteriaObfsPassword")}
-                          <ReloadIcon cursor={"pointer"} onClick={() => { const p = Array.from(crypto.getRandomValues(new Uint8Array(16))).map((b) => b.toString(16).padStart(2, "0")).join(""); form.setValue("proxies.hysteria.obfs", "salamander"); form.setValue("proxies.hysteria.obfs_password", p); }} />
+                        <Flex gap={2} alignItems="center" justifyContent="space-between">
+                          <span>{t("userDialog.hysteriaPassword")}</span>
+                          <Button
+                            type="button"
+                            size="xs"
+                            variant="outline"
+                            isDisabled={disabled}
+                            onClick={() =>
+                              form.setValue(
+                                "proxies.hysteria.auth",
+                                generateHysteriaPassword(),
+                                { shouldDirty: true, shouldValidate: true }
+                              )
+                            }
+                          >
+                            <ReloadIcon mr={1} />
+                            {t("userDialog.generatePassword")}
+                          </Button>
                         </Flex>
                       </FormLabel>
                       <Input
                         size="sm"
                         type="text"
                         borderRadius="6px"
+                        autoComplete="new-password"
                         disabled={disabled}
-                        {...form.register("proxies.hysteria.obfs_password")}
+                        {...form.register("proxies.hysteria.auth", {
+                          required: t("userDialog.hysteriaPasswordRequired"),
+                        })}
                       />
+                      <FormHelperText color="terminal.dim">
+                        {t("userDialog.hysteriaPasswordHelp")}
+                      </FormHelperText>
                     </FormControl>
                   </Collapse>
                 </GridItem>

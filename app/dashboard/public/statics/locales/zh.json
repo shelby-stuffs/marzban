@@ -197,5 +197,9 @@
   "usersTable.avgSpeedPrefix": "均",
   "usersTable.prevHour": "上一小时",
   "usersTable.currHour": "当前小时",
-  "usersTable.today": "今日"
+  "usersTable.today": "今日",
+  "userDialog.hysteriaPassword": "Hysteria 2 user password",
+  "userDialog.generatePassword": "Generate",
+  "userDialog.hysteriaPasswordRequired": "Hysteria 2 user password is required",
+  "userDialog.hysteriaPasswordHelp": "Unique per user. Changing it revokes old Hysteria 2 configs. Configure Salamander in Hosts/inbound."
 }

@@ -199,5 +199,9 @@
   "usersTable.avgSpeedPrefix": "ср.",
   "usersTable.prevHour": "Прошлый час",
   "usersTable.currHour": "Текущий час",
-  "usersTable.today": "Сутки"
+  "usersTable.today": "Сутки",
+  "userDialog.hysteriaPassword": "Пароль пользователя Hysteria 2",
+  "userDialog.generatePassword": "Сгенерировать",
+  "userDialog.hysteriaPasswordRequired": "Укажите пароль пользователя Hysteria 2",
+  "userDialog.hysteriaPasswordHelp": "Уникален для этого пользователя. Смена пароля отзывает старые конфигурации Hysteria 2. Salamander настраивается в Hosts/inbound."
 }
