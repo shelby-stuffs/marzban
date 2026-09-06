@@ -1224,6 +1224,13 @@ class V2rayJsonConfig(str):
                     }]
                 }
 
+            # Native Hysteria2 uses QUIC streams, not the panel's generic
+            # Mux.Cool overlay. Its packet obfuscation is configured above.
+            # Do not parse/apply the generic Freedom fragment/noises options:
+            # their dialer is not connected to this Hysteria transport.
+            self.add_config(remarks=remark, outbounds=[outbound])
+            return
+
         outbounds = [outbound]
         dialer_proxy = ''
         extra_outbound = self.make_dialer_outbound(fragment, noise)
@@ -1231,7 +1238,7 @@ class V2rayJsonConfig(str):
             dialer_proxy = extra_outbound['tag']
             outbounds.append(extra_outbound)
 
-        # Hysteria2's streamSettings were constructed above.
+        # Native Hysteria2 has already returned above.
         if inbound['protocol'] != 'hysteria':
             alpn = inbound.get('alpn', None)
             outbound["streamSettings"] = self.make_stream_setting(

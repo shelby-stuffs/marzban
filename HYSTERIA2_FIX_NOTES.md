@@ -1,4 +1,4 @@
-# Hysteria 2: пакеты исправлений 01 + 02
+# Hysteria 2: пакеты исправлений 01 + 02 + 03
 
 ## Область изменений пакета 01
 Генерация Xray JSON в app/subscription/v2ray.py и изолированные тесты.
@@ -40,7 +40,7 @@ SyntaxWarning об escape-последовательности в xray_api/proto
 ## Статус подозрительных мест
 1. Исправлено в пакете 02: чтение Salamander из finalmask.udp и передача
    в метаданные подписок (подробности ниже).
-2. Проверить влияние общих Mux, fragment и noise на Hysteria/QUIC.
+2. Исправлено в пакете 03: обход общего Mux и неподключённого fragment/noise dialer.
 3. Проверить создание/отзыв пользователя через gRPC и учёт трафика.
 4. Проверить схемы inbound и обязательные поля version/users на закреплённом ядре.
 
@@ -82,3 +82,51 @@ app/subscription/v2ray.py и добавить tests/test_hysteria2_xray_json.py.
 эквивалентом серверной конфигурации. Некорректные элементы пропускаются при
 извлечении метаданных; проверять корректность исходного конфига должно ядро.
 
+
+## Пакет 03: Mux / fragment / noise
+Архив marzban-hysteria2-fix-03.zip накопительный: содержит пакеты 01, 02 и 03.
+
+Подтверждено по коду генератора:
+- Для Hysteria создавался Freedom outbound `dialer` с fragment/noises, но ссылка
+  sockopt.dialerProxy в её streamSettings отсутствовала. Этот outbound не был
+  подключён к транспорту Hysteria и мог приводить к конфликтам тегов с шаблоном.
+- Общий mux_enable добавлял Mux.Cool поверх native Hysteria без проверки протокола.
+- До завершения экспорта разбирались ненужные Hysteria параметры fragment/noise
+  и JSON общего Mux-шаблона. Некорректные значения могли прерывать генерацию.
+
+Исправление:
+Ветка protocol=hysteria теперь сохраняет готовую конфигурацию и возвращается
+до общего кода Freedom dialer/Mux. Шаблон подписки по-прежнему обрабатывается
+через add_config. TLS, auth, Salamander из пакетов 01/02 сохранены.
+
+Это намеренная политика экспортера для native Hysteria2: общие опции хоста
+mux_enable, fragment_setting и noise_setting не применяются к её Xray JSON.
+Она согласуется с уже существующими ранними возвратами Hysteria в генераторах
+Clash Meta и sing-box. UI и БД не менялись: опции могут оставаться видимыми и
+сохранёнными, но при экспорте Hysteria игнорируются. Другие протоколы сохраняют
+прежний код генерации. VLESS поверх Hysteria-транспорта отдельно не изменялся.
+
+Важно: fragment — TCP-фрагментация; Freedom noises — именно UDP-шум, а не
+TCP-функция. Фикс НЕ утверждает, что UDP-шум принципиально невозможен с QUIC.
+Он убирает неподключённый Freedom dialer в текущем генераторе; поддержку
+UDP-шумов через согласованный finalmask нужно проектировать отдельно.
+Документация:
+- https://xtls.github.io/en/config/outbound.html (Mux.Cool / XUDP)
+- https://xtls.github.io/en/config/outbounds/freedom.html (fragment / noises)
+- https://xtls.github.io/en/config/transports/hysteria.html (QUIC transport)
+
+Проверки пакета 03:
+Добавлено 9 регрессионных тестов (7 проверок Hysteria, 2 контрольных VLESS).
+До исправления не проходили 7 новых проверок, после — все проходят.
+Итого: 19 тестов Xray JSON + 14 тестов inbound = 33 успешных теста.
+Компиляция app, cli, xray_api успешна.
+Ограничения из предыдущих пакетов остаются: это изолированные тесты через AST,
+без штатной инициализации приложения, БД, pytest и запуска бинарника Xray.
+
+Если пакет 02 уже установлен, для пакета 03 заменить только:
+- app/subscription/v2ray.py
+- tests/test_hysteria2_xray_json.py
+- HYSTERIA2_FIX_NOTES.md (эти примечания)
+
+Предлагаемый коммит:
+fix(hysteria2): skip generic mux and unused fragment/noise dialers

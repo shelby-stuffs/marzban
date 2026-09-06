@@ -106,6 +106,59 @@ class HysteriaXrayJsonTests(unittest.TestCase):
         self.assertNotIn("hysteriaSettings", outbound["streamSettings"])
         self.assertNotIn("finalmask", outbound["streamSettings"])
 
+    def test_hysteria_does_not_emit_generic_mux(self):
+        outbound = self.generate(mux_enable=True)
+        self.assertNotIn("mux", outbound)
+
+    def test_hysteria_fragment_does_not_add_unused_dialer(self):
+        self.generate(fragment_setting="10-20,1-2,tlshello")
+        self.assertEqual(len(self.config.config[-1]["outbounds"]), 1)
+
+    def test_hysteria_noise_does_not_add_unused_dialer(self):
+        self.generate(noise_setting="str:hello,1-2")
+        self.assertEqual(len(self.config.config[-1]["outbounds"]), 1)
+
+    def test_hysteria_does_not_parse_inapplicable_fragment(self):
+        self.generate(fragment_setting="malformed-legacy-value")
+        self.assertEqual(len(self.config.config[-1]["outbounds"]), 1)
+
+    def test_hysteria_does_not_parse_inapplicable_noise(self):
+        # Metadata fixtures bypass API validation deliberately: unused options
+        # must not be processed by this protocol's exporter at all.
+        self.generate(noise_setting=123)
+        self.assertEqual(len(self.config.config[-1]["outbounds"]), 1)
+
+    def test_hysteria_does_not_parse_generic_mux_template(self):
+        self.config.mux_template = "not-json"
+        self.assertNotIn("mux", self.generate(mux_enable=True))
+
+    def test_hysteria_options_do_not_change_tls_auth_or_salamander(self):
+        baseline = copy.deepcopy(self.generate())
+        result = self.generate(mux_enable=True, fragment_setting="10-20,1-2,tlshello",
+                               noise_setting="str:hello,1-2")
+        self.assertEqual(result, baseline)
+        self.assertEqual(len(self.config.config[-1]["outbounds"]), 1)
+        self.assertNotIn("sockopt", result["streamSettings"])
+
+    def test_vless_still_emits_generic_mux(self):
+        inbound = dict(self.inbound, protocol="vless", network="raw", mux_enable=True)
+        self.config.add("VLESS", "203.0.113.10", inbound, {"id": "test-id"})
+        self.assertIs(self.config.config[-1]["outbounds"][0]["mux"]["enabled"], True)
+
+    def test_vless_still_uses_fragment_noise_dialer(self):
+        inbound = dict(self.inbound, protocol="vless", network="raw",
+                       fragment_setting="10-20,1-2,tlshello", noise_setting="str:hello,1-2")
+        self.config.add("VLESS", "203.0.113.10", inbound, {"id": "test-id"})
+        outbounds = self.config.config[-1]["outbounds"]
+        self.assertEqual(len(outbounds), 2)
+        self.assertEqual(outbounds[0]["streamSettings"]["sockopt"]["dialerProxy"], "dialer")
+        self.assertEqual(outbounds[1], {
+            "tag": "dialer", "protocol": "freedom", "settings": {
+                "fragment": {"length": "10-20", "interval": "1-2", "packets": "tlshello"},
+                "noises": [{"type": "str", "packet": "hello", "delay": "1-2"}],
+            },
+        })
+
 
 if __name__ == "__main__":
     unittest.main()
