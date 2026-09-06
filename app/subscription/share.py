@@ -361,7 +361,7 @@ def process_inbounds_and_tags(
             for host in xray.hosts.get(tag, []):
                 host_inbound = inbound.copy()
                 sni = ""
-                sni_list = host["sni"] or inbound["sni"]
+                sni_list = host["sni"] or inbound.get("sni", [])
                 if sni_list:
                     salt = secrets.token_hex(8)
                     sni = random.choice(sni_list).replace("*", salt)
@@ -370,7 +370,7 @@ def process_inbounds_and_tags(
                     host_inbound["sid"] = random.choice(sids)
 
                 req_host = ""
-                req_host_list = host["host"] or inbound["host"]
+                req_host_list = host["host"] or inbound.get("host", [])
                 if req_host_list:
                     salt = secrets.token_hex(8)
                     req_host = random.choice(req_host_list).replace("*", salt)
