@@ -1,4 +1,5 @@
 import { extendTheme } from "@chakra-ui/react";
+import { terminalTheme } from "./src/theme/terminal";
 
 const mono = `"JetBrains Mono","SFMono-Regular",Menlo,Consolas,"Liberation Mono",monospace`;
 const sans = `Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",sans-serif`;
@@ -11,7 +12,7 @@ const TEXT = "#c8d6e2";
 
 // The dashboard is dark-only. There is no light color mode, so every component
 // style below targets a single dark canvas and no _light branches exist.
-export const theme = extendTheme({
+const baseTheme = extendTheme({
   config: {
     initialColorMode: "dark",
     useSystemColorMode: false,
@@ -392,4 +393,5 @@ export const theme = extendTheme({
   },
 });
 
+export const theme = extendTheme(baseTheme, terminalTheme);
 export default theme;

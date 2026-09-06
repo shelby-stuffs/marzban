@@ -195,7 +195,7 @@ const RadioCard: FC<
       bg={shouldBeDisabled ? "gray.100" : "transparent"}
       _dark={{
         borderColor: "gray.600",
-        bg: shouldBeDisabled ? "#364154" : "transparent",
+        bg: shouldBeDisabled ? "terminal.overlay" : "transparent",
       }}
       _checked={{
         bg: "gray.50",

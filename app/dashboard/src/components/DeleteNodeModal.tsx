@@ -50,7 +50,7 @@ export const DeleteNodeModal: FC<DeleteUserModalProps> = ({
 
   return (
     <Modal isCentered isOpen={!!deletingNode} onClose={onClose} size="sm">
-      <ModalOverlay bg="blackAlpha.300" backdropFilter="blur(10px)" />
+      <ModalOverlay />
       <ModalContent mx="3">
         <ModalHeader pt={6}>
           <Icon color="red">

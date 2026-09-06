@@ -70,7 +70,7 @@ export const QRCodeDialog: FC = () => {
 
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
-      <ModalOverlay bg="blackAlpha.300" backdropFilter="blur(10px)" />
+      <ModalOverlay />
       <ModalContent mx="3" w="fit-content" maxW="3xl">
         <ModalHeader pt={6}>
           <Icon color="primary">

@@ -1,10 +1,28 @@
 import { Box } from "@chakra-ui/react";
-import Editor, { OnMount } from "@monaco-editor/react";
+import Editor, { BeforeMount, OnMount } from "@monaco-editor/react";
 import { forwardRef, useEffect, useRef } from "react";
 
 export type JSONEditorProps = {
   onChange: (value: string) => void;
   json: any;
+};
+
+const configureTheme: BeforeMount = (monaco) => {
+  monaco.editor.defineTheme("marzban-terminal", {
+    base: "vs-dark", inherit: true,
+    rules: [
+      { token: "string.key.json", foreground: "89c5ff" },
+      { token: "string.value.json", foreground: "42ffb6" },
+      { token: "number", foreground: "ffc078" },
+    ],
+    colors: {
+      "editor.background": "#0b0f15", "editor.foreground": "#c8d6e2",
+      "editorLineNumber.foreground": "#8b9bb0",
+      "editorCursor.foreground": "#00e08c",
+      "editor.selectionBackground": "#143b30",
+      "editor.lineHighlightBackground": "#101620",
+    },
+  });
 };
 
 const stringify = (value: any) => JSON.stringify(value ?? {}, null, 2);
@@ -38,12 +56,13 @@ export const JsonEditor = forwardRef<HTMLDivElement, JSONEditorProps>(
           height="500px"
           defaultLanguage="json"
           defaultValue={stringify(json)}
-          theme="vs-dark"
+          theme="marzban-terminal"
+          beforeMount={configureTheme}
           onMount={handleMount}
           onChange={(value) => onChange(value ?? "")}
           options={{
             minimap: { enabled: false },
-            fontSize: 12,
+            fontSize: 13,
             fontFamily: "JetBrains Mono, monospace",
             tabSize: 2,
             scrollBeyondLastLine: false,

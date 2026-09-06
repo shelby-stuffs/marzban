@@ -22,6 +22,7 @@ import {
   useToast,
 } from "@chakra-ui/react";
 import { Header } from "components/Header";
+import { Panel } from "components/Panel";
 import { useEffect, useMemo, useState } from "react";
 import { fetch } from "service/http";
 
@@ -85,8 +86,7 @@ const SettingsEditor = ({ settings, onChange, runtime = false }: {
   const update = (key: string, value: unknown) => onChange({ ...settings, [key]: value });
   return (
     <VStack align="stretch" spacing="5">
-      <Box borderWidth="1px" borderRadius="lg" p="4">
-        <Text fontWeight="semibold" mb="4">Transport</Text>
+      <Panel label="transport">
         <Grid templateColumns={{ base: "1fr", md: "repeat(2, 1fr)" }} gap="4">
           {runtime && <FormControl><FormLabel>Path</FormLabel><Input value={settings.path || ""} onChange={(e) => update("path", e.target.value)} /></FormControl>}
           {runtime && <FormControl><FormLabel>Host</FormLabel><Input value={Array.isArray(settings.host) ? settings.host.join(",") : settings.host || ""} onChange={(e) => update("host", e.target.value)} /></FormControl>}
@@ -108,15 +108,14 @@ const SettingsEditor = ({ settings, onChange, runtime = false }: {
             </Select></FormControl>
           ))}
         </HStack>
-      </Box>
-      <Box borderWidth="1px" borderRadius="lg" p="4">
-        <Text fontWeight="semibold" mb="4">Structured settings</Text>
+      </Panel>
+      <Panel label="structured settings">
         <Grid templateColumns={{ base: "1fr", lg: "repeat(3, 1fr)" }} gap="4">
           <JsonField label="HTTP headers (JSON)" value={settings.headers} onChange={(value) => update("headers", value)} />
           <JsonField label="XMUX (JSON)" value={settings.xmux} onChange={(value) => update("xmux", value)} />
           <JsonField label="Download settings (JSON)" value={settings.downloadSettings} onChange={(value) => update("downloadSettings", value)} />
         </Grid>
-      </Box>
+      </Panel>
     </VStack>
   );
 };
@@ -176,7 +175,7 @@ export const XHTTPSettingsPage = () => {
     finally { setSavingOverrides(false); }
   };
 
-  return <Box><Header title="XHTTP" />{loading ? <Spinner /> : runtimeInbounds.length === 0 ? <Text>No XHTTP inbounds found.</Text> : <VStack align="stretch" spacing="5">
+  return <Box><Header title="XHTTP" /><Box mt="4">{loading ? <Spinner /> : runtimeInbounds.length === 0 ? <Text>No XHTTP inbounds found.</Text> : <VStack align="stretch" spacing="5">
     <FormControl maxW="520px"><FormLabel>Inbound</FormLabel><Select value={tag} onChange={(e) => { setTag(e.target.value); setHostIndex(0); }}>
       {runtimeInbounds.map((item) => <option key={item.tag} value={item.tag}>{item.tag} — {item.protocol} — {item.port || item.listen}</option>)}
     </Select></FormControl>
@@ -196,5 +195,5 @@ export const XHTTPSettingsPage = () => {
         </TabPanel>
       </TabPanels>
     </Tabs>
-  </VStack>}</Box>;
+  </VStack>}</Box></Box>;
 };

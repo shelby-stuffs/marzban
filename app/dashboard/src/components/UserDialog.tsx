@@ -385,7 +385,7 @@ export const UserDialog: FC<UserDialogProps> = () => {
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} size="2xl">
-      <ModalOverlay bg="blackAlpha.300" backdropFilter="blur(10px)" />
+      <ModalOverlay />
       <FormProvider {...form}>
         <ModalContent mx="3">
           <form onSubmit={form.handleSubmit(submit)}>
@@ -561,7 +561,7 @@ export const UserDialog: FC<UserDialogProps> = () => {
                                   size="sm"
                                   {...field}
                                   disabled={disabled}
-                                  bg={disabled ? "gray.100" : "transparent"}
+                                  bg={disabled ? "terminal.overlay" : "transparent"}
                                   _dark={{
                                     bg: disabled ? "gray.600" : "transparent",
                                   }}

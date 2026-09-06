@@ -18,6 +18,7 @@ import {
   VStack,
 } from "@chakra-ui/react";
 import { Header } from "components/Header";
+import { Panel } from "components/Panel";
 import { Input } from "components/Input";
 import { FC, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "react-query";
@@ -168,9 +169,9 @@ export const WireGuardOutbounds: FC = () => {
     <VStack align="stretch" spacing="4" w="full">
       <Header title="WireGuard outbounds" />
       <SimpleGrid columns={{ base: 1, xl: 2 }} spacing="4" alignItems="start">
-        <Box borderWidth="1px" borderColor="light-border" _dark={{ borderColor: "gray.600" }} borderRadius="10px" p="4">
-          <HStack justify="space-between" mb="4">
-            <Heading size="md">Configured outbounds</Heading>
+        <Panel label="configured outbounds">
+          <HStack justify="space-between" mb="4" flexWrap="wrap" gap="2">
+            <Text color="terminal.dim" fontSize="sm">Xray WireGuard</Text>
             <Button size="sm" onClick={resetForm}>New outbound</Button>
           </HStack>
           {outboundsQuery.isLoading && <Spinner />}
@@ -181,10 +182,11 @@ export const WireGuardOutbounds: FC = () => {
                 key={outbound.tag}
                 borderWidth="1px"
                 borderColor={editingTag === outbound.tag ? "primary.400" : "light-border"}
-                borderRadius="8px"
+                borderRadius="4px"
+                bg="terminal.overlay"
                 p="3"
               >
-                <HStack justify="space-between" align="start">
+                <HStack justify="space-between" align="start" flexWrap="wrap" gap="2">
                   <Box>
                     <HStack>
                       <Text fontWeight="semibold">{outbound.tag}</Text>
@@ -216,9 +218,9 @@ export const WireGuardOutbounds: FC = () => {
               <Text color="gray.500">No WireGuard outbounds configured.</Text>
             )}
           </Stack>
-        </Box>
+        </Panel>
 
-        <Box borderWidth="1px" borderColor="light-border" _dark={{ borderColor: "gray.600" }} borderRadius="10px" p="4">
+        <Panel label={selectedOutbound ? "edit outbound" : "new outbound"}>
           <Heading size="md" mb="1">{selectedOutbound ? `Edit ${selectedOutbound.tag}` : "Add outbound"}</Heading>
           <Text fontSize="sm" color="gray.500" mb="4">
             Saving validates the complete configuration with Xray-core and restarts connected cores.
@@ -257,7 +259,7 @@ export const WireGuardOutbounds: FC = () => {
               </Button>
             </HStack>
           </Stack>
-        </Box>
+        </Panel>
       </SimpleGrid>
     </VStack>
   );

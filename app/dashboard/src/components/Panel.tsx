@@ -20,7 +20,8 @@ export const Panel: FC<PropsWithChildren<PanelProps>> = ({
     borderWidth="1px"
     borderColor="terminal.border"
     bg="terminal.surface"
-    borderRadius="6px"
+    borderRadius="4px"
+    minW="0"
     boxShadow="panel"
     overflow="hidden"
     {...props}
@@ -30,6 +31,7 @@ export const Panel: FC<PropsWithChildren<PanelProps>> = ({
         align="center"
         justify="space-between"
         gap="3"
+        flexWrap="wrap"
         px="4"
         py="2.5"
         borderBottom="1px solid"
@@ -38,19 +40,19 @@ export const Panel: FC<PropsWithChildren<PanelProps>> = ({
       >
         <Text
           fontFamily="mono"
-          fontSize="10px"
+          fontSize="xs"
           fontWeight="500"
           textTransform="uppercase"
           letterSpacing="0.14em"
           color="gray.400"
-          noOfLines={1}
+          overflowWrap="anywhere"
         >
           {label}
         </Text>
         {actions}
       </Flex>
     )}
-    <Box p="4">{children}</Box>
+    <Box p={{ base: "3", md: "4" }} minW="0">{children}</Box>
   </Box>
 );
 

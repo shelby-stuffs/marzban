@@ -282,7 +282,7 @@ export const CoreSettingsPanel: FC = () => {
                   size="sm"
                   style={{ width: "auto" }}
                   disabled={disabled}
-                  bg={disabled ? "gray.100" : "transparent"}
+                  bg={disabled ? "terminal.overlay" : "transparent"}
                   _dark={{
                     bg: disabled ? "gray.600" : "transparent",
                   }}
@@ -317,12 +317,9 @@ export const CoreSettingsPanel: FC = () => {
           </HStack>
           <Box
             border="1px solid"
-            borderColor="gray.300"
-            bg="#F9F9F9"
-            _dark={{
-              borderColor: "gray.500",
-              bg: "#2e3440",
-            }}
+            borderColor="terminal.border"
+            bg="terminal.bg"
+            fontFamily="mono"
             borderRadius={5}
             minHeight="200px"
             maxHeight={"250px"}
@@ -383,7 +380,7 @@ export const CoreSettingsModal: FC = () => {
 
   return (
     <Modal isOpen={isEditingCore} onClose={onClose} size="3xl">
-      <ModalOverlay bg="blackAlpha.300" backdropFilter="blur(10px)" />
+      <ModalOverlay />
       <ModalContent mx="3" w="full">
         <ModalHeader pt={6}>
           <HStack gap={2}>

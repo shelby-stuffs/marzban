@@ -404,15 +404,14 @@ const NodeForm: NodeFormType = ({
               </HStack>
               <Collapse in={showCertificate} animateOpacity>
                 <Text
-                  bg="rgba(255,255,255,.5)"
-                  _dark={{
-                    bg: "rgba(255,255,255,.2)",
-                  }}
+                  bg="terminal.bg"
+                  border="1px solid"
+                  borderColor="terminal.border"
                   rounded="md"
                   p="2"
                   lineHeight="1.2"
-                  fontSize="10px"
-                  fontFamily="Courier"
+                  fontSize="xs"
+                  fontFamily="mono"
                   whiteSpace="pre"
                   overflow="auto"
                   onClick={(e) => {
