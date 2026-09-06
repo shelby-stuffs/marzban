@@ -9,7 +9,17 @@ from app.xray import operations
 from app.xray.config import XRayConfig as BaseXRayConfig
 from app.xray.core import XRayCore
 from app.xray.node import XRayNode
-from config import XRAY_ASSETS_PATH, XRAY_EXECUTABLE_PATH, XRAY_JSON
+from config import (
+    SINGBOX_HYSTERIA_ENABLED,
+    SINGBOX_HYSTERIA_SETTINGS_PATH,
+    UVICORN_SSL_CERTFILE,
+    UVICORN_SSL_KEYFILE,
+    XRAY_ASSETS_PATH,
+    XRAY_EXECUTABLE_PATH,
+    XRAY_JSON,
+)
+from app.singbox.config import install_virtual_hysteria_inbound
+from app.singbox.settings import generate_settings, load_settings
 from xray_api import XRay as XRayAPI
 from xray_api import exceptions, types
 from xray_api import exceptions as exc
@@ -21,6 +31,21 @@ class XRayConfig(BaseXRayConfig):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         enrich_xhttp_inbound_metadata(self)
+        if SINGBOX_HYSTERIA_ENABLED:
+            settings = load_settings(SINGBOX_HYSTERIA_SETTINGS_PATH)
+            if settings is None:
+                generated, _source = generate_settings(
+                    self,
+                    fallback_certificate_path=UVICORN_SSL_CERTFILE or "",
+                    fallback_key_path=UVICORN_SSL_KEYFILE or "",
+                )
+                try:
+                    from app.singbox.settings import Hysteria2ServerSettings
+                    settings = Hysteria2ServerSettings.model_validate(generated)
+                except ValueError:
+                    settings = None
+            if settings is not None:
+                install_virtual_hysteria_inbound(self, settings.model_dump())
 
 
 core = XRayCore(XRAY_EXECUTABLE_PATH, XRAY_ASSETS_PATH)

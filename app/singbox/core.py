@@ -60,6 +60,20 @@ class SingBoxCore:
         )
         threading.Thread(target=self._capture_logs, daemon=True).start()
 
+    def validate(self, config: dict) -> None:
+        self.config_path.parent.mkdir(parents=True, exist_ok=True)
+        fd, temporary = tempfile.mkstemp(
+            prefix=".marzban-sing-box-check-", suffix=".json.tmp", dir=self.config_path.parent
+        )
+        try:
+            with os.fdopen(fd, "w", encoding="utf-8") as file:
+                json.dump(config, file, indent=2)
+                file.write("\n")
+            self._validate_file(temporary)
+        finally:
+            if os.path.exists(temporary):
+                os.unlink(temporary)
+
     def apply(self, config: dict) -> bool:
         payload = json.dumps(config, sort_keys=True, separators=(",", ":"))
         digest = hashlib.sha256(payload.encode()).hexdigest()

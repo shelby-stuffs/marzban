@@ -49,6 +49,9 @@ XRAY_EXCLUDE_INBOUND_TAGS = config("XRAY_EXCLUDE_INBOUND_TAGS", default='').spli
 SINGBOX_HYSTERIA_ENABLED = config("SINGBOX_HYSTERIA_ENABLED", cast=bool, default=False)
 SINGBOX_EXECUTABLE_PATH = config("SINGBOX_EXECUTABLE_PATH", default="/usr/local/bin/sing-box")
 SINGBOX_CONFIG_PATH = config("SINGBOX_CONFIG_PATH", default="/var/lib/marzban/sing-box-hysteria.json")
+SINGBOX_HYSTERIA_SETTINGS_PATH = config(
+    "SINGBOX_HYSTERIA_SETTINGS_PATH", default="/var/lib/marzban/hysteria2-settings.json"
+)
 SINGBOX_HEALTH_CHECK_INTERVAL = config("SINGBOX_HEALTH_CHECK_INTERVAL", cast=int, default=5)
 
 XRAY_SUBSCRIPTION_URL_PREFIX = config("XRAY_SUBSCRIPTION_URL_PREFIX", default="").strip("/")

@@ -4,6 +4,7 @@ from . import (
     admin,
     core,
     home,
+    hysteria2,
     node,
     subscription,
     subscription_settings,
@@ -19,6 +20,7 @@ api_router = APIRouter()
 routers = [
     admin.router,
     core.router,
+    hysteria2.router,
     node.router,
     wireguard_outbound.router,
     xhttp_inbound.router,

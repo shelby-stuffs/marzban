@@ -131,3 +131,80 @@ def build_hysteria2_server_config(
         "outbounds": [{"type": "direct", "tag": "direct"}],
         "route": {"final": "direct"},
     }
+
+
+
+def build_hysteria2_settings_config(settings: Mapping, users: Iterable[Mapping]) -> dict:
+    """Build the native sing-box config from the dedicated settings document."""
+    if not settings.get("enabled", True):
+        return {"log": {"level": "info", "timestamp": True}, "inbounds": [],
+                "outbounds": [{"type": "direct", "tag": "direct"}], "route": {"final": "direct"}}
+    inbound = {
+        "type": "hysteria2",
+        "tag": settings["tag"],
+        "listen": settings.get("listen") or "::",
+        "listen_port": settings["listen_port"],
+        "users": [
+            {"name": item["name"], "password": item["password"]}
+            for item in users
+        ],
+        "tls": {
+            "enabled": True,
+            "certificate_path": settings["certificate_path"],
+            "key_path": settings["key_path"],
+            "alpn": settings.get("alpn") or ["h3"],
+        },
+    }
+    for key in ("up_mbps", "down_mbps"):
+        if settings.get(key):
+            inbound[key] = settings[key]
+    if settings.get("ignore_client_bandwidth"):
+        inbound["ignore_client_bandwidth"] = True
+    if settings.get("obfs_type"):
+        inbound["obfs"] = {
+            "type": settings["obfs_type"],
+            "password": settings["obfs_password"],
+        }
+    if settings.get("masquerade"):
+        inbound["masquerade"] = settings["masquerade"]
+    return {
+        "log": {"level": "info", "timestamp": True},
+        "inbounds": [inbound],
+        "outbounds": [{"type": "direct", "tag": "direct"}],
+        "route": {"final": "direct"},
+    }
+
+
+def settings_to_subscription_inbound(settings: Mapping) -> dict:
+    """Expose the separate server as virtual metadata to users/hosts/subscriptions."""
+    return {
+        "tag": settings["tag"],
+        "protocol": "hysteria",
+        "network": "hysteria",
+        "port": settings["listen_port"],
+        "listen": settings.get("listen") or "::",
+        "tls": "tls",
+        "hysteria_version": 2,
+        "alpn": settings.get("alpn") or ["h3"],
+        "obfs": settings.get("obfs_type") or "",
+        "obfs_password": settings.get("obfs_password") or "",
+        "allowinsecure": False,
+    }
+
+
+def install_virtual_hysteria_inbound(config, settings: Mapping) -> None:
+    """Replace legacy Hysteria metadata without adding it to Xray's JSON."""
+    old_tags = {
+        item.get("tag") for item in config.inbounds
+        if item.get("protocol") == "hysteria"
+    }
+    config.inbounds[:] = [item for item in config.inbounds if item.get("protocol") != "hysteria"]
+    for tag in old_tags:
+        config.inbounds_by_tag.pop(tag, None)
+    config.inbounds_by_protocol.pop("hysteria", None)
+    if not settings.get("enabled", True):
+        return
+    inbound = settings_to_subscription_inbound(settings)
+    config.inbounds.append(inbound)
+    config.inbounds_by_tag[inbound["tag"]] = inbound
+    config.inbounds_by_protocol["hysteria"] = [inbound]

@@ -5,6 +5,7 @@ import { Dashboard } from "./Dashboard";
 import { Layout } from "./Layout";
 import { Login } from "./Login";
 import { CoreRoute, HostsRoute, NodesRoute } from "./sections";
+import { Hysteria2SettingsPage } from "./Hysteria2Settings";
 import { SubscriptionSettingsPage } from "./SubscriptionSettings";
 import { WireGuardOutbounds } from "./WireGuardOutbounds";
 import { XHTTPSettingsPage } from "./XHTTPSettings";
@@ -30,6 +31,7 @@ export const router = createHashRouter([
       { path: "core", element: <CoreRoute /> },
       { path: "wireguard", element: <WireGuardOutbounds /> },
       { path: "xhttp", element: <XHTTPSettingsPage /> },
+      { path: "hysteria2", element: <Hysteria2SettingsPage /> },
       { path: "subscriptions", element: <SubscriptionSettingsPage /> },
     ],
   },
