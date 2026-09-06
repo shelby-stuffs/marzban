@@ -243,5 +243,18 @@
   "hysteria.preview": "Generate preview",
   "hysteria.previewHelp": "Save settings or generate a preview to inspect the resulting runtime configuration.",
   "hysteria.secretsRedacted": "Passwords are redacted as",
-  "hysteria.save": "Save and apply"
+  "hysteria.save": "Save and apply",
+  "singbox.title": "sing-box",
+  "singbox.description": "独立核心管理。Hysteria 2 在此作为 Xray 之外的独立入站运行。",
+  "singbox.hysteriaInbound": "Hysteria 2 入站",
+  "singbox.logs": "sing-box 日志",
+  "singbox.logsEmpty": "暂无 sing-box 输出。请启动或应用 Hysteria 2 入站。",
+  "singbox.autoRefresh": "实时 · 3秒",
+  "singbox.paused": "已暂停",
+  "singbox.refresh": "刷新",
+  "singbox.clearLogs": "清空",
+  "singbox.processId": "PID",
+  "singbox.configPath": "运行配置",
+  "singbox.logsHelp": "stdout / stderr · 仅 sudo",
+  "singbox.logsCleared": "sing-box 日志已清空"
 }

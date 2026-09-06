@@ -15,14 +15,15 @@ class Hysteria2SettingsSectionTests(unittest.TestCase):
  def test_dashboard_has_dedicated_route_and_sidebar_item(self):
   router=(ROOT/"app/dashboard/src/pages/Router.tsx").read_text()
   sidebar=(ROOT/"app/dashboard/src/components/Sidebar.tsx").read_text()
+  self.assertIn('path: "singbox"',router)
   self.assertIn('path: "hysteria2"',router)
-  self.assertIn('to="/hysteria2"',sidebar)
+  self.assertIn('to="/singbox"',sidebar)
 
  def test_form_contains_certificate_and_server_fields(self):
-  source=(ROOT/"app/dashboard/src/pages/Hysteria2Settings.tsx").read_text()
+  source=(ROOT/"app/dashboard/src/pages/SingBoxSettings.tsx").read_text()
   for field in ("certificate_path","key_path","listen_port","obfs_password","masquerade","ignore_client_bandwidth"):
    self.assertIn(field,source)
-  self.assertIn('/hysteria2/runtime-config',source)
+  self.assertIn('/singbox/runtime-config',source)
 
  def test_locales_have_section_copy(self):
   for lang in ("en","ru","fa","zh"):

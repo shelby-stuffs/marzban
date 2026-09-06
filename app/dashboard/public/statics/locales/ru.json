@@ -245,5 +245,18 @@
   "hysteria.preview": "Сформировать предпросмотр",
   "hysteria.previewHelp": "Сформируйте предпросмотр, чтобы проверить итоговый runtime-конфиг.",
   "hysteria.secretsRedacted": "Пароли скрываются как",
-  "hysteria.save": "Сохранить и применить"
+  "hysteria.save": "Сохранить и применить",
+  "singbox.title": "sing-box",
+  "singbox.description": "Управление отдельным ядром. Hysteria 2 работает здесь как самостоятельный inbound вне Xray.",
+  "singbox.hysteriaInbound": "inbound Hysteria 2",
+  "singbox.logs": "логи sing-box",
+  "singbox.logsEmpty": "Вывода sing-box пока нет. Запустите или примените inbound Hysteria 2.",
+  "singbox.autoRefresh": "live · 3с",
+  "singbox.paused": "пауза",
+  "singbox.refresh": "Обновить",
+  "singbox.clearLogs": "Очистить",
+  "singbox.processId": "PID",
+  "singbox.configPath": "Runtime-конфиг",
+  "singbox.logsHelp": "stdout / stderr · только sudo",
+  "singbox.logsCleared": "Логи sing-box очищены"
 }

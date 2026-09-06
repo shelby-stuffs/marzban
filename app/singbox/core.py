@@ -18,7 +18,7 @@ class SingBoxCore:
         self.process = None
         self._digest = None
         self._lock = threading.RLock()
-        self.logs = deque(maxlen=200)
+        self.logs = deque(maxlen=500)
         atexit.register(self.stop)
 
     @property
@@ -39,6 +39,7 @@ class SingBoxCore:
                 break
 
     def _validate_file(self, path: str) -> None:
+        self.logs.append(f"[marzban] validating config: {path}")
         result = subprocess.run(
             [self.executable_path, "check", "-c", path],
             stdout=subprocess.PIPE,
@@ -46,18 +47,22 @@ class SingBoxCore:
             text=True,
             timeout=30,
         )
+        if result.stdout.strip():
+            self.logs.extend(result.stdout.strip().splitlines())
         if result.returncode:
             raise ValueError(f"Invalid sing-box config: {result.stdout.strip()}")
 
     def _start_existing(self) -> None:
         if self.started:
             return
+        self.logs.append(f"[marzban] starting: {self.executable_path} run -c {self.config_path}")
         self.process = subprocess.Popen(
             [self.executable_path, "run", "-c", str(self.config_path)],
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             text=True,
         )
+        self.logs.append(f"[marzban] sing-box started, pid={self.process.pid}")
         threading.Thread(target=self._capture_logs, daemon=True).start()
 
     def validate(self, config: dict) -> None:
@@ -112,4 +117,5 @@ class SingBoxCore:
             except subprocess.TimeoutExpired:
                 process.kill()
                 process.wait(timeout=5)
+            self.logs.append(f"[marzban] sing-box stopped, pid={process.pid}")
             self.process = None

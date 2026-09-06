@@ -1,11 +1,11 @@
-import { createHashRouter } from "react-router-dom";
+import { Navigate, createHashRouter } from "react-router-dom";
 import { fetch } from "../service/http";
 import { getAuthToken } from "../utils/authStorage";
 import { Dashboard } from "./Dashboard";
 import { Layout } from "./Layout";
 import { Login } from "./Login";
 import { CoreRoute, HostsRoute, NodesRoute } from "./sections";
-import { Hysteria2SettingsPage } from "./Hysteria2Settings";
+import { SingBoxSettingsPage } from "./SingBoxSettings";
 import { SubscriptionSettingsPage } from "./SubscriptionSettings";
 import { WireGuardOutbounds } from "./WireGuardOutbounds";
 import { XHTTPSettingsPage } from "./XHTTPSettings";
@@ -31,7 +31,8 @@ export const router = createHashRouter([
       { path: "core", element: <CoreRoute /> },
       { path: "wireguard", element: <WireGuardOutbounds /> },
       { path: "xhttp", element: <XHTTPSettingsPage /> },
-      { path: "hysteria2", element: <Hysteria2SettingsPage /> },
+      { path: "singbox", element: <SingBoxSettingsPage /> },
+      { path: "hysteria2", element: <Navigate to="/singbox" replace /> },
       { path: "subscriptions", element: <SubscriptionSettingsPage /> },
     ],
   },

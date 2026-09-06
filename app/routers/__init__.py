@@ -21,6 +21,7 @@ routers = [
     admin.router,
     core.router,
     hysteria2.router,
+    hysteria2.singbox_router,
     node.router,
     wireguard_outbound.router,
     xhttp_inbound.router,

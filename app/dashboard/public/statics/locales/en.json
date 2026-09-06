@@ -245,5 +245,18 @@
   "hysteria.preview": "Generate preview",
   "hysteria.previewHelp": "Save settings or generate a preview to inspect the resulting runtime configuration.",
   "hysteria.secretsRedacted": "Passwords are redacted as",
-  "hysteria.save": "Save and apply"
+  "hysteria.save": "Save and apply",
+  "singbox.title": "sing-box",
+  "singbox.description": "Standalone core management. Hysteria 2 runs here as an independent inbound, outside Xray.",
+  "singbox.hysteriaInbound": "Hysteria 2 inbound",
+  "singbox.logs": "sing-box logs",
+  "singbox.logsEmpty": "No sing-box output yet. Start or apply the Hysteria 2 inbound.",
+  "singbox.autoRefresh": "live · 3s",
+  "singbox.paused": "paused",
+  "singbox.refresh": "Refresh",
+  "singbox.clearLogs": "Clear",
+  "singbox.processId": "PID",
+  "singbox.configPath": "Runtime config",
+  "singbox.logsHelp": "stdout / stderr · sudo only",
+  "singbox.logsCleared": "sing-box logs cleared"
 }

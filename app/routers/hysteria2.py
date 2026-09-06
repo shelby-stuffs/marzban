@@ -1,6 +1,6 @@
 from copy import deepcopy
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 
 from app import xray
 from app.models.admin import Admin
@@ -22,7 +22,8 @@ from config import (
     UVICORN_SSL_KEYFILE,
 )
 
-router = APIRouter(prefix="/api/hysteria2", tags=["Hysteria2"])
+router = APIRouter(prefix="/api/hysteria2", tags=["Hysteria2 legacy"] )
+singbox_router = APIRouter(prefix="/api/singbox", tags=["sing-box"])
 
 
 def _generated():
@@ -34,6 +35,7 @@ def _generated():
 
 
 @router.get("")
+@singbox_router.get("")
 def get_hysteria2_settings(_admin: Admin = Depends(Admin.check_sudo_admin)):
     settings = load_settings(SINGBOX_HYSTERIA_SETTINGS_PATH)
     source = "saved"
@@ -60,12 +62,14 @@ def get_hysteria2_settings(_admin: Admin = Depends(Admin.check_sudo_admin)):
 
 
 @router.post("/generate")
+@singbox_router.post("/generate")
 def generate_hysteria2_settings(_admin: Admin = Depends(Admin.check_sudo_admin)):
     generated, source = _generated()
     return {"settings": generated, "source": source}
 
 
 @router.get("/runtime-config")
+@singbox_router.get("/runtime-config")
 def get_generated_runtime_config(_admin: Admin = Depends(Admin.check_sudo_admin)):
     settings = load_settings(SINGBOX_HYSTERIA_SETTINGS_PATH)
     if settings is None:
@@ -85,7 +89,42 @@ def get_generated_runtime_config(_admin: Admin = Depends(Admin.check_sudo_admin)
     return {"config": redacted, "user_count": len(users)}
 
 
+@router.get("/logs")
+@singbox_router.get("/logs")
+def get_singbox_logs(
+    limit: int = Query(default=200, ge=1, le=500),
+    _admin: Admin = Depends(Admin.check_sudo_admin),
+):
+    if not SINGBOX_HYSTERIA_ENABLED:
+        return {
+            "feature_enabled": False,
+            "started": False,
+            "pid": None,
+            "config_path": None,
+            "logs": [],
+        }
+    from app.singbox.runtime import runtime
+    process = runtime.core.process
+    return {
+        "feature_enabled": True,
+        "started": runtime.core.started,
+        "pid": process.pid if process and process.poll() is None else None,
+        "config_path": str(runtime.core.config_path),
+        "logs": list(runtime.core.logs)[-limit:],
+    }
+
+
+@router.delete("/logs")
+@singbox_router.delete("/logs")
+def clear_singbox_logs(_admin: Admin = Depends(Admin.check_sudo_admin)):
+    if SINGBOX_HYSTERIA_ENABLED:
+        from app.singbox.runtime import runtime
+        runtime.core.logs.clear()
+    return {"cleared": True}
+
+
 @router.put("")
+@singbox_router.put("")
 def put_hysteria2_settings(
     payload: Hysteria2ServerSettings,
     _admin: Admin = Depends(Admin.check_sudo_admin),

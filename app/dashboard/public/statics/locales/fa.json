@@ -247,5 +247,18 @@
   "hysteria.preview": "Generate preview",
   "hysteria.previewHelp": "Save settings or generate a preview to inspect the resulting runtime configuration.",
   "hysteria.secretsRedacted": "Passwords are redacted as",
-  "hysteria.save": "Save and apply"
+  "hysteria.save": "Save and apply",
+  "singbox.title": "sing-box",
+  "singbox.description": "مدیریت هسته مستقل. Hysteria 2 در اینجا خارج از Xray اجرا می‌شود.",
+  "singbox.hysteriaInbound": "ورودی Hysteria 2",
+  "singbox.logs": "گزارش‌های sing-box",
+  "singbox.logsEmpty": "هنوز خروجی sing-box وجود ندارد. ورودی Hysteria 2 را اجرا یا اعمال کنید.",
+  "singbox.autoRefresh": "زنده · ۳ ثانیه",
+  "singbox.paused": "متوقف",
+  "singbox.refresh": "به‌روزرسانی",
+  "singbox.clearLogs": "پاک کردن",
+  "singbox.processId": "PID",
+  "singbox.configPath": "پیکربندی اجرا",
+  "singbox.logsHelp": "stdout / stderr · فقط مدیر",
+  "singbox.logsCleared": "گزارش‌های sing-box پاک شد"
 }

@@ -21,7 +21,7 @@ const NodesNavIcon = chakra(SquaresPlusIcon, navIconStyle);
 const CoreNavIcon = chakra(Cog6ToothIcon, navIconStyle);
 const WireGuardNavIcon = chakra(ShieldCheckIcon, navIconStyle);
 const XHTTPNavIcon = chakra(CloudIcon, navIconStyle);
-const HysteriaNavIcon = chakra(BoltIcon, navIconStyle);
+const SingBoxNavIcon = chakra(BoltIcon, navIconStyle);
 const SubscriptionsNavIcon = chakra(QueueListIcon, navIconStyle);
 
 const railDisplay = { base: "none", md: "flex" };
@@ -115,7 +115,7 @@ export const SidebarContent: FC<{ onNavigate?: () => void }> = ({ onNavigate }) 
           <SectionLabel>transport</SectionLabel>
           <NavItem to="/hosts" icon={HostsNavIcon} label={t("hosts", "Hosts")} onClick={onNavigate} />
           <NavItem to="/xhttp" icon={XHTTPNavIcon} label={t("xhttp.title", "XHTTP")} onClick={onNavigate} />
-          <NavItem to="/hysteria2" icon={HysteriaNavIcon} label={t("hysteria.title", "Hysteria 2")} onClick={onNavigate} />
+          <NavItem to="/singbox" icon={SingBoxNavIcon} label={t("singbox.title", "sing-box")} onClick={onNavigate} />
           <NavItem
             to="/wireguard"
             icon={WireGuardNavIcon}
