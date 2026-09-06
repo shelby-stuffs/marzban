@@ -305,5 +305,6 @@
   "singbox.ruleSetsSaved": "规则集已保存并应用",
   "singbox.ruleSetsReloaded": "sing-box 已重启，远程规则集将刷新",
   "singbox.tabSubscription": "Subscription",
-  "singbox.subscriptionFormatsHelp": "此公共端点用于 Hysteria 2 链接、Clash Meta、sing-box、Xray JSON/Happ 和仅 Hysteria 订阅。"
+  "singbox.subscriptionFormatsHelp": "此公共端点用于 Hysteria 2 链接、Clash Meta、sing-box、Xray JSON/Happ 和仅 Hysteria 订阅。",
+  "singbox.logOutput": "sing-box / stdout"
 }

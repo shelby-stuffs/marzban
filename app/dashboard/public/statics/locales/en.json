@@ -307,5 +307,6 @@
   "singbox.ruleSetsSaved": "Rule sets saved and applied",
   "singbox.ruleSetsReloaded": "sing-box restarted; remote rule sets will be refreshed",
   "singbox.tabSubscription": "Subscription",
-  "singbox.subscriptionFormatsHelp": "This public endpoint is used for Hysteria 2 links, Clash Meta, sing-box, Xray JSON/Happ and Hysteria-only subscriptions."
+  "singbox.subscriptionFormatsHelp": "This public endpoint is used for Hysteria 2 links, Clash Meta, sing-box, Xray JSON/Happ and Hysteria-only subscriptions.",
+  "singbox.logOutput": "sing-box / stdout"
 }

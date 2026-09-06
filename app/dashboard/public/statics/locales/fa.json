@@ -309,5 +309,6 @@
   "singbox.ruleSetsSaved": "rule setها ذخیره و اعمال شدند",
   "singbox.ruleSetsReloaded": "sing-box دوباره راه‌اندازی شد",
   "singbox.tabSubscription": "Subscription",
-  "singbox.subscriptionFormatsHelp": "این endpoint عمومی برای لینک‌های Hysteria 2، Clash Meta، sing-box، Xray JSON/Happ و اشتراک‌های Hysteria-only استفاده می‌شود."
+  "singbox.subscriptionFormatsHelp": "این endpoint عمومی برای لینک‌های Hysteria 2، Clash Meta، sing-box، Xray JSON/Happ و اشتراک‌های Hysteria-only استفاده می‌شود.",
+  "singbox.logOutput": "sing-box / stdout"
 }

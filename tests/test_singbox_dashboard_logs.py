@@ -25,7 +25,8 @@ class SingBoxDashboardLogsTests(unittest.TestCase):
   source=(ROOT/"app/dashboard/src/pages/SingBoxSettings.tsx").read_text()
   self.assertIn('/singbox/logs?limit=500', source)
   self.assertIn('window.setInterval', source)
-  self.assertIn('logsMeta.logs.join', source)
+  self.assertIn('<AnsiLogViewer', source)
+  self.assertIn('logs={logsMeta?.logs || []}', source)
   self.assertIn('method: "DELETE"', source)
 
  def test_locales_contain_singbox_copy(self):

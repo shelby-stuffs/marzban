@@ -25,6 +25,7 @@ import {
   VStack,
   useToast,
 } from "@chakra-ui/react";
+import { AnsiLogViewer } from "components/AnsiLogViewer";
 import { Header } from "components/Header";
 import { JsonEditor } from "components/JsonEditor";
 import { Panel } from "components/Panel";
@@ -398,6 +399,22 @@ export const SingBoxSettingsPage = () => {
         </TabList>
         <TabPanels>
           <TabPanel px="0">
+      <Panel label={t("singbox.advancedEditor")}>
+        <Alert status="warning" mb="4"><AlertIcon />{t("singbox.editorWarning")}</Alert>
+        <HStack justify="space-between" mb="3" flexWrap="wrap" gap="2">
+          <Text color="gray.500" fontFamily="mono" fontSize="xs">
+            {t("singbox.editorAllowed")}: {(advancedMeta?.allowed_top_level_keys || ["log", "dns", "outbounds", "route", "experimental"]).join(", ")}
+          </Text>
+          <Badge colorScheme={advancedMeta?.persisted ? "green" : "gray"}>{advancedMeta?.persisted ? t("singbox.editorSavedSource") : t("singbox.editorDefaultSource")}</Badge>
+        </HStack>
+        {advancedLoading ? <Spinner /> : <JsonEditor json={advancedConfig} onChange={setAdvancedText} />}
+        <HStack justify="flex-end" mt="4" flexWrap="wrap">
+          <Button variant="ghost" onClick={resetAdvanced}>{t("singbox.editorReset")}</Button>
+          <Button variant="outline" isLoading={advancedChecking} onClick={() => void checkAdvanced()}>{t("singbox.editorCheck")}</Button>
+          <Button colorScheme="primary" isLoading={advancedSaving} onClick={() => void saveAdvanced()}>{t("singbox.editorSave")}</Button>
+        </HStack>
+      </Panel>
+
       <Panel label={t("singbox.logs")}>
         <HStack justify="space-between" align="center" mb="3" flexWrap="wrap" gap="2">
           <HStack>
@@ -415,44 +432,13 @@ export const SingBoxSettingsPage = () => {
             <Button size="sm" variant="ghost" onClick={() => void clearLogs()}>{t("singbox.clearLogs")}</Button>
           </HStack>
         </HStack>
-        <Box
+        <AnsiLogViewer
           ref={logsRef}
-          as="pre"
-          minH="220px"
-          maxH="420px"
-          overflow="auto"
-          m="0"
-          p="4"
-          bg="#05070a"
-          border="1px solid"
-          borderColor="terminal.border"
-          borderRadius="3px"
-          color="gray.300"
-          fontFamily="mono"
-          fontSize="xs"
-          lineHeight="1.65"
-          whiteSpace="pre-wrap"
-          wordBreak="break-word"
-        >
-          {logsMeta?.logs.length ? logsMeta.logs.join("\n") : t("singbox.logsEmpty")}
-        </Box>
+          logs={logsMeta?.logs || []}
+          emptyText={t("singbox.logsEmpty")}
+          title={t("singbox.logOutput")}
+        />
         {logsMeta?.config_path && <Text mt="2" color="gray.500" fontFamily="mono" fontSize="xs">{t("singbox.configPath")}: {logsMeta.config_path}</Text>}
-      </Panel>
-
-      <Panel label={t("singbox.advancedEditor")}>
-        <Alert status="warning" mb="4"><AlertIcon />{t("singbox.editorWarning")}</Alert>
-        <HStack justify="space-between" mb="3" flexWrap="wrap" gap="2">
-          <Text color="gray.500" fontFamily="mono" fontSize="xs">
-            {t("singbox.editorAllowed")}: {(advancedMeta?.allowed_top_level_keys || ["log", "dns", "outbounds", "route", "experimental"]).join(", ")}
-          </Text>
-          <Badge colorScheme={advancedMeta?.persisted ? "green" : "gray"}>{advancedMeta?.persisted ? t("singbox.editorSavedSource") : t("singbox.editorDefaultSource")}</Badge>
-        </HStack>
-        {advancedLoading ? <Spinner /> : <JsonEditor json={advancedConfig} onChange={setAdvancedText} />}
-        <HStack justify="flex-end" mt="4" flexWrap="wrap">
-          <Button variant="ghost" onClick={resetAdvanced}>{t("singbox.editorReset")}</Button>
-          <Button variant="outline" isLoading={advancedChecking} onClick={() => void checkAdvanced()}>{t("singbox.editorCheck")}</Button>
-          <Button colorScheme="primary" isLoading={advancedSaving} onClick={() => void saveAdvanced()}>{t("singbox.editorSave")}</Button>
-        </HStack>
       </Panel>
           </TabPanel>
           <TabPanel px="0">
