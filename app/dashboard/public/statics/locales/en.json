@@ -270,7 +270,7 @@
   "singbox.subscriptionRemark": "Node name",
   "singbox.subscriptionRemarkHelp": "Supports variables such as {USERNAME}, {SERVER_IP}, and {PROTOCOL}.",
   "singbox.advancedEditor": "advanced sing-box JSON",
-  "singbox.editorWarning": "Managed Hysteria 2 inbounds and users are protected. Configure outbounds, route, DNS, logging and experimental features here. The complete merged config is checked before saving.",
+  "singbox.editorWarning": "Managed Hysteria 2 inbounds, users, and the traffic Stats API are protected. Configure outbounds, route, DNS, logging and other experimental features here. The complete merged config is checked before saving.",
   "singbox.editorAllowed": "Allowed top-level sections",
   "singbox.editorSavedSource": "saved",
   "singbox.editorDefaultSource": "defaults",
@@ -308,5 +308,11 @@
   "singbox.ruleSetsReloaded": "sing-box restarted; remote rule sets will be refreshed",
   "singbox.tabSubscription": "Subscription",
   "singbox.subscriptionFormatsHelp": "This public endpoint is used for Hysteria 2 links, Clash Meta, sing-box, Xray JSON/Happ and Hysteria-only subscriptions.",
-  "singbox.logOutput": "sing-box / stdout"
+  "singbox.logOutput": "sing-box / stdout",
+  "singbox.ruleSetAddRemote": "Add remote",
+  "singbox.ruleSetAddIp": "Add IP set",
+  "singbox.ruleSetInlineIp": "inline IP/CIDR",
+  "singbox.ruleSetIpCidrs": "IP addresses and CIDRs",
+  "singbox.ruleSetIpCidrsHelp": "One IPv4, IPv6 or CIDR per line. Plain IP addresses are normalized to /32 or /128.",
+  "singbox.ruleSetMatchSourceIp": "Match source IP"
 }

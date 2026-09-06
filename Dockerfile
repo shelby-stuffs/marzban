@@ -1,4 +1,14 @@
 ARG PYTHON_VERSION=3.12
+ARG SINGBOX_VERSION=1.13.12
+
+FROM golang:1.25-bookworm AS singbox-build
+ARG SINGBOX_VERSION
+RUN git clone --depth 1 --branch "v${SINGBOX_VERSION}" https://github.com/SagerNet/sing-box.git /src/sing-box
+WORKDIR /src/sing-box
+RUN CGO_ENABLED=0 go build -trimpath \
+    -tags "with_quic with_grpc with_v2ray_api" \
+    -o /out/sing-box ./cmd/sing-box \
+    && /out/sing-box version
 
 FROM python:$PYTHON_VERSION-slim AS build
 
@@ -7,7 +17,6 @@ ENV PYTHONUNBUFFERED=1
 WORKDIR /code
 
 ARG XRAY_VERSION=v26.7.11
-ARG SINGBOX_VERSION=1.13.12
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends build-essential curl unzip gcc python3-dev libpq-dev \
@@ -34,13 +43,7 @@ RUN apt-get update \
     && mv /tmp/geosite_custom.dat /usr/local/share/xray/geosite_custom.dat \
     && rm -rf /var/lib/apt/lists/*
 
-RUN SB_ARCH=$(case "$(dpkg --print-architecture)" in amd64) echo "amd64";; arm64) echo "arm64";; armhf) echo "armv7";; i386) echo "386";; *) exit 1;; esac) \
-    && curl -L -o /tmp/sing-box.tar.gz "https://github.com/SagerNet/sing-box/releases/download/v${SINGBOX_VERSION}/sing-box-${SINGBOX_VERSION}-linux-${SB_ARCH}.tar.gz" \
-    && tar -xzf /tmp/sing-box.tar.gz -C /tmp \
-    && mv "/tmp/sing-box-${SINGBOX_VERSION}-linux-${SB_ARCH}/sing-box" /usr/local/bin/sing-box \
-    && chmod +x /usr/local/bin/sing-box \
-    && /usr/local/bin/sing-box version \
-    && rm -rf /tmp/sing-box.tar.gz "/tmp/sing-box-${SINGBOX_VERSION}-linux-${SB_ARCH}"
+COPY --from=singbox-build /out/sing-box /usr/local/bin/sing-box
 
 COPY ./requirements.txt /code/
 RUN python3 -m pip install --upgrade pip "setuptools<71" \

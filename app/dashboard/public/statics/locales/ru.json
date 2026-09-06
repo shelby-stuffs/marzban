@@ -270,7 +270,7 @@
   "singbox.subscriptionRemark": "Название узла",
   "singbox.subscriptionRemarkHelp": "Поддерживаются переменные {USERNAME}, {SERVER_IP} и {PROTOCOL}.",
   "singbox.advancedEditor": "расширенный JSON sing-box",
-  "singbox.editorWarning": "Управляемые inbound Hysteria 2 и пользователи защищены. Здесь настраиваются outbounds, route, DNS, логирование и experimental. Перед сохранением проверяется итоговый объединённый конфиг.",
+  "singbox.editorWarning": "Управляемые inbound Hysteria 2, пользователи и Stats API учёта трафика защищены. Здесь настраиваются outbounds, route, DNS, логирование и другие experimental-функции. Перед сохранением проверяется итоговый объединённый конфиг.",
   "singbox.editorAllowed": "Разрешённые верхнеуровневые секции",
   "singbox.editorSavedSource": "сохранён",
   "singbox.editorDefaultSource": "по умолчанию",
@@ -308,5 +308,11 @@
   "singbox.ruleSetsReloaded": "sing-box перезапущен; remote rule sets будут обновлены",
   "singbox.tabSubscription": "Subscription",
   "singbox.subscriptionFormatsHelp": "Этот публичный endpoint используется для Hysteria 2 ссылок, Clash Meta, sing-box, Xray JSON/Happ и Hysteria-only подписок.",
-  "singbox.logOutput": "sing-box / stdout"
+  "singbox.logOutput": "sing-box / stdout",
+  "singbox.ruleSetAddRemote": "Добавить remote",
+  "singbox.ruleSetAddIp": "Добавить IP-набор",
+  "singbox.ruleSetInlineIp": "inline IP/CIDR",
+  "singbox.ruleSetIpCidrs": "IP-адреса и CIDR",
+  "singbox.ruleSetIpCidrsHelp": "По одному IPv4, IPv6 или CIDR на строку. Обычные IP преобразуются в /32 или /128.",
+  "singbox.ruleSetMatchSourceIp": "Сопоставлять source IP"
 }

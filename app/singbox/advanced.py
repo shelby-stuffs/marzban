@@ -52,6 +52,9 @@ def validate_advanced_config(value: Mapping) -> dict:
         "services": list,
         "experimental": dict,
     }
+    experimental = config.get("experimental")
+    if isinstance(experimental, Mapping) and "v2ray_api" in experimental:
+        raise ValueError("experimental.v2ray_api is managed by Marzban traffic accounting")
     for key, expected in typed_sections.items():
         if key in config and not isinstance(config[key], expected):
             raise ValueError(f"sing-box {key} must be a JSON {expected.__name__}")

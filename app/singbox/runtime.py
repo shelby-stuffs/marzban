@@ -11,15 +11,20 @@ from app.singbox.config import build_hysteria2_settings_config, merge_advanced_c
 from app.singbox.core import SingBoxCore
 from app.singbox.rulesets import RuleSetsSettings, load_rule_sets, merge_rule_sets
 from app.singbox.settings import generate_settings, load_settings
+from app.singbox.traffic import install_traffic_api
 from config import (
     SINGBOX_ADVANCED_CONFIG_PATH,
     SINGBOX_CONFIG_PATH,
     SINGBOX_EXECUTABLE_PATH,
     SINGBOX_HYSTERIA_SETTINGS_PATH,
     SINGBOX_RULE_SETS_PATH,
+    SINGBOX_TRAFFIC_ACCOUNTING_ENABLED,
+    SINGBOX_TRAFFIC_API_HOST,
+    SINGBOX_TRAFFIC_API_PORT,
     UVICORN_SSL_CERTFILE,
     UVICORN_SSL_KEYFILE,
 )
+from xray_api import XRay as XRayAPI
 
 
 class SingBoxHysteriaRuntime:
@@ -27,6 +32,10 @@ class SingBoxHysteriaRuntime:
         self.core = SingBoxCore(SINGBOX_EXECUTABLE_PATH, SINGBOX_CONFIG_PATH)
         self._timer = None
         self._timer_lock = threading.Lock()
+        self.traffic_api = (
+            XRayAPI(SINGBOX_TRAFFIC_API_HOST, SINGBOX_TRAFFIC_API_PORT)
+            if SINGBOX_TRAFFIC_ACCOUNTING_ENABLED else None
+        )
 
     def current_settings(self):
         settings = load_settings(SINGBOX_HYSTERIA_SETTINGS_PATH)
@@ -72,11 +81,19 @@ class SingBoxHysteriaRuntime:
             advanced_config = self.current_advanced_config()
         if rule_sets is None:
             rule_sets = self.current_rule_sets()
-        managed = build_hysteria2_settings_config(
-            settings.model_dump(), self._users(settings.tag)
-        )
+        users = self._users(settings.tag)
+        managed = build_hysteria2_settings_config(settings.model_dump(), users)
         combined = merge_advanced_config(managed, advanced_config)
-        return merge_rule_sets(combined, rule_sets)
+        combined = merge_rule_sets(combined, rule_sets)
+        if settings.enabled and SINGBOX_TRAFFIC_ACCOUNTING_ENABLED:
+            combined = install_traffic_api(
+                combined,
+                host=SINGBOX_TRAFFIC_API_HOST,
+                port=SINGBOX_TRAFFIC_API_PORT,
+                inbound_tag=settings.tag,
+                users=(item["name"] for item in users),
+            )
+        return combined
 
     def apply_current(self) -> bool:
         settings = self.current_settings()

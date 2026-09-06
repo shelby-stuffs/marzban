@@ -5,6 +5,7 @@ import json
 import os
 import re
 import tempfile
+from ipaddress import ip_network
 from pathlib import Path
 from typing import Literal, Mapping
 from urllib.parse import urlparse
@@ -18,13 +19,22 @@ _INTERVAL = re.compile(r"^[1-9][0-9]*(?:s|m|h|d)$")
 class RuleSetItem(BaseModel):
     enabled: bool = True
     tag: str = Field(min_length=1, max_length=128)
-    type: Literal["remote", "local"] = "remote"
+    type: Literal["remote", "local", "inline"] = "remote"
     format: Literal["binary", "source"] = "binary"
     url: str = ""
     path: str = ""
     download_detour: str = "direct"
     update_interval: str = "1d"
     outbound: str = ""
+    ip_cidr: list[str] = Field(default_factory=list)
+    ip_cidr_match_source: bool = False
+
+    @field_validator("ip_cidr", mode="before")
+    @classmethod
+    def parse_ip_cidrs(cls, value):
+        if isinstance(value, str):
+            return [item.strip() for item in value.replace(",", "\n").splitlines() if item.strip()]
+        return value
 
     @field_validator("tag", "url", "path", "download_detour", "update_interval", "outbound", mode="before")
     @classmethod
@@ -43,8 +53,21 @@ class RuleSetItem(BaseModel):
                 raise ValueError(
                     f"Remote rule set {self.tag} update_interval must look like 30m, 12h or 1d"
                 )
-        elif not self.path:
-            raise ValueError(f"Local rule set {self.tag} requires a path")
+        elif self.type == "local":
+            if not self.path:
+                raise ValueError(f"Local rule set {self.tag} requires a path")
+        else:
+            if not self.ip_cidr:
+                raise ValueError(f"Inline IP rule set {self.tag} requires at least one IP or CIDR")
+            normalized = []
+            for value in self.ip_cidr:
+                try:
+                    network = str(ip_network(value.strip(), strict=False))
+                except (AttributeError, ValueError) as exc:
+                    raise ValueError(f"Inline IP rule set {self.tag} contains an invalid IP/CIDR: {value}") from exc
+                if network not in normalized:
+                    normalized.append(network)
+            self.ip_cidr = normalized
         return self
 
 
@@ -98,6 +121,12 @@ def save_rule_sets(path: str, settings: RuleSetsSettings) -> None:
 
 
 def _definition(item: RuleSetItem) -> dict:
+    if item.type == "inline":
+        return {
+            "type": "inline",
+            "tag": item.tag,
+            "rules": [{"ip_cidr": item.ip_cidr}],
+        }
     value = {"type": item.type, "tag": item.tag, "format": item.format}
     if item.type == "remote":
         value["url"] = item.url
@@ -108,6 +137,17 @@ def _definition(item: RuleSetItem) -> dict:
     else:
         value["path"] = item.path
     return value
+
+
+def _route_rule(item: RuleSetItem) -> dict:
+    rule = {
+        "rule_set": [item.tag],
+        "action": "route",
+        "outbound": item.outbound,
+    }
+    if item.ip_cidr_match_source:
+        rule["rule_set_ip_cidr_match_source"] = True
+    return rule
 
 
 def merge_rule_sets(config: Mapping, settings: RuleSetsSettings) -> dict:
@@ -133,14 +173,7 @@ def merge_rule_sets(config: Mapping, settings: RuleSetsSettings) -> dict:
     existing_rules = route.get("rules", [])
     if not isinstance(existing_rules, list):
         raise ValueError("sing-box route.rules must be an array")
-    managed_rules = [
-        {
-            "rule_set": [item.tag],
-            "action": "route",
-            "outbound": item.outbound,
-        }
-        for item in active if item.outbound
-    ]
+    managed_rules = [_route_rule(item) for item in active if item.outbound]
     route["rules"] = managed_rules + existing_rules
     if settings.cache_enabled:
         experimental = result.setdefault("experimental", {})

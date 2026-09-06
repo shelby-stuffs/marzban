@@ -140,6 +140,20 @@ def record_user_usages():
         futures = {node_id: executor.submit(get_users_stats, api) for node_id, api in api_instances.items()}
     api_params = {node_id: future.result() for node_id, future in futures.items()}
 
+    # sing-box exposes the same V2Ray StatsService contract as Xray. Its
+    # Hysteria user names use Marzban's existing "<uid>.<username>" shape, so
+    # reset-on-read counters can share the normal main-server accounting path.
+    from config import SINGBOX_HYSTERIA_ENABLED, SINGBOX_TRAFFIC_ACCOUNTING_ENABLED
+    if SINGBOX_HYSTERIA_ENABLED and SINGBOX_TRAFFIC_ACCOUNTING_ENABLED:
+        try:
+            from app.singbox.runtime import runtime
+            if runtime.core.started and runtime.traffic_api is not None:
+                api_params[None].extend(get_users_stats(runtime.traffic_api))
+        except Exception:
+            # Accounting failures must never stop Xray usage collection. Keep
+            # counters in sing-box (the gRPC query only resets on success).
+            pass
+
     users_usage = defaultdict(int)
     for node_id, params in api_params.items():
         coefficient = usage_coefficient.get(node_id, 1)  # get the usage coefficient for the node

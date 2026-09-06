@@ -75,13 +75,15 @@ type AdvancedConfigResponse = {
 type RuleSetItem = {
   enabled: boolean;
   tag: string;
-  type: "remote" | "local";
+  type: "remote" | "local" | "inline";
   format: "binary" | "source";
   url: string;
   path: string;
   download_detour: string;
   update_interval: string;
   outbound: string;
+  ip_cidr: string[];
+  ip_cidr_match_source: boolean;
 };
 
 type RuleSetsSettings = {
@@ -232,18 +234,20 @@ export const SingBoxSettingsPage = () => {
 
   useEffect(() => { void loadRuleSets(); }, []);
 
-  const addRuleSet = () => setRuleSets((current) => ({
+  const addRuleSet = (type: "remote" | "inline" = "remote") => setRuleSets((current) => ({
     ...current,
     items: [...current.items, {
       enabled: true,
-      tag: `rule-set-${current.items.length + 1}`,
-      type: "remote",
+      tag: `${type === "inline" ? "ip-set" : "rule-set"}-${current.items.length + 1}`,
+      type,
       format: "binary",
       url: "",
       path: "",
       download_detour: "direct",
       update_interval: "1d",
       outbound: "",
+      ip_cidr: [],
+      ip_cidr_match_source: false,
     }],
   }));
 
@@ -538,7 +542,10 @@ export const SingBoxSettingsPage = () => {
 
         <HStack justify="space-between" flexWrap="wrap">
           <Text color="gray.500" fontFamily="mono" fontSize="xs">{t("singbox.ruleSetsHelp")}</Text>
-          <Button size="sm" variant="outline" onClick={addRuleSet}>{t("singbox.ruleSetAdd")}</Button>
+          <HStack spacing="2">
+            <Button size="sm" variant="outline" onClick={() => addRuleSet()}>{t("singbox.ruleSetAddRemote")}</Button>
+            <Button size="sm" colorScheme="primary" variant="outline" onClick={() => addRuleSet("inline")}>{t("singbox.ruleSetAddIp")}</Button>
+          </HStack>
         </HStack>
 
         {ruleSets.items.length === 0 && <Alert status="info" py="2" fontSize="xs"><AlertIcon />{t("singbox.ruleSetsEmpty")}</Alert>}
@@ -551,15 +558,20 @@ export const SingBoxSettingsPage = () => {
               </HStack>
               <Grid templateColumns={{ base: "1fr", md: "repeat(2, 1fr)", xl: "repeat(4, 1fr)" }} gap="3">
                 <FormControl isRequired><FormLabel fontSize="xs" mb="1">{t("singbox.ruleSetTag")}</FormLabel><Input size="sm" fontFamily="mono" value={item.tag} onChange={(event) => updateRuleSet(index, "tag", event.target.value)} /></FormControl>
-                <FormControl><FormLabel fontSize="xs" mb="1">{t("singbox.ruleSetType")}</FormLabel><Select size="sm" value={item.type} onChange={(event) => updateRuleSet(index, "type", event.target.value as "remote" | "local")}><option value="remote">remote</option><option value="local">local</option></Select></FormControl>
-                <FormControl><FormLabel fontSize="xs" mb="1">{t("singbox.ruleSetFormat")}</FormLabel><Select size="sm" value={item.format} onChange={(event) => updateRuleSet(index, "format", event.target.value as "binary" | "source")}><option value="binary">binary (.srs)</option><option value="source">source (JSON)</option></Select></FormControl>
+                <FormControl><FormLabel fontSize="xs" mb="1">{t("singbox.ruleSetType")}</FormLabel><Select size="sm" value={item.type} onChange={(event) => updateRuleSet(index, "type", event.target.value as "remote" | "local" | "inline")}><option value="remote">remote</option><option value="local">local</option><option value="inline">{t("singbox.ruleSetInlineIp")}</option></Select></FormControl>
+                {item.type !== "inline" && <FormControl><FormLabel fontSize="xs" mb="1">{t("singbox.ruleSetFormat")}</FormLabel><Select size="sm" value={item.format} onChange={(event) => updateRuleSet(index, "format", event.target.value as "binary" | "source")}><option value="binary">binary (.srs)</option><option value="source">source (JSON)</option></Select></FormControl>}
                 <FormControl><FormLabel fontSize="xs" mb="1">{t("singbox.ruleSetOutbound")}</FormLabel><Input size="sm" fontFamily="mono" placeholder="direct" value={item.outbound} onChange={(event) => updateRuleSet(index, "outbound", event.target.value)} /><FormHelperText mt="1" fontSize="10px">{t("singbox.ruleSetOutboundHelp")}</FormHelperText></FormControl>
+                <FormControl display="flex" alignItems="center" pt={{ base: "0", xl: "5" }}><Checkbox size="sm" isChecked={item.ip_cidr_match_source} onChange={(event) => updateRuleSet(index, "ip_cidr_match_source", event.target.checked)}>{t("singbox.ruleSetMatchSourceIp")}</Checkbox></FormControl>
               </Grid>
               {item.type === "remote" ? <Grid templateColumns={{ base: "1fr", lg: "2fr 1fr 1fr" }} gap="3">
                 <FormControl isRequired={item.enabled}><FormLabel fontSize="xs" mb="1">URL</FormLabel><Input size="sm" fontFamily="mono" placeholder="https://example.com/rules.srs" value={item.url} onChange={(event) => updateRuleSet(index, "url", event.target.value)} /></FormControl>
                 <FormControl><FormLabel fontSize="xs" mb="1">{t("singbox.ruleSetDetour")}</FormLabel><Input size="sm" fontFamily="mono" value={item.download_detour} onChange={(event) => updateRuleSet(index, "download_detour", event.target.value)} /></FormControl>
                 <FormControl><FormLabel fontSize="xs" mb="1">{t("singbox.ruleSetInterval")}</FormLabel><Input size="sm" fontFamily="mono" placeholder="1d" value={item.update_interval} onChange={(event) => updateRuleSet(index, "update_interval", event.target.value)} /></FormControl>
-              </Grid> : <FormControl isRequired={item.enabled}><FormLabel fontSize="xs" mb="1">{t("singbox.ruleSetPath")}</FormLabel><Input size="sm" fontFamily="mono" placeholder="/var/lib/marzban/rules/local.srs" value={item.path} onChange={(event) => updateRuleSet(index, "path", event.target.value)} /></FormControl>}
+              </Grid> : item.type === "local" ? <FormControl isRequired={item.enabled}><FormLabel fontSize="xs" mb="1">{t("singbox.ruleSetPath")}</FormLabel><Input size="sm" fontFamily="mono" placeholder="/var/lib/marzban/rules/local.srs" value={item.path} onChange={(event) => updateRuleSet(index, "path", event.target.value)} /></FormControl> : <FormControl isRequired={item.enabled}>
+                <HStack justify="space-between" mb="1"><FormLabel fontSize="xs" mb="0">{t("singbox.ruleSetIpCidrs")}</FormLabel><Badge fontSize="10px">{item.ip_cidr.length}</Badge></HStack>
+                <Textarea size="sm" minH="110px" resize="vertical" fontFamily="mono" fontSize="xs" placeholder={"1.1.1.1\n10.0.0.0/8\n2001:db8::/32"} value={item.ip_cidr.join("\n")} onChange={(event) => updateRuleSet(index, "ip_cidr", event.target.value.split(/[\n,]+/).map((value) => value.trim()).filter(Boolean))} />
+                <FormHelperText mt="1" fontSize="10px">{t("singbox.ruleSetIpCidrsHelp")}</FormHelperText>
+              </FormControl>}
             </VStack>
           </Panel>
         ))}

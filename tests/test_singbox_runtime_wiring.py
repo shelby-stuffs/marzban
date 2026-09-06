@@ -4,9 +4,11 @@ import unittest
 ROOT=Path(__file__).resolve().parents[1]
 
 class SingBoxRuntimeWiringTests(unittest.TestCase):
- def test_docker_download_urls_are_plain(self):
+ def test_docker_builds_stats_capable_singbox_from_upstream(self):
   source=(ROOT/"Dockerfile").read_text()
-  self.assertIn("github.com/SagerNet/sing-box/releases/download",source)
+  self.assertIn("github.com/SagerNet/sing-box.git",source)
+  self.assertIn("with_quic with_grpc with_v2ray_api",source)
+  self.assertNotIn("SagerNet/sing-box/releases/download",source)
   self.assertNotIn("{{https://",source)
 
  def test_xray_runtime_skips_hysteria_users_and_inbounds(self):

@@ -59,6 +59,11 @@ SINGBOX_RULE_SETS_PATH = config(
     "SINGBOX_RULE_SETS_PATH", default="/var/lib/marzban/sing-box-rule-sets.json"
 )
 SINGBOX_HEALTH_CHECK_INTERVAL = config("SINGBOX_HEALTH_CHECK_INTERVAL", cast=int, default=5)
+SINGBOX_TRAFFIC_ACCOUNTING_ENABLED = config("SINGBOX_TRAFFIC_ACCOUNTING_ENABLED", cast=bool, default=True)
+SINGBOX_TRAFFIC_API_HOST = config("SINGBOX_TRAFFIC_API_HOST", default="127.0.0.1")
+SINGBOX_TRAFFIC_API_PORT = config("SINGBOX_TRAFFIC_API_PORT", cast=int, default=10085)
+if not 1 <= SINGBOX_TRAFFIC_API_PORT <= 65535:
+    raise ValueError("SINGBOX_TRAFFIC_API_PORT must be between 1 and 65535")
 
 XRAY_SUBSCRIPTION_URL_PREFIX = config("XRAY_SUBSCRIPTION_URL_PREFIX", default="").strip("/")
 XRAY_SUBSCRIPTION_PATH = config("XRAY_SUBSCRIPTION_PATH", default="sub").strip("/")

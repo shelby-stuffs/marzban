@@ -268,7 +268,7 @@
   "singbox.subscriptionRemark": "节点名称",
   "singbox.subscriptionRemarkHelp": "支持 {USERNAME}、{SERVER_IP} 和 {PROTOCOL} 等变量。",
   "singbox.advancedEditor": "高级 sing-box JSON",
-  "singbox.editorWarning": "托管的 Hysteria 2 入站和用户受到保护。可在此配置 outbounds、route、DNS、日志和 experimental。保存前会检查完整合并配置。",
+  "singbox.editorWarning": "受管的 Hysteria 2 入站、用户和流量统计 API 均受保护。可在此配置出站、路由、DNS、日志和其他实验性功能。保存前会检查完整的合并配置。",
   "singbox.editorAllowed": "允许的顶级部分",
   "singbox.editorSavedSource": "已保存",
   "singbox.editorDefaultSource": "默认值",
@@ -306,5 +306,11 @@
   "singbox.ruleSetsReloaded": "sing-box 已重启，远程规则集将刷新",
   "singbox.tabSubscription": "Subscription",
   "singbox.subscriptionFormatsHelp": "此公共端点用于 Hysteria 2 链接、Clash Meta、sing-box、Xray JSON/Happ 和仅 Hysteria 订阅。",
-  "singbox.logOutput": "sing-box / stdout"
+  "singbox.logOutput": "sing-box / stdout",
+  "singbox.ruleSetAddRemote": "添加远程规则集",
+  "singbox.ruleSetAddIp": "添加 IP 集",
+  "singbox.ruleSetInlineIp": "内联 IP/CIDR",
+  "singbox.ruleSetIpCidrs": "IP 地址和 CIDR",
+  "singbox.ruleSetIpCidrsHelp": "每行输入一个 IPv4、IPv6 或 CIDR；普通 IP 将转换为 /32 或 /128。",
+  "singbox.ruleSetMatchSourceIp": "匹配源 IP"
 }

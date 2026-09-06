@@ -272,7 +272,7 @@
   "singbox.subscriptionRemark": "نام گره",
   "singbox.subscriptionRemarkHelp": "متغیرهای {USERNAME}، {SERVER_IP} و {PROTOCOL} پشتیبانی می‌شوند.",
   "singbox.advancedEditor": "JSON پیشرفته sing-box",
-  "singbox.editorWarning": "ورودی‌های Hysteria 2 و کاربران مدیریت‌شده محافظت می‌شوند. outbounds، route، DNS، logging و experimental را اینجا تنظیم کنید.",
+  "singbox.editorWarning": "ورودی‌های مدیریت‌شده Hysteria 2، کاربران و API آمار ترافیک محافظت می‌شوند. خروجی‌ها، مسیریابی، DNS، گزارش‌گیری و سایر قابلیت‌های آزمایشی را اینجا تنظیم کنید. پیکربندی نهایی پیش از ذخیره بررسی می‌شود.",
   "singbox.editorAllowed": "بخش‌های سطح بالا مجاز",
   "singbox.editorSavedSource": "ذخیره‌شده",
   "singbox.editorDefaultSource": "پیش‌فرض",
@@ -310,5 +310,11 @@
   "singbox.ruleSetsReloaded": "sing-box دوباره راه‌اندازی شد",
   "singbox.tabSubscription": "Subscription",
   "singbox.subscriptionFormatsHelp": "این endpoint عمومی برای لینک‌های Hysteria 2، Clash Meta، sing-box، Xray JSON/Happ و اشتراک‌های Hysteria-only استفاده می‌شود.",
-  "singbox.logOutput": "sing-box / stdout"
+  "singbox.logOutput": "sing-box / stdout",
+  "singbox.ruleSetAddRemote": "افزودن remote",
+  "singbox.ruleSetAddIp": "افزودن مجموعه IP",
+  "singbox.ruleSetInlineIp": "inline IP/CIDR",
+  "singbox.ruleSetIpCidrs": "آدرس‌های IP و CIDR",
+  "singbox.ruleSetIpCidrsHelp": "در هر خط یک IPv4، IPv6 یا CIDR وارد کنید.",
+  "singbox.ruleSetMatchSourceIp": "تطبیق IP مبدأ"
 }

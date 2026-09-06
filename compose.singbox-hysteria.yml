@@ -11,3 +11,6 @@ services:
       SINGBOX_HYSTERIA_SETTINGS_PATH: /var/lib/marzban/hysteria2-settings.json
       SINGBOX_ADVANCED_CONFIG_PATH: /var/lib/marzban/sing-box-advanced.json
       SINGBOX_RULE_SETS_PATH: /var/lib/marzban/sing-box-rule-sets.json
+      SINGBOX_TRAFFIC_ACCOUNTING_ENABLED: "true"
+      SINGBOX_TRAFFIC_API_HOST: 127.0.0.1
+      SINGBOX_TRAFFIC_API_PORT: "10085"
