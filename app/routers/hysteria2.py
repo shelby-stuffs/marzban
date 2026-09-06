@@ -15,6 +15,11 @@ from app.singbox.config import (
     build_hysteria2_settings_config,
     install_virtual_hysteria_inbound,
 )
+from app.singbox.rulesets import (
+    RuleSetsSettings,
+    load_rule_sets,
+    save_rule_sets,
+)
 from app.singbox.settings import (
     Hysteria2ServerSettings,
     generate_settings,
@@ -26,6 +31,7 @@ from config import (
     SINGBOX_ADVANCED_CONFIG_PATH,
     SINGBOX_HYSTERIA_ENABLED,
     SINGBOX_HYSTERIA_SETTINGS_PATH,
+    SINGBOX_RULE_SETS_PATH,
     UVICORN_SSL_CERTFILE,
     UVICORN_SSL_KEYFILE,
 )
@@ -169,6 +175,76 @@ def put_advanced_singbox_config(
         "checked_by_binary": runtime is not None,
         "runtime_started": bool(runtime and runtime.core.started),
     }
+
+
+@singbox_router.get("/rule-sets")
+def get_singbox_rule_sets(_admin: Admin = Depends(Admin.check_sudo_admin)):
+    try:
+        settings, persisted = load_rule_sets(SINGBOX_RULE_SETS_PATH)
+    except (OSError, ValueError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    runtime_started = False
+    if SINGBOX_HYSTERIA_ENABLED:
+        from app.singbox.runtime import runtime
+        runtime_started = runtime.core.started
+    return {
+        "settings": settings.model_dump(),
+        "persisted": persisted,
+        "runtime_started": runtime_started,
+    }
+
+
+@singbox_router.post("/rule-sets/check")
+def check_singbox_rule_sets(
+    payload: RuleSetsSettings,
+    _admin: Admin = Depends(Admin.check_sudo_admin),
+):
+    try:
+        checked_by_binary = False
+        if SINGBOX_HYSTERIA_ENABLED:
+            from app.singbox.runtime import runtime
+            generated = runtime.build_current(rule_sets=payload)
+            runtime.core.validate(generated)
+            checked_by_binary = True
+        return {"valid": True, "checked_by_binary": checked_by_binary}
+    except (OSError, ValueError, RuntimeError, TimeoutError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@singbox_router.put("/rule-sets")
+def put_singbox_rule_sets(
+    payload: RuleSetsSettings,
+    _admin: Admin = Depends(Admin.check_sudo_admin),
+):
+    runtime = None
+    try:
+        if SINGBOX_HYSTERIA_ENABLED:
+            from app.singbox.runtime import runtime
+            generated = runtime.build_current(rule_sets=payload)
+            runtime.core.validate(generated)
+        save_rule_sets(SINGBOX_RULE_SETS_PATH, payload)
+        if runtime is not None:
+            runtime.apply_current()
+    except (OSError, ValueError, RuntimeError, TimeoutError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return {
+        "settings": payload.model_dump(),
+        "persisted": True,
+        "runtime_started": bool(runtime and runtime.core.started),
+    }
+
+
+@singbox_router.post("/rule-sets/reload")
+def reload_singbox_rule_sets(_admin: Admin = Depends(Admin.check_sudo_admin)):
+    if not SINGBOX_HYSTERIA_ENABLED:
+        raise HTTPException(status_code=400, detail="sing-box runtime is disabled")
+    try:
+        from app.singbox.runtime import runtime
+        runtime.core.stop()
+        runtime.apply_current()
+    except (OSError, ValueError, RuntimeError, TimeoutError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return {"reloaded": True, "runtime_started": runtime.core.started}
 
 
 @router.get("/logs")

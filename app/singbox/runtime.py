@@ -9,12 +9,14 @@ from app.models.user import UserStatus
 from app.singbox.advanced import load_advanced_config
 from app.singbox.config import build_hysteria2_settings_config, merge_advanced_config
 from app.singbox.core import SingBoxCore
+from app.singbox.rulesets import RuleSetsSettings, load_rule_sets, merge_rule_sets
 from app.singbox.settings import generate_settings, load_settings
 from config import (
     SINGBOX_ADVANCED_CONFIG_PATH,
     SINGBOX_CONFIG_PATH,
     SINGBOX_EXECUTABLE_PATH,
     SINGBOX_HYSTERIA_SETTINGS_PATH,
+    SINGBOX_RULE_SETS_PATH,
     UVICORN_SSL_CERTFILE,
     UVICORN_SSL_KEYFILE,
 )
@@ -60,14 +62,21 @@ class SingBoxHysteriaRuntime:
         config, _persisted = load_advanced_config(SINGBOX_ADVANCED_CONFIG_PATH)
         return config
 
-    def build_current(self, settings=None, advanced_config=None) -> dict:
+    def current_rule_sets(self) -> RuleSetsSettings:
+        settings, _persisted = load_rule_sets(SINGBOX_RULE_SETS_PATH)
+        return settings
+
+    def build_current(self, settings=None, advanced_config=None, rule_sets=None) -> dict:
         settings = settings or self.current_settings()
         if advanced_config is None:
             advanced_config = self.current_advanced_config()
+        if rule_sets is None:
+            rule_sets = self.current_rule_sets()
         managed = build_hysteria2_settings_config(
             settings.model_dump(), self._users(settings.tag)
         )
-        return merge_advanced_config(managed, advanced_config)
+        combined = merge_advanced_config(managed, advanced_config)
+        return merge_rule_sets(combined, rule_sets)
 
     def apply_current(self) -> bool:
         settings = self.current_settings()

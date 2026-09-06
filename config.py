@@ -55,6 +55,9 @@ SINGBOX_HYSTERIA_SETTINGS_PATH = config(
 SINGBOX_ADVANCED_CONFIG_PATH = config(
     "SINGBOX_ADVANCED_CONFIG_PATH", default="/var/lib/marzban/sing-box-advanced.json"
 )
+SINGBOX_RULE_SETS_PATH = config(
+    "SINGBOX_RULE_SETS_PATH", default="/var/lib/marzban/sing-box-rule-sets.json"
+)
 SINGBOX_HEALTH_CHECK_INTERVAL = config("SINGBOX_HEALTH_CHECK_INTERVAL", cast=int, default=5)
 
 XRAY_SUBSCRIPTION_URL_PREFIX = config("XRAY_SUBSCRIPTION_URL_PREFIX", default="").strip("/")
