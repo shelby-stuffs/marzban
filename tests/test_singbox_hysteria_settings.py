@@ -92,6 +92,19 @@ class SingBoxHysteriaSettingsTests(unittest.TestCase):
         self.assertEqual(inbound["masquerade"], "https://example.com")
         self.assertNotIn("leak", str(config))
 
+    def test_virtual_inbound_has_generic_subscription_metadata(self):
+        settings = sb_settings.Hysteria2ServerSettings(
+            certificate_path="/cert.pem", key_path="/key.pem"
+        )
+        inbound = sb_config.settings_to_subscription_inbound(settings.model_dump())
+        required = {
+            "tag", "protocol", "network", "port", "tls", "sni", "host",
+            "path", "header_type", "fp", "pbk", "sid", "alpn",
+        }
+        self.assertEqual(required - inbound.keys(), set())
+        self.assertEqual(inbound["sni"], [])
+        self.assertEqual(inbound["host"], [])
+
     def test_virtual_inbound_replaces_legacy_metadata_only(self):
         class FakeConfig(dict):
             pass

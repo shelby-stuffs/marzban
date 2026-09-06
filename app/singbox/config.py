@@ -185,6 +185,17 @@ def settings_to_subscription_inbound(settings: Mapping) -> dict:
         "listen": settings.get("listen") or "::",
         "tls": "tls",
         "hysteria_version": 2,
+        # The generic subscription renderer indexes these metadata keys
+        # directly for every protocol. Keep the virtual sing-box inbound
+        # shape compatible with metadata produced by XRayConfig.
+        "sni": [],
+        "host": [],
+        "path": "",
+        "header_type": "",
+        "fp": "",
+        "pbk": "",
+        "sid": "",
+        "sids": [],
         "alpn": settings.get("alpn") or ["h3"],
         "obfs": settings.get("obfs_type") or "",
         "obfs_password": settings.get("obfs_password") or "",
