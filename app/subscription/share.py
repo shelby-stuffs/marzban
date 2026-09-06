@@ -358,7 +358,12 @@ def process_inbounds_and_tags(
                 continue
 
             format_variables.update({"TRANSPORT": inbound["network"]})
-            for host in xray.hosts.get(tag, []):
+            if inbound.get("protocol") == "hysteria" and "subscription_host" in inbound:
+                managed_host = inbound.get("subscription_host")
+                subscription_hosts = [managed_host] if managed_host else []
+            else:
+                subscription_hosts = xray.hosts.get(tag, [])
+            for host in subscription_hosts:
                 host_inbound = inbound.copy()
                 sni = ""
                 sni_list = host["sni"] or inbound.get("sni", [])

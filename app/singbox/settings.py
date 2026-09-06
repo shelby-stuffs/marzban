@@ -24,8 +24,14 @@ class Hysteria2ServerSettings(BaseModel):
     key_path: str = ""
     alpn: list[str] = Field(default_factory=lambda: ["h3"])
     masquerade: str = ""
+    subscription_enabled: bool = True
+    subscription_address: str = "{SERVER_IP}"
+    subscription_port: int | None = Field(default=None, ge=1, le=65535)
+    subscription_sni: str = ""
+    subscription_insecure: bool = False
+    subscription_remark: str = "🚀 Marz ({USERNAME}) [Hysteria 2]"
 
-    @field_validator("tag", "listen", "certificate_path", "key_path", "masquerade", mode="before")
+    @field_validator("tag", "listen", "certificate_path", "key_path", "masquerade", "subscription_address", "subscription_sni", "subscription_remark", mode="before")
     @classmethod
     def strip_strings(cls, value):
         return value.strip() if isinstance(value, str) else value
@@ -45,6 +51,10 @@ class Hysteria2ServerSettings(BaseModel):
             raise ValueError("Salamander requires obfs_password")
         if self.ignore_client_bandwidth and (self.up_mbps or self.down_mbps):
             raise ValueError("ignore_client_bandwidth conflicts with up_mbps/down_mbps")
+        if self.enabled and self.subscription_enabled and not self.subscription_address:
+            raise ValueError("subscription_address is required when subscription export is enabled")
+        if self.subscription_enabled and not self.subscription_remark:
+            raise ValueError("subscription_remark cannot be empty")
         return self
 
 
@@ -112,6 +122,12 @@ def generate_settings(
             "key_path": cert.get("keyFile") or fallback_key_path,
             "alpn": tls.get("alpn") or ["h3"],
             "masquerade": protocol.get("masquerade") or "",
+            "subscription_enabled": True,
+            "subscription_address": "{SERVER_IP}",
+            "subscription_port": inbound.get("port") or 443,
+            "subscription_sni": tls.get("serverName") or "",
+            "subscription_insecure": False,
+            "subscription_remark": "🚀 Marz ({USERNAME}) [Hysteria 2]",
         }
         return generated, "legacy_xray_inbound"
     return {
@@ -128,4 +144,10 @@ def generate_settings(
         "key_path": fallback_key_path,
         "alpn": ["h3"],
         "masquerade": "",
+        "subscription_enabled": True,
+        "subscription_address": "{SERVER_IP}",
+        "subscription_port": 443,
+        "subscription_sni": "",
+        "subscription_insecure": False,
+        "subscription_remark": "🚀 Marz ({USERNAME}) [Hysteria 2]",
     }, "defaults"

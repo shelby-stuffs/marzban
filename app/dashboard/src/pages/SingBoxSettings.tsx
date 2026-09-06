@@ -40,6 +40,12 @@ type HysteriaSettings = {
   key_path: string;
   alpn: string[];
   masquerade: string;
+  subscription_enabled: boolean;
+  subscription_address: string;
+  subscription_port: number | null;
+  subscription_sni: string;
+  subscription_insecure: boolean;
+  subscription_remark: string;
 };
 
 type SettingsResponse = {
@@ -263,6 +269,24 @@ export const SingBoxSettingsPage = () => {
               <FormControl isRequired><FormLabel>{t("hysteria.keyPath")}</FormLabel><Input fontFamily="mono" placeholder="/etc/letsencrypt/live/example.com/privkey.pem" value={form.key_path} onChange={(event) => update("key_path", event.target.value)} /></FormControl>
             </VStack>
           </Panel>
+
+          <Panel label={t("singbox.subscription")}>
+            <VStack align="stretch" spacing="4">
+              <FormControl display="flex" justifyContent="space-between" alignItems="center">
+                <Box><FormLabel mb="0">{t("singbox.subscriptionEnabled")}</FormLabel><FormHelperText>{t("singbox.subscriptionHelp")}</FormHelperText></Box>
+                <Switch isChecked={form.subscription_enabled} onChange={(event) => update("subscription_enabled", event.target.checked)} />
+              </FormControl>
+              <Alert status="warning"><AlertIcon />{t("singbox.subscriptionTlsHint")}</Alert>
+              <Grid templateColumns={{ base: "1fr", md: "1fr 1fr" }} gap="4">
+                <FormControl isRequired={form.subscription_enabled}><FormLabel>{t("singbox.subscriptionAddress")}</FormLabel><Input fontFamily="mono" placeholder="hy.example.com" value={form.subscription_address} onChange={(event) => update("subscription_address", event.target.value)} /><FormHelperText>{t("singbox.subscriptionAddressHelp")}</FormHelperText></FormControl>
+                <FormControl><FormLabel>{t("singbox.subscriptionPort")}</FormLabel><Input type="number" placeholder={String(form.listen_port)} value={form.subscription_port ?? ""} onChange={(event) => update("subscription_port", event.target.value ? Number(event.target.value) : null)} /></FormControl>
+                <FormControl><FormLabel>SNI</FormLabel><Input fontFamily="mono" placeholder="hy.example.com" value={form.subscription_sni} onChange={(event) => update("subscription_sni", event.target.value)} /></FormControl>
+                <FormControl display="flex" justifyContent="space-between" alignItems="center" pt="7"><FormLabel mb="0">{t("singbox.subscriptionInsecure")}</FormLabel><Switch isChecked={form.subscription_insecure} onChange={(event) => update("subscription_insecure", event.target.checked)} /></FormControl>
+              </Grid>
+              <FormControl isRequired={form.subscription_enabled}><FormLabel>{t("singbox.subscriptionRemark")}</FormLabel><Input value={form.subscription_remark} onChange={(event) => update("subscription_remark", event.target.value)} /><FormHelperText>{t("singbox.subscriptionRemarkHelp")}</FormHelperText></FormControl>
+            </VStack>
+          </Panel>
+
         </VStack>
 
         <VStack align="stretch" spacing="4">

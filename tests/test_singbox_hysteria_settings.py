@@ -105,6 +105,31 @@ class SingBoxHysteriaSettingsTests(unittest.TestCase):
         self.assertEqual(inbound["sni"], [])
         self.assertEqual(inbound["host"], [])
 
+
+    def test_managed_subscription_endpoint_is_exported_in_virtual_metadata(self):
+        settings = sb_settings.Hysteria2ServerSettings(
+            certificate_path="/cert.pem",
+            key_path="/key.pem",
+            subscription_address="hy.example.com",
+            subscription_port=8443,
+            subscription_sni="hy.example.com",
+            subscription_remark="HY2 {USERNAME}",
+        )
+        host = sb_config.subscription_host_from_settings(settings.model_dump())
+        self.assertEqual(host["address"], ["hy.example.com"])
+        self.assertEqual(host["port"], 8443)
+        self.assertEqual(host["sni"], ["hy.example.com"])
+        inbound = sb_config.settings_to_subscription_inbound(settings.model_dump())
+        self.assertEqual(inbound["subscription_host"], host)
+        self.assertEqual(inbound["obfs_password"], settings.obfs_password)
+
+    def test_subscription_export_can_be_disabled(self):
+        settings = sb_settings.Hysteria2ServerSettings(
+            certificate_path="/cert.pem", key_path="/key.pem", subscription_enabled=False
+        )
+        inbound = sb_config.settings_to_subscription_inbound(settings.model_dump())
+        self.assertIsNone(inbound["subscription_host"])
+
     def test_virtual_inbound_replaces_legacy_metadata_only(self):
         class FakeConfig(dict):
             pass

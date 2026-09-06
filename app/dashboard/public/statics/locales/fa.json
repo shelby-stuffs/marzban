@@ -260,5 +260,15 @@
   "singbox.processId": "PID",
   "singbox.configPath": "پیکربندی اجرا",
   "singbox.logsHelp": "stdout / stderr · فقط مدیر",
-  "singbox.logsCleared": "گزارش‌های sing-box پاک شد"
+  "singbox.logsCleared": "گزارش‌های sing-box پاک شد",
+  "singbox.subscription": "نقطه اشتراک",
+  "singbox.subscriptionEnabled": "افزودن Hysteria 2 به اشتراک‌ها",
+  "singbox.subscriptionHelp": "از این نقطه به‌جای Host قدیمی Xray استفاده می‌کند.",
+  "singbox.subscriptionTlsHint": "آدرس عمومی و SNI باید با گواهی sing-box مطابقت داشته باشد.",
+  "singbox.subscriptionAddress": "آدرس عمومی",
+  "singbox.subscriptionAddressHelp": "دامنه، IP یا الگوی {SERVER_IP} بدون https://.",
+  "singbox.subscriptionPort": "پورت عمومی UDP",
+  "singbox.subscriptionInsecure": "TLS ناامن مجاز",
+  "singbox.subscriptionRemark": "نام گره",
+  "singbox.subscriptionRemarkHelp": "متغیرهای {USERNAME}، {SERVER_IP} و {PROTOCOL} پشتیبانی می‌شوند."
 }

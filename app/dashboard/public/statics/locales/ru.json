@@ -258,5 +258,15 @@
   "singbox.processId": "PID",
   "singbox.configPath": "Runtime-конфиг",
   "singbox.logsHelp": "stdout / stderr · только sudo",
-  "singbox.logsCleared": "Логи sing-box очищены"
+  "singbox.logsCleared": "Логи sing-box очищены",
+  "singbox.subscription": "endpoint подписки",
+  "singbox.subscriptionEnabled": "Добавлять Hysteria 2 в подписки",
+  "singbox.subscriptionHelp": "Использует этот endpoint напрямую вместо старой записи Xray Host.",
+  "singbox.subscriptionTlsHint": "Публичный адрес и SNI должны соответствовать сертификату, который отдаёт sing-box.",
+  "singbox.subscriptionAddress": "Публичный адрес",
+  "singbox.subscriptionAddressHelp": "Домен, IP или шаблон {SERVER_IP}. Без схемы https://.",
+  "singbox.subscriptionPort": "Публичный UDP-порт",
+  "singbox.subscriptionInsecure": "Разрешить небезопасный TLS",
+  "singbox.subscriptionRemark": "Название узла",
+  "singbox.subscriptionRemarkHelp": "Поддерживаются переменные {USERNAME}, {SERVER_IP} и {PROTOCOL}."
 }

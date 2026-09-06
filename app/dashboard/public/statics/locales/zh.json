@@ -256,5 +256,15 @@
   "singbox.processId": "PID",
   "singbox.configPath": "运行配置",
   "singbox.logsHelp": "stdout / stderr · 仅 sudo",
-  "singbox.logsCleared": "sing-box 日志已清空"
+  "singbox.logsCleared": "sing-box 日志已清空",
+  "singbox.subscription": "订阅端点",
+  "singbox.subscriptionEnabled": "将 Hysteria 2 添加到订阅",
+  "singbox.subscriptionHelp": "直接使用此端点，不再依赖旧的 Xray Host 记录。",
+  "singbox.subscriptionTlsHint": "公网地址和 SNI 必须与 sing-box 提供的证书匹配。",
+  "singbox.subscriptionAddress": "公网地址",
+  "singbox.subscriptionAddressHelp": "域名、IP 或 {SERVER_IP} 模板，不要包含 https://。",
+  "singbox.subscriptionPort": "公网 UDP 端口",
+  "singbox.subscriptionInsecure": "允许不安全 TLS",
+  "singbox.subscriptionRemark": "节点名称",
+  "singbox.subscriptionRemarkHelp": "支持 {USERNAME}、{SERVER_IP} 和 {PROTOCOL} 等变量。"
 }

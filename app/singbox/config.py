@@ -175,6 +175,37 @@ def build_hysteria2_settings_config(settings: Mapping, users: Iterable[Mapping])
     }
 
 
+def subscription_host_from_settings(settings: Mapping) -> dict | None:
+    """Build one authoritative public endpoint for all subscription formats."""
+    if not settings.get("subscription_enabled", True):
+        return None
+    address = (settings.get("subscription_address") or "").strip()
+    if not address:
+        return None
+    sni = (settings.get("subscription_sni") or "").strip()
+    alpn = settings.get("alpn") or ["h3"]
+    return {
+        "remark": settings.get("subscription_remark") or "🚀 Marz ({USERNAME}) [Hysteria 2]",
+        "address": [address],
+        "port": settings.get("subscription_port") or settings["listen_port"],
+        "path": None,
+        "sni": [sni] if sni else [],
+        "host": [],
+        "tls": None,
+        "alpn": ",".join(alpn) if isinstance(alpn, (list, tuple)) else alpn,
+        "fingerprint": "",
+        "allowinsecure": bool(settings.get("subscription_insecure", False)),
+        "mux_enable": False,
+        "fragment_setting": None,
+        "noise_setting": None,
+        "random_user_agent": False,
+        "use_sni_as_host": False,
+        # Empty means inherit the server-wide values from virtual inbound metadata.
+        "obfs": "",
+        "obfs_password": "",
+    }
+
+
 def settings_to_subscription_inbound(settings: Mapping) -> dict:
     """Expose the separate server as virtual metadata to users/hosts/subscriptions."""
     return {
@@ -200,6 +231,7 @@ def settings_to_subscription_inbound(settings: Mapping) -> dict:
         "obfs": settings.get("obfs_type") or "",
         "obfs_password": settings.get("obfs_password") or "",
         "allowinsecure": False,
+        "subscription_host": subscription_host_from_settings(settings),
     }
 
 

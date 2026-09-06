@@ -258,5 +258,15 @@
   "singbox.processId": "PID",
   "singbox.configPath": "Runtime config",
   "singbox.logsHelp": "stdout / stderr · sudo only",
-  "singbox.logsCleared": "sing-box logs cleared"
+  "singbox.logsCleared": "sing-box logs cleared",
+  "singbox.subscription": "subscription endpoint",
+  "singbox.subscriptionEnabled": "Publish Hysteria 2 in subscriptions",
+  "singbox.subscriptionHelp": "Uses this endpoint directly instead of the old Xray Host record.",
+  "singbox.subscriptionTlsHint": "Address and SNI must match the certificate served by sing-box.",
+  "singbox.subscriptionAddress": "Public address",
+  "singbox.subscriptionAddressHelp": "Hostname, IP, or {SERVER_IP} template. Do not include a URL scheme.",
+  "singbox.subscriptionPort": "Public UDP port",
+  "singbox.subscriptionInsecure": "Allow insecure TLS",
+  "singbox.subscriptionRemark": "Node name",
+  "singbox.subscriptionRemarkHelp": "Supports variables such as {USERNAME}, {SERVER_IP}, and {PROTOCOL}."
 }
