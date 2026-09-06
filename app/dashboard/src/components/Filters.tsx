@@ -123,7 +123,7 @@ export const Filters: FC<FilterProps> = ({ ...props }) => {
             onFilterChange({
               ...filters,
               offset: 0,
-              status: event.target.value || undefined,
+              status: (event.target.value || undefined) as typeof filters.status,
             })
           }
         >

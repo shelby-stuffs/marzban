@@ -288,26 +288,8 @@ export const UsersTable: FC<UsersTableProps> = (props) => {
                   <Sort sort={filters.sort} column="username" />
                 </HStack>
               </Th>
-              <Th
-                minW="150px"
-                px={2}
-              >
-                <Select
-                  aria-label={t("usersTable.status")}
-                  value={filters.status || ""}
-                  onChange={handleStatusFilter}
-                  size="xs"
-                  fontSize="xs"
-                  fontWeight="600"
-                  textTransform="uppercase"
-                >
-                  <option value="">{t("usersTable.status")}: all</option>
-                  <option value="active">active</option>
-                  <option value="on_hold">on hold</option>
-                  <option value="disabled">disabled</option>
-                  <option value="limited">limited</option>
-                  <option value="expired">expired</option>
-                </Select>
+              <Th minW="150px" px={2}>
+                <span>{t("usersTable.status")}</span>
               </Th>
               <Th
                 minW="100px"
