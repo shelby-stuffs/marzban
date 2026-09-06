@@ -9,12 +9,19 @@ from app.models.node import NodeStatus
 from app.models.user import UserResponse
 from app.utils.concurrency import threaded_function
 from app.xray.node import XRayNode
+from config import SINGBOX_HYSTERIA_ENABLED
 from xray_api import XRay as XRayAPI
 from xray_api.types.account import Account, XTLSFlows
 
 if TYPE_CHECKING:
     from app.db import User as DBUser
     from app.db.models import Node as DBNode
+
+
+def _schedule_singbox_reload():
+    if SINGBOX_HYSTERIA_ENABLED:
+        from app.singbox.runtime import runtime
+        runtime.schedule_reload()
 
 
 @lru_cache(maxsize=None)
@@ -81,6 +88,8 @@ def add_user(dbuser: "DBUser"):
     email = f"{dbuser.id}.{dbuser.username}"
 
     for proxy_type, inbound_tags in user.inbounds.items():
+        if SINGBOX_HYSTERIA_ENABLED and getattr(proxy_type, "value", proxy_type) == "hysteria":
+            continue
         for inbound_tag in inbound_tags:
             inbound = xray.config.inbounds_by_tag.get(inbound_tag, {})
 
@@ -108,16 +117,20 @@ def add_user(dbuser: "DBUser"):
             for node in list(xray.nodes.values()):
                 if node.connected and node.started:
                     _add_user_to_inbound(node.api, inbound_tag, account)
+    _schedule_singbox_reload()
 
 
 def remove_user(dbuser: "DBUser"):
     email = f"{dbuser.id}.{dbuser.username}"
 
-    for inbound_tag in xray.config.inbounds_by_tag:
+    for inbound_tag, inbound in xray.config.inbounds_by_tag.items():
+        if SINGBOX_HYSTERIA_ENABLED and inbound.get("protocol") == "hysteria":
+            continue
         _remove_user_from_inbound(xray.api, inbound_tag, email)
         for node in list(xray.nodes.values()):
             if node.connected and node.started:
                 _remove_user_from_inbound(node.api, inbound_tag, email)
+    _schedule_singbox_reload()
 
 
 def update_user(dbuser: "DBUser"):
@@ -126,6 +139,8 @@ def update_user(dbuser: "DBUser"):
 
     active_inbounds = []
     for proxy_type, inbound_tags in user.inbounds.items():
+        if SINGBOX_HYSTERIA_ENABLED and getattr(proxy_type, "value", proxy_type) == "hysteria":
+            continue
         for inbound_tag in inbound_tags:
             active_inbounds.append(inbound_tag)
             inbound = xray.config.inbounds_by_tag.get(inbound_tag, {})
@@ -155,7 +170,9 @@ def update_user(dbuser: "DBUser"):
                 if node.connected and node.started:
                     _alter_inbound_user(node.api, inbound_tag, account)
 
-    for inbound_tag in xray.config.inbounds_by_tag:
+    for inbound_tag, inbound in xray.config.inbounds_by_tag.items():
+        if SINGBOX_HYSTERIA_ENABLED and inbound.get("protocol") == "hysteria":
+            continue
         if inbound_tag in active_inbounds:
             continue
         # remove disabled inbounds
@@ -163,6 +180,7 @@ def update_user(dbuser: "DBUser"):
         for node in list(xray.nodes.values()):
             if node.connected and node.started:
                 _remove_user_from_inbound(node.api, inbound_tag, email)
+    _schedule_singbox_reload()
 
 
 def remove_node(node_id: int):

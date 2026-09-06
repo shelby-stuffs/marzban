@@ -14,7 +14,8 @@ from app.db import models as db_models
 from app.models.proxy import ProxyTypes
 from app.models.user import UserStatus
 from app.utils.crypto import get_cert_SANs
-from config import DEBUG, XRAY_EXCLUDE_INBOUND_TAGS, XRAY_FALLBACKS_INBOUND_TAG
+from config import DEBUG, SINGBOX_HYSTERIA_ENABLED, XRAY_EXCLUDE_INBOUND_TAGS, XRAY_FALLBACKS_INBOUND_TAG
+from app.singbox.config import strip_hysteria_from_xray
 
 
 def merge_dicts(a, b):  # B will override A dictionary key and values
@@ -553,6 +554,8 @@ class XRayConfig(dict):
                 ))
 
             for proxy_type, rows in grouped_data.items():
+                if SINGBOX_HYSTERIA_ENABLED and proxy_type == "hysteria":
+                    continue
 
                 inbounds = self.inbounds_by_protocol.get(proxy_type)
                 if not inbounds:
@@ -587,6 +590,11 @@ class XRayConfig(dict):
                             del client['flow']
 
                         clients.append(client)
+
+        if SINGBOX_HYSTERIA_ENABLED:
+            runtime_config = strip_hysteria_from_xray(config)
+            config.clear()
+            config.update(runtime_config)
 
         if DEBUG:
             with open('generated_config-debug.json', 'w') as f:

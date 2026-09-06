@@ -1,0 +1,10 @@
+services:
+  marzban:
+    build:
+      context: .
+      args:
+        SINGBOX_VERSION: ${SINGBOX_VERSION:-1.13.12}
+    environment:
+      SINGBOX_HYSTERIA_ENABLED: "true"
+      SINGBOX_EXECUTABLE_PATH: /usr/local/bin/sing-box
+      SINGBOX_CONFIG_PATH: /var/lib/marzban/sing-box-hysteria.json
