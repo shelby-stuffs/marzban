@@ -6,6 +6,7 @@ Real classes/functions are extracted via AST. Templates, enum and runtime
 context are minimal fixtures; this is not an API/DB/network integration test.
 """
 import ast
+import runpy
 import base64
 import copy
 import json
@@ -29,9 +30,10 @@ def load_definitions(relative, names, namespace=None):
     assert {n.name for n in nodes} == set(names)
     future = ast.ImportFrom(module="__future__", names=[ast.alias(name="annotations")], level=0)
     module = ast.fix_missing_locations(ast.Module(body=[future, *nodes], type_ignores=[]))
-    env = {"json": json, "copy": copy, "deepcopy": copy.deepcopy,
+    env = {"Hysteria2Client": runpy.run_path(str(ROOT / "app/subscription/hysteria2.py"))["Hysteria2Client"], "json": json, "copy": copy, "deepcopy": copy.deepcopy,
            "PosixPath": PosixPath, "Union": Union, "choice": random.choice,
            "urlparse": urlparse, "quote": urlparse.quote, "base64": base64, "UUID": UUID}
+    env["resolve_hysteria2_host"] = runpy.run_path(str(ROOT / "app/utils/hysteria2_validation.py"))["resolve_hysteria2_host"]
     env.update(namespace or {})
     exec(compile(module, str(source), "exec"), env)
     return env

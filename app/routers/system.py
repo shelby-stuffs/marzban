@@ -1,3 +1,6 @@
+from app.subscription.hysteria2 import Hysteria2Client
+from app.utils.hysteria2_validation import validate_hysteria2_hosts
+
 from typing import Dict, List, Union
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -68,6 +71,13 @@ def modify_hosts(
     for inbound_tag in modified_hosts:
         if inbound_tag not in xray.config.inbounds_by_tag:
             raise HTTPException(status_code=400, detail=f"Inbound {inbound_tag} doesn't exist")
+
+    try:
+        validate_hysteria2_hosts(
+            modified_hosts, xray.config.inbounds_by_tag, client_type=Hysteria2Client
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     for inbound_tag, hosts in modified_hosts.items():
         crud.update_hosts(db, inbound_tag, hosts)

@@ -1,3 +1,5 @@
+from app.subscription.hysteria2 import Hysteria2Client
+
 import base64
 import copy
 import json
@@ -168,17 +170,7 @@ class V2rayShareLink(str):
             )
 
         elif inbound["protocol"] == "hysteria":
-            link = self.hysteria2(
-                remark=remark,
-                address=address,
-                port=inbound["port"],
-                auth=settings["auth"],
-                sni=inbound.get("sni", ""),
-                alpn=inbound.get("alpn", ""),
-                ais=inbound.get("ais", ""),
-                obfs=settings.get("obfs") or inbound.get("obfs", ""),
-                obfs_password=settings.get("obfs_password") or inbound.get("obfs_password", ""),
-            )
+            link = Hysteria2Client.from_mapping(address, inbound, settings).share_link(remark)
         else:
             return
 
@@ -544,28 +536,12 @@ class V2rayShareLink(str):
             obfs: str = "",
             obfs_password: str = "",
     ):
-        payload = {}
-        if obfs:
-            payload["obfs"] = obfs
-            if obfs_password:
-                payload["obfs-password"] = obfs_password
-                payload["fm"] = json.dumps(
-                    {"udp": [{"type": obfs, "settings": {"password": obfs_password}}]},
-                    separators=(",", ":"),
-                )
-        if sni:
-            payload["sni"] = sni
-        if alpn:
-            payload["alpn"] = alpn
-        if ais:
-            payload["insecure"] = 1
-
-        query = ("?" + urlparse.urlencode(payload)) if payload else ""
-        return (
-            "hysteria2://"
-            + f"{urlparse.quote(auth, safe=':')}@{address}:{port}{query}"
-            + f"#{urlparse.quote(remark)}"
-        )
+        return Hysteria2Client.from_mapping(
+            address,
+            {"port": port, "sni": sni, "alpn": alpn, "ais": ais,
+             "obfs": obfs, "obfs_password": obfs_password},
+            {"auth": auth},
+        ).share_link(remark)
 
     @classmethod
     def shadowsocks(
@@ -1144,6 +1120,12 @@ class V2rayJsonConfig(str):
 
     def add(self, remark: str, address: str, inbound: dict, settings: dict):
 
+        if inbound.get("protocol") == "hysteria":
+            profile = Hysteria2Client.from_mapping(address, inbound, settings)
+            outbound = profile.xray(self.settings.get("hysteriaSettings", {}))
+            self.add_config(remarks=remark, outbounds=[outbound])
+            return
+
         net = inbound['network']
         protocol = inbound['protocol']
         port = inbound['port']
@@ -1195,41 +1177,6 @@ class V2rayJsonConfig(str):
                                                            port=port,
                                                            password=settings['password'],
                                                            method=settings['method'])
-
-        elif inbound['protocol'] == 'hysteria':
-            outbound["settings"] = self.hysteria2_config(address=address, port=port)
-            # Hysteria2 requires its QUIC transport and TLS. Credentials belong
-            # to the transport, not to a Shadowsocks-style settings.servers.
-            transport = self.hysteria_config(version=2)
-            transport["auth"] = settings["auth"]
-            alpn = inbound.get("alpn")
-            outbound["streamSettings"] = self.stream_setting_config(
-                network="hysteria",
-                security="tls",
-                network_setting=transport,
-                tls_settings=self.tls_config(
-                    sni=inbound.get("sni", ""),
-                    alpn=alpn.split(",") if alpn else None,
-                    ais=inbound.get("ais", False),
-                ),
-            )
-            # Xray's packet obfuscation lives in finalmask, not in the
-            # Hysteria proxy settings. Reuse the subscription obfs metadata.
-            obfs = inbound.get("obfs", "")
-            if obfs:
-                outbound["streamSettings"]["finalmask"] = {
-                    "udp": [{
-                        "type": obfs,
-                        "settings": {"password": inbound.get("obfs_password", "")},
-                    }]
-                }
-
-            # Native Hysteria2 uses QUIC streams, not the panel's generic
-            # Mux.Cool overlay. Its packet obfuscation is configured above.
-            # Do not parse/apply the generic Freedom fragment/noises options:
-            # their dialer is not connected to this Hysteria transport.
-            self.add_config(remarks=remark, outbounds=[outbound])
-            return
 
         outbounds = [outbound]
         dialer_proxy = ''

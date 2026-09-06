@@ -6,6 +6,7 @@ starting database/router/scheduler imports. This does NOT validate application
 imports, template loading, or acceptance by the Xray binary.
 """
 import ast
+import runpy
 import copy
 import json
 from pathlib import Path
@@ -18,7 +19,7 @@ def load_generator():
     source = Path(__file__).resolve().parents[1] / "app/subscription/v2ray.py"
     tree = ast.parse(source.read_text(encoding="utf-8"))
     node = next(n for n in tree.body if isinstance(n, ast.ClassDef) and n.name == "V2rayJsonConfig")
-    namespace = {"copy": copy, "json": json, "choice": choice, "Union": Union}
+    namespace = {"Hysteria2Client": runpy.run_path(str(source.with_name("hysteria2.py")))["Hysteria2Client"], "copy": copy, "json": json, "choice": choice, "Union": Union}
     exec(compile(ast.Module(body=[node], type_ignores=[]), str(source), "exec"), namespace)
     return namespace["V2rayJsonConfig"]
 

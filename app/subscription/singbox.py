@@ -1,3 +1,5 @@
+from app.subscription.hysteria2 import Hysteria2Client
+
 import copy
 import json
 from random import choice
@@ -292,33 +294,12 @@ class SingBoxConfiguration(str):
         net = inbound["network"]
         path = inbound["path"]
 
-        # Hysteria2 protocol (not transport)
+        # The same validated profile drives every native Hysteria2 format.
         if inbound["protocol"] == "hysteria":
+            profile = Hysteria2Client.from_mapping(address, inbound, settings)
             remark = self._remark_validation(remark)
             self.proxy_remarks.append(remark)
-            port = inbound["port"]
-            if isinstance(port, str):
-                port = int(choice(port.split(",")))
-            outbound = {
-                "type": "hysteria2",
-                "tag": remark,
-                "server": address,
-                "server_port": port,
-                "password": settings["auth"],
-            }
-            if inbound.get("obfs"):
-                outbound["obfs"] = {
-                    "type": inbound["obfs"],
-                    "password": inbound.get("obfs_password", ""),
-                }
-            alpn = inbound.get("alpn")
-            outbound["tls"] = self.tls_config(
-                sni=inbound.get("sni"),
-                tls="tls",
-                alpn=alpn.rsplit(",") if alpn else None,
-                ais=inbound.get("ais"),
-            )
-            self.add_outbound(outbound)
+            self.add_outbound(profile.singbox(remark))
             return
 
         # not supported by sing-box

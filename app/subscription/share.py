@@ -1,3 +1,5 @@
+from app.utils.hysteria2_validation import resolve_hysteria2_host
+
 import base64
 import math
 import random
@@ -406,6 +408,9 @@ def process_inbounds_and_tags(
                         "obfs_password": host.get("obfs_password") or inbound.get("obfs_password", ""),
                     }
                 )
+
+                if inbound.get("protocol") == "hysteria":
+                    host_inbound.update(resolve_hysteria2_host(inbound, host))
 
                 conf.add(
                     remark=host["remark"].format_map(format_variables),

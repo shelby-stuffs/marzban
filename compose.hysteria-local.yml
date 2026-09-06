@@ -1,0 +1,4 @@
+services:
+  marzban:
+    image: marzban:hysteria-review
+    pull_policy: never

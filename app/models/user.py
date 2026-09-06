@@ -1,3 +1,5 @@
+from app.utils.hysteria2_validation import validate_hysteria2_user_proxies
+
 import re
 import secrets
 from datetime import datetime
@@ -122,6 +124,11 @@ class User(BaseModel):
 
 
 class UserCreate(User):
+    @field_validator("proxies", mode="after")
+    @classmethod
+    def validate_hysteria2_auth_on_write(cls, value):
+        return validate_hysteria2_user_proxies(value)
+
     username: str
     status: UserStatusCreate = None
     model_config = ConfigDict(json_schema_extra={
@@ -204,6 +211,11 @@ class UserCreate(User):
 
 
 class UserModify(User):
+    @field_validator("proxies", mode="after")
+    @classmethod
+    def validate_hysteria2_auth_on_write(cls, value):
+        return validate_hysteria2_user_proxies(value)
+
     status: UserStatusModify = None
     data_limit_reset_strategy: UserDataLimitResetStrategy = None
     model_config = ConfigDict(json_schema_extra={

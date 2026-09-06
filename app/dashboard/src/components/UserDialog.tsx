@@ -790,6 +790,10 @@ export const UserDialog: FC<UserDialogProps> = () => {
                     in={(selectedProxies || []).includes("hysteria")}
                     animateOpacity
                   >
+                    <Text fontSize="sm" color="terminal.dim" mt={2}>
+                      Legacy fields: configure obfs in Hosts/inbound instead. / Устаревшие поля: настраивайте obfs в Hosts/inbound.
+                      These values do not override host settings. / Эти значения не переопределяют настройки хоста.
+                    </Text>
                     <FormControl mt="10px">
                       <FormLabel>{t("userDialog.hysteriaObfs")}</FormLabel>
                       <Select

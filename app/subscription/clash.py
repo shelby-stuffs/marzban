@@ -1,3 +1,5 @@
+from app.subscription.hysteria2 import Hysteria2Client
+
 import copy
 import json
 from random import choice
@@ -348,31 +350,10 @@ class ClashMetaConfiguration(ClashConfiguration):
         return node
 
     def add(self, remark: str, address: str, inbound: dict, settings: dict):
-        # Hysteria2 protocol
         if inbound['protocol'] == 'hysteria':
+            profile = Hysteria2Client.from_mapping(address, inbound, settings)
             proxy_remark = self._remark_validation(remark)
-            port = inbound['port']
-            if isinstance(port, str):
-                from random import choice as _choice
-                port = int(_choice(port.split(',')))
-            node = {
-                'name': proxy_remark,
-                'type': 'hysteria2',
-                'server': address,
-                'port': port,
-                'password': settings['auth'],
-            }
-            if inbound.get('sni'):
-                node['sni'] = inbound['sni']
-            if inbound.get('alpn'):
-                node['alpn'] = inbound['alpn'].split(',') if isinstance(inbound['alpn'], str) else inbound['alpn']
-            if inbound.get('ais'):
-                node['skip-cert-verify'] = True
-            if inbound.get('obfs'):
-                node['obfs'] = inbound['obfs']
-                if inbound.get('obfs_password'):
-                    node['obfs-password'] = inbound['obfs_password']
-            self.data['proxies'].append(node)
+            self.data['proxies'].append(profile.clash(proxy_remark))
             self.proxy_remarks.append(proxy_remark)
             return
 

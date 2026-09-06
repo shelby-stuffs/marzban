@@ -1,3 +1,5 @@
+from app.utils.hysteria2_validation import validate_hysteria2_config
+
 from copy import deepcopy
 from typing import Literal
 
@@ -46,8 +48,10 @@ def _read_user_config() -> dict:
 def _validate_and_apply(payload: dict) -> dict:
     try:
         normalized = normalize_xray_v26_config(deepcopy(payload))
+        validate_hysteria2_config(normalized)
         config = XRayConfig(normalized, api_port=xray.config.api_port)
         startup_config = config.include_db_users()
+        validate_hysteria2_config(startup_config)
         xray.core.validate_config(startup_config)
     except (ValueError, TypeError, RuntimeError, TimeoutError) as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc

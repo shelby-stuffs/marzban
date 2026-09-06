@@ -682,8 +682,9 @@ const AccordionInbound: FC<AccordionInboundType> = ({
                               <FormControl>
                                 <FormLabel display="flex" pb={1} m="0"><span>Obfs</span></FormLabel>
                                 <Select size="sm" borderRadius="4px" {...form.register(hostKey + "." + index + ".obfs")}>
-                                  <option value="">none</option>
-                                  <option value="salamander">salamander</option>
+                                  <option value="">Inherit from inbound / Наследовать</option>
+                                  <option value="none">No obfs / Без obfs</option>
+                                  <option value="salamander">Salamander</option>
                                 </Select>
                               </FormControl>
                               <FormControl>
@@ -692,13 +693,17 @@ const AccordionInbound: FC<AccordionInboundType> = ({
                                   <Input
                                     size="sm"
                                     borderRadius="4px"
-                                    placeholder="obfs password"
+                                    placeholder="Empty = inherit / Пусто = наследовать"
                                     {...form.register(hostKey + "." + index + ".obfs_password")}
                                   />
                                   <Button size="sm" flexShrink={0} onClick={() => { const p = Array.from(crypto.getRandomValues(new Uint8Array(16))).map((b) => b.toString(16).padStart(2, "0")).join(""); (form.setValue as any)(hostKey + "." + index + ".obfs", "salamander"); (form.setValue as any)(hostKey + "." + index + ".obfs_password", p); }}>
                                     Gen
                                   </Button>
                                 </HStack>
+                                <Text fontSize="xs" color="terminal.dim" mt={2}>
+                                  Client export only; the server is not changed. / Только подписка: сервер не меняется.
+                                  No obfs ignores the password; Salamander must match the server. / Без obfs пароль игнорируется; Salamander должен совпадать с сервером.
+                                </Text>
                               </FormControl>
                             </>
                           )}

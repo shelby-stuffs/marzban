@@ -1,3 +1,5 @@
+from app.utils.hysteria2_validation import validate_hysteria2_config
+
 import asyncio
 import json
 import os
@@ -138,14 +140,16 @@ def modify_core_config(
     """Modify the core configuration and restart the core."""
     try:
         normalized_payload = normalize_xray_v26_config(deepcopy(payload))
+        validate_hysteria2_config(normalized_payload)
         config = XRayConfig(
             normalized_payload,
             api_port=xray.config.api_port,
         )
         startup_config = config.include_db_users()
+        validate_hysteria2_config(startup_config)
         # Validate while the currently working core is still running.
         xray.core.validate_config(startup_config)
-    except (ValueError, RuntimeError, TimeoutError) as err:
+    except (ValueError, TypeError, RuntimeError, TimeoutError) as err:
         raise HTTPException(status_code=400, detail=str(err))
 
     # Persist only the user's normalized config. XRayConfig's dynamic API
