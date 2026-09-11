@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Literal, Optional
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
@@ -11,6 +11,13 @@ from config import SUDOERS
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/admin/token")  # Admin view url
+
+
+DashboardTheme = Literal["terminal-green", "glamour-pink", "cyber-violet", "airy-light"]
+
+
+class AdminPreferences(BaseModel):
+    dashboard_theme: DashboardTheme = "glamour-pink"
 
 
 class Token(BaseModel):

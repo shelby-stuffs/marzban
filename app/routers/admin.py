@@ -7,7 +7,8 @@ from sqlalchemy.exc import IntegrityError
 from app import xray
 from app.db import Session, crud, get_db
 from app.dependencies import get_admin_by_username, validate_admin
-from app.models.admin import Admin, AdminCreate, AdminModify, Token
+from app.models.admin import Admin, AdminCreate, AdminModify, AdminPreferences, Token
+from app.db.admin_preferences import AdminPreference as DBAdminPreference
 from app.utils import report, responses
 from app.utils.jwt import create_admin_token
 from config import LOGIN_NOTIFY_WHITE_LIST
@@ -67,6 +68,39 @@ def create_admin(
         raise HTTPException(status_code=409, detail="Admin already exists")
 
     return dbadmin
+
+
+@router.get("/admin/preferences", response_model=AdminPreferences)
+def get_admin_preferences(
+    db: Session = Depends(get_db),
+    admin: Admin = Depends(Admin.get_current),
+):
+    """Return dashboard preferences for the authenticated account."""
+    preference = db.query(DBAdminPreference).filter(
+        DBAdminPreference.username == admin.username
+    ).first()
+    if preference is None:
+        return AdminPreferences()
+    return AdminPreferences(dashboard_theme=preference.dashboard_theme)
+
+
+@router.put("/admin/preferences", response_model=AdminPreferences)
+def update_admin_preferences(
+    preferences: AdminPreferences,
+    db: Session = Depends(get_db),
+    admin: Admin = Depends(Admin.get_current),
+):
+    """Persist dashboard preferences for the authenticated account."""
+    preference = db.query(DBAdminPreference).filter(
+        DBAdminPreference.username == admin.username
+    ).first()
+    if preference is None:
+        preference = DBAdminPreference(username=admin.username)
+        db.add(preference)
+    preference.dashboard_theme = preferences.dashboard_theme
+    db.commit()
+    db.refresh(preference)
+    return AdminPreferences(dashboard_theme=preference.dashboard_theme)
 
 
 @router.put(
