@@ -25,7 +25,7 @@ const SingBoxNavIcon = chakra(BoltIcon, navIconStyle);
 const SubscriptionsNavIcon = chakra(QueueListIcon, navIconStyle);
 
 const railDisplay = { base: "none", md: "flex" };
-const hoverStyle = { bg: "terminal.overlay", color: "primary.300" };
+const hoverStyle = { bg: "rgba(246,83,173,.10)", color: "primary.200", transform: "translateX(2px)" };
 
 type NavItemProps = {
   to: string;
@@ -44,13 +44,13 @@ const NavItem: FC<NavItemProps> = ({ to, end, icon: IconEl, label, onClick }) =>
         px="3"
         py="2"
         position="relative"
-        borderRadius="3px"
+        borderRadius="12px"
         fontFamily="mono"
         fontSize="sm"
         letterSpacing="0.01em"
         cursor="pointer"
-        transition="background .12s ease-out, color .12s ease-out"
-        bg={navData.isActive ? "rgba(0, 224, 140, 0.08)" : "transparent"}
+        transition="background .18s ease-out, color .18s ease-out, transform .18s ease-out"
+        bg={navData.isActive ? "linear-gradient(90deg, rgba(246,83,173,.20), rgba(189,145,255,.08))" : "transparent"}
         color={navData.isActive ? "primary.300" : "gray.400"}
         _hover={navData.isActive ? undefined : hoverStyle}
       >
@@ -60,7 +60,7 @@ const NavItem: FC<NavItemProps> = ({ to, end, icon: IconEl, label, onClick }) =>
           top="1.5"
           bottom="1.5"
           w="2px"
-          borderRadius="1px"
+          borderRadius="999px"
           bg={navData.isActive ? "primary.500" : "transparent"}
         />
         <IconEl />
@@ -94,7 +94,7 @@ export const SidebarContent: FC<{ onNavigate?: () => void }> = ({ onNavigate }) 
   return (
     <VStack align="stretch" spacing="0.5" p="3" w="full">
       <HStack spacing="2" px="3" py="3" mb="1" align="center">
-        <Box boxSize="2" borderRadius="1px" bg="primary.500" boxShadow="glow" />
+        <Box boxSize="2.5" borderRadius="full" bg="linear-gradient(135deg, primary.200, primary.500)" boxShadow="glow" />
         <Text fontFamily="mono" fontWeight="600" fontSize="md" letterSpacing="0.04em">
           marzban
         </Text>
@@ -140,8 +140,9 @@ export const Sidebar: FC = () => (
     w="56"
     flexShrink={0}
     borderRight="1px solid"
-    borderColor="terminal.border"
-    bg="terminal.surface"
+    borderColor="rgba(255, 188, 226, 0.16)"
+    bg="rgba(24, 13, 26, 0.82)"
+    backdropFilter="blur(22px) saturate(135%)"
     position="sticky"
     top="0"
     h="100vh"
