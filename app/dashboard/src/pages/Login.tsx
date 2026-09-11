@@ -93,9 +93,10 @@ export const Login: FC = () => {
             w="full"
             maxW="360px"
             borderWidth="1px"
-            borderColor="terminal.border"
-            bg="terminal.surface"
-            borderRadius="6px"
+            borderColor="rgba(255, 188, 226, 0.24)"
+            bg="rgba(29, 17, 31, 0.82)"
+            backdropFilter="blur(24px) saturate(140%)"
+            borderRadius="22px"
             boxShadow="panel"
             overflow="hidden"
           >
@@ -104,12 +105,12 @@ export const Login: FC = () => {
               py="2.5"
               spacing="2"
               borderBottom="1px solid"
-              borderColor="terminal.border"
-              bg="terminal.overlay"
+              borderColor="rgba(255, 188, 226, 0.16)"
+              bg="linear-gradient(90deg, rgba(246,83,173,.16), rgba(189,145,255,.08))"
             >
               <Box
                 boxSize="2"
-                borderRadius="1px"
+                borderRadius="full"
                 bg="primary.500"
                 boxShadow="glow"
               />

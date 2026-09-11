@@ -36,9 +36,9 @@ const iconProps = {
 };
 const MoreIcon: FC = () => (
   <HStack spacing="0.5" h="4" align="center" justify="center">
-    <Box w="3px" h="3px" bg="currentColor" />
-    <Box w="3px" h="3px" bg="currentColor" />
-    <Box w="3px" h="3px" bg="currentColor" />
+    <Box w="3px" h="3px" borderRadius="full" bg="currentColor" />
+    <Box w="3px" h="3px" borderRadius="full" bg="currentColor" />
+    <Box w="3px" h="3px" borderRadius="full" bg="currentColor" />
   </HStack>
 );
 const LogoutIcon = chakra(ArrowLeftOnRectangleIcon, iconProps);
@@ -106,18 +106,19 @@ export const Header: FC<HeaderProps> = ({ title, actions }) => {
       <Flex align="center" gap="2" minW="0">
         <Text
           as="span"
-          fontFamily="mono"
-          fontSize="sm"
-          color="primary.500"
+          fontFamily="body"
+          fontSize="md"
+          color="primary.300"
+          textShadow="0 0 16px rgba(246,83,173,.75)"
           userSelect="none"
           flexShrink={0}
         >
-          &gt;
+          ✦
         </Text>
         <Text
           as="h1"
-          fontFamily="mono"
-          fontWeight="600"
+          fontFamily="heading"
+          fontWeight="800"
           letterSpacing="0.01em"
           fontSize={titleSize}
           minW="0"
