@@ -2,13 +2,13 @@ import { extendTheme } from "@chakra-ui/react";
 import { terminalTheme } from "./src/theme/terminal";
 
 const mono = `"JetBrains Mono","SFMono-Regular",Menlo,Consolas,"Liberation Mono",monospace`;
-const sans = `Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",sans-serif`;
+const sans = `Manrope,Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif`;
 
-const BG = "#06080b";
-const SURFACE = "#0b0f15";
-const OVERLAY = "#101620";
-const BORDER = "#1c2634";
-const TEXT = "#c8d6e2";
+const BG = "#130a14";
+const SURFACE = "#1d111f";
+const OVERLAY = "#2a182d";
+const BORDER = "#593653";
+const TEXT = "#ffe9f6";
 
 // The dashboard is dark-only. There is no light color mode, so every component
 // style below targets a single dark canvas and no _light branches exist.
@@ -31,7 +31,7 @@ const baseTheme = extendTheme({
     "2xl": "23px",
     "3xl": "28px",
   },
-  radii: { sm: "3px", md: "4px", lg: "6px", xl: "8px" },
+  radii: { sm: "8px", md: "12px", lg: "16px", xl: "20px" },
   colors: {
     // Kept as an alias so legacy references still resolve to the dark border.
     "light-border": BORDER,
@@ -45,40 +45,40 @@ const baseTheme = extendTheme({
       text: TEXT,
     },
     primary: {
-      50: "#e6fff5",
-      100: "#b8ffe3",
-      200: "#7dffcd",
-      300: "#42ffb6",
-      400: "#12f79f",
-      500: "#00e08c",
-      600: "#00b872",
-      700: "#008f58",
-      800: "#00663f",
-      900: "#003d26",
+      50: "#fff2fa",
+      100: "#ffd9ef",
+      200: "#ffbce2",
+      300: "#ff96d2",
+      400: "#ff72c2",
+      500: "#f653ad",
+      600: "#d83b93",
+      700: "#ad2b73",
+      800: "#7d2056",
+      900: "#4d1737",
     },
     accent: {
-      400: "#38e0ff",
-      500: "#22d3ee",
-      600: "#0ea5c4",
+      400: "#d4b4ff",
+      500: "#bd91ff",
+      600: "#9d6ee8",
     },
     gray: {
-      50: "#e7ecf1",
-      100: "#cfd8e3",
-      200: "#a9b7c6",
-      300: "#a9b7c6",
-      400: "#7d8fa3",
-      500: "#5b6b7d",
+      50: "#fff4fa",
+      100: "#f7ddea",
+      200: "#e9bfd4",
+      300: "#dca9c3",
+      400: "#c892af",
+      500: "#a87592",
       600: BORDER,
       700: OVERLAY,
-      750: "#0e141c",
+      750: "#241427",
       800: SURFACE,
       900: BG,
     },
   },
   shadows: {
-    outline: `0 0 0 1px #00e08c`,
-    glow: "0 0 0 1px rgba(0, 224, 140, 0.35), 0 0 18px -6px rgba(0, 224, 140, 0.45)",
-    panel: "0 1px 0 rgba(255, 255, 255, 0.02) inset, 0 8px 24px -18px rgba(0, 0, 0, 0.9)",
+    outline: `0 0 0 3px rgba(246, 83, 173, 0.28)`,
+    glow: "0 0 0 1px rgba(255, 150, 210, 0.32), 0 0 28px -6px rgba(246, 83, 173, 0.72)",
+    panel: "0 1px 0 rgba(255,255,255,.08) inset, 0 20px 55px -34px rgba(246,83,173,.72), 0 14px 36px -28px rgba(0,0,0,.9)",
   },
   styles: {
     global: {
@@ -88,8 +88,8 @@ const baseTheme = extendTheme({
         bg: BG,
         color: TEXT,
         backgroundImage:
-          "linear-gradient(rgba(0,255,156,0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(0,255,156,0.035) 1px, transparent 1px)",
-        backgroundSize: "32px 32px",
+          "radial-gradient(circle at 18% 8%, rgba(255,114,194,.18), transparent 31%), radial-gradient(circle at 86% 18%, rgba(189,145,255,.13), transparent 28%), linear-gradient(145deg, #130a14 0%, #1d0e1c 52%, #120a18 100%)",
+        backgroundSize: "auto",
         backgroundAttachment: "fixed",
       },
       "*::selection": { bg: "primary.500", color: BG },
@@ -98,7 +98,7 @@ const baseTheme = extendTheme({
       "::-webkit-scrollbar-track": { bg: "transparent" },
       "::-webkit-scrollbar-thumb": {
         bg: BORDER,
-        borderRadius: "0",
+        borderRadius: "999px",
         _hover: { bg: "primary.700" },
       },
     },
@@ -116,15 +116,15 @@ const baseTheme = extendTheme({
         container: {
           bg: SURFACE,
           borderColor: BORDER,
-          borderRadius: "6px",
+          borderRadius: "16px",
           boxShadow: "none",
         },
       },
     },
     Button: {
       baseStyle: {
-        borderRadius: "4px",
-        fontFamily: mono,
+        borderRadius: "12px",
+        fontFamily: sans,
         fontWeight: "500",
         letterSpacing: "0.02em",
         _focusVisible: { boxShadow: "outline" },
@@ -154,8 +154,8 @@ const baseTheme = extendTheme({
     IconButton: { defaultProps: { size: "sm", variant: "outline" } },
     Badge: {
       baseStyle: {
-        borderRadius: "2px",
-        fontFamily: mono,
+        borderRadius: "999px",
+        fontFamily: sans,
         textTransform: "uppercase",
         letterSpacing: "0.06em",
         fontWeight: "500",
@@ -164,7 +164,7 @@ const baseTheme = extendTheme({
     },
     Tag: {
       baseStyle: {
-        container: { borderRadius: "2px", fontFamily: mono, bg: OVERLAY, color: TEXT },
+        container: { borderRadius: "999px", fontFamily: sans, bg: OVERLAY, color: TEXT },
       },
       defaultProps: { size: "sm" },
     },
@@ -173,14 +173,14 @@ const baseTheme = extendTheme({
         fontFamily: mono,
         bg: OVERLAY,
         color: "primary.300",
-        borderRadius: "2px",
+        borderRadius: "8px",
       },
     },
     FormLabel: {
       baseStyle: {
-        fontFamily: mono,
+        fontFamily: sans,
         fontSize: "xs",
-        fontWeight: "500",
+        fontWeight: "700",
         textTransform: "uppercase",
         letterSpacing: "0.08em",
         mb: "1.5",
@@ -307,7 +307,7 @@ const baseTheme = extendTheme({
     Modal: {
       baseStyle: {
         dialog: {
-          borderRadius: "6px",
+          borderRadius: "16px",
           bg: SURFACE,
           border: "1px solid",
           borderColor: BORDER,
