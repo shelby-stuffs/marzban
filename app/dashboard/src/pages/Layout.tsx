@@ -22,7 +22,7 @@ import { FC } from "react";
 import { Outlet } from "react-router-dom";
 
 const MenuIcon = chakra(Bars3Icon, { baseStyle: { w: 5, h: 5 } });
-const contentPad = { base: 4, md: 6 };
+const contentPad = { base: 4, md: 7 };
 const topbarDisplay = { base: "flex", md: "none" };
 
 export const Layout: FC = () => {
@@ -37,8 +37,9 @@ export const Layout: FC = () => {
         px="4"
         py="3"
         borderBottom="1px solid"
-        borderColor="terminal.border"
-        bg="terminal.surface"
+        borderColor="rgba(255, 188, 226, 0.16)"
+        bg="rgba(24, 13, 26, 0.86)"
+        backdropFilter="blur(22px) saturate(135%)"
         position="sticky"
         top="0"
         zIndex={20}
@@ -51,7 +52,7 @@ export const Layout: FC = () => {
         >
           <MenuIcon />
         </IconButton>
-        <Box boxSize="2" borderRadius="1px" bg="primary.500" boxShadow="glow" />
+        <Box boxSize="2.5" borderRadius="full" bg="linear-gradient(135deg, primary.200, primary.500)" boxShadow="glow" />
         <Text fontFamily="mono" fontWeight="600" fontSize="md" letterSpacing="0.04em">
           marzban
         </Text>

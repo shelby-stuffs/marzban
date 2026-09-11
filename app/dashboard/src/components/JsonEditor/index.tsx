@@ -11,16 +11,16 @@ const configureTheme: BeforeMount = (monaco) => {
   monaco.editor.defineTheme("marzban-terminal", {
     base: "vs-dark", inherit: true,
     rules: [
-      { token: "string.key.json", foreground: "89c5ff" },
-      { token: "string.value.json", foreground: "42ffb6" },
-      { token: "number", foreground: "ffc078" },
+      { token: "string.key.json", foreground: "D4B4FF" },
+      { token: "string.value.json", foreground: "FF96D2" },
+      { token: "number", foreground: "FFC08E" },
     ],
     colors: {
-      "editor.background": "#0b0f15", "editor.foreground": "#c8d6e2",
-      "editorLineNumber.foreground": "#8b9bb0",
-      "editorCursor.foreground": "#00e08c",
-      "editor.selectionBackground": "#143b30",
-      "editor.lineHighlightBackground": "#101620",
+      "editor.background": "#1a0f1c", "editor.foreground": "#ffe9f6",
+      "editorLineNumber.foreground": "#c892af",
+      "editorCursor.foreground": "#f653ad",
+      "editor.selectionBackground": "#4c2141",
+      "editor.lineHighlightBackground": "#2a182d",
     },
   });
 };
@@ -48,7 +48,7 @@ export const JsonEditor = forwardRef<HTMLDivElement, JSONEditorProps>(
         ref={ref}
         border="1px solid"
         borderColor="terminal.border"
-        borderRadius="4px"
+        borderRadius="14px"
         h="full"
         overflow="hidden"
       >

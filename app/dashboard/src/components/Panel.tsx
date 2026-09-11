@@ -20,9 +20,10 @@ export const Panel: FC<PropsWithChildren<PanelProps>> = ({
 }) => (
   <Box
     borderWidth="1px"
-    borderColor="terminal.border"
-    bg="terminal.surface"
-    borderRadius="4px"
+    borderColor="rgba(255, 188, 226, 0.20)"
+    bg="rgba(29, 17, 31, 0.84)"
+    backdropFilter="blur(18px) saturate(130%)"
+    borderRadius="16px"
     minW="0"
     boxShadow="panel"
     overflow="hidden"
@@ -37,8 +38,8 @@ export const Panel: FC<PropsWithChildren<PanelProps>> = ({
         px={compact ? "3" : "4"}
         py={compact ? "1.5" : "2.5"}
         borderBottom="1px solid"
-        borderColor="terminal.border"
-        bg="terminal.overlay"
+        borderColor="rgba(255, 188, 226, 0.16)"
+        bg="linear-gradient(90deg, rgba(246,83,173,.13), rgba(189,145,255,.07))"
       >
         <Text
           fontFamily="mono"
