@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap");
 
 // ---------------------------------------------------------------------------
 // Terminal design tokens mirrored from chakra.config.ts
@@ -6,19 +6,46 @@
 // ---------------------------------------------------------------------------
 :root {
   color-scheme: dark;
-  --term-bg: #06080b;
-  --term-surface: #0b0f15;
-  --term-overlay: #101620;
-  --term-border: #1c2634;
-  --term-accent: #00e08c;
-  --term-text: #c8d6e2;
-  --term-dim: #8b9bb0;
+  --term-bg: #130a14;
+  --term-surface: #1d111f;
+  --term-overlay: #2a182d;
+  --term-border: #593653;
+  --term-accent: #f653ad;
+  --term-text: #ffe9f6;
+  --term-dim: #c892af;
 }
 
 html,
 body {
+  min-height: 100%;
   background-color: var(--term-bg);
   color: var(--term-text);
+}
+
+body {
+  background-image:
+    radial-gradient(circle at 12% 8%, rgba(255, 114, 194, 0.20), transparent 28rem),
+    radial-gradient(circle at 90% 14%, rgba(189, 145, 255, 0.15), transparent 30rem),
+    radial-gradient(circle at 56% 92%, rgba(255, 188, 226, 0.08), transparent 34rem),
+    linear-gradient(145deg, #130a14, #1d0e1c 52%, #120a18);
+  background-attachment: fixed;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: .45;
+  background-image: radial-gradient(rgba(255, 233, 246, .32) .7px, transparent .7px);
+  background-size: 28px 28px;
+  mask-image: linear-gradient(to bottom, black, transparent 72%);
+}
+
+#root {
+  position: relative;
+  z-index: 1;
 }
 
 .bg-blue-animate {
@@ -53,19 +80,19 @@ body {
 // ---------------------------------------------------------------------------
 table thead {
   th:first-of-type {
-    border-top-left-radius: 4px;
+    border-top-left-radius: 14px;
   }
   th:last-of-type {
-    border-top-right-radius: 4px;
+    border-top-right-radius: 14px;
   }
 }
 
 .last-row {
   td:first-of-type {
-    border-bottom-left-radius: 4px;
+    border-bottom-left-radius: 14px;
   }
   td:last-of-type {
-    border-bottom-right-radius: 4px;
+    border-bottom-right-radius: 14px;
   }
 }
 
@@ -109,7 +136,7 @@ table thead {
   font-family: "JetBrains Mono", monospace !important;
   background-color: var(--term-overlay) !important;
   border: 1px solid var(--term-border);
-  border-radius: 4px !important;
+  border-radius: 14px !important;
   position: relative;
 }
 
@@ -144,8 +171,8 @@ table thead {
 }
 
 .react-datepicker__day:hover {
-  border-radius: 2px;
-  background-color: var(--term-border) !important;
+  border-radius: 999px;
+  background-color: rgba(246, 83, 173, .20) !important;
   color: var(--term-accent) !important;
 }
 
@@ -159,8 +186,8 @@ table thead {
 .react-datepicker__day--selected,
 .react-datepicker__day--in-selecting-range,
 .react-datepicker__day--in-range {
-  border-radius: 2px;
-  background-color: var(--term-accent) !important;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #ff96d2, #f653ad) !important;
   color: #04150d !important;
 }
 
@@ -203,8 +230,8 @@ table thead {
 .circle {
   min-width: 8px;
   min-height: 8px;
-  border-radius: 1px;
-  box-shadow: 0 0 6px 0 currentColor;
+  border-radius: 999px;
+  box-shadow: 0 0 10px 0 currentColor;
 }
 
 .pulse {
@@ -230,10 +257,10 @@ table thead {
 }
 @keyframes green-pulse-animation {
   0% {
-    box-shadow: 0 0 0 0 rgba(0, 224, 140, 0.5);
+    box-shadow: 0 0 0 0 rgba(246, 83, 173, 0.52);
   }
   100% {
-    box-shadow: 0 0 0 8px rgba(0, 224, 140, 0);
+    box-shadow: 0 0 0 9px rgba(246, 83, 173, 0);
   }
 }
 @keyframes red-pulse-animation {
@@ -258,5 +285,5 @@ table thead {
   align-items: center;
   justify-content: start;
   gap: 0.6rem;
-  font-family: "JetBrains Mono", monospace;
+  font-family: "Manrope", sans-serif;
 }

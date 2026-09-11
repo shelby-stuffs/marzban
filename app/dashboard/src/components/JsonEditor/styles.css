@@ -3,7 +3,7 @@
 	padding-right: 16px !important;
 }
 .ace_editor, .jsoneditor{
-	border-radius: 4px;
+	border-radius: 14px;
 }
 .ace_editor{
 	min-height: 300px;
