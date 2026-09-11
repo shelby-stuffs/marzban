@@ -10,7 +10,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { QueryClientProvider } from "react-query";
 import { queryClient } from "utils/react-query";
-import { updateThemeColor } from "utils/themeColor";
+import { applyDashboardTheme, DashboardThemeProvider, getStoredTheme } from "contexts/ThemeContext";
 import { theme } from "../chakra.config";
 import App from "./App";
 import "index.scss";
@@ -21,17 +21,18 @@ dayjs.extend(utc);
 dayjs.extend(RelativeTime);
 dayjs.extend(Duration);
 
-// Dark is the only supported color mode. Pin the persisted value so previously
-// stored "light" preferences cannot bring the old white theme back.
+// Apply the cached account theme before React mounts to avoid a color flash.
 window.localStorage.setItem("chakra-ui-color-mode", "dark");
-updateThemeColor();
+applyDashboardTheme(getStoredTheme());
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
-    <ChakraProvider theme={theme}>
-      <QueryClientProvider client={queryClient}>
-        <App />
-      </QueryClientProvider>
-    </ChakraProvider>
+    <DashboardThemeProvider>
+      <ChakraProvider theme={theme}>
+        <QueryClientProvider client={queryClient}>
+          <App />
+        </QueryClientProvider>
+      </ChakraProvider>
+    </DashboardThemeProvider>
   </React.StrictMode>
 );

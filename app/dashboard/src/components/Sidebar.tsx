@@ -8,6 +8,7 @@ import {
   ShieldCheckIcon,
   SquaresPlusIcon,
   UsersIcon,
+  PaintBrushIcon,
 } from "@heroicons/react/24/outline";
 import useGetUser from "hooks/useGetUser";
 import { FC } from "react";
@@ -23,9 +24,10 @@ const WireGuardNavIcon = chakra(ShieldCheckIcon, navIconStyle);
 const XHTTPNavIcon = chakra(CloudIcon, navIconStyle);
 const SingBoxNavIcon = chakra(BoltIcon, navIconStyle);
 const SubscriptionsNavIcon = chakra(QueueListIcon, navIconStyle);
+const AppearanceNavIcon = chakra(PaintBrushIcon, navIconStyle);
 
 const railDisplay = { base: "none", md: "flex" };
-const hoverStyle = { bg: "rgba(246,83,173,.10)", color: "primary.200", transform: "translateX(2px)" };
+const hoverStyle = { bg: "var(--theme-hover-soft)", color: "primary.200", transform: "translateX(2px)" };
 
 type NavItemProps = {
   to: string;
@@ -50,7 +52,7 @@ const NavItem: FC<NavItemProps> = ({ to, end, icon: IconEl, label, onClick }) =>
         letterSpacing="0.01em"
         cursor="pointer"
         transition="background .18s ease-out, color .18s ease-out, transform .18s ease-out"
-        bg={navData.isActive ? "linear-gradient(90deg, rgba(246,83,173,.20), rgba(189,145,255,.08))" : "transparent"}
+        bg={navData.isActive ? "var(--theme-active-gradient)" : "transparent"}
         color={navData.isActive ? "primary.300" : "gray.400"}
         _hover={navData.isActive ? undefined : hoverStyle}
       >
@@ -101,6 +103,8 @@ export const SidebarContent: FC<{ onNavigate?: () => void }> = ({ onNavigate }) 
       </HStack>
 
       <NavItem to="/" end icon={UsersNavIcon} label={t("users", "Users")} onClick={onNavigate} />
+      <SectionLabel>account</SectionLabel>
+      <NavItem to="/settings" icon={AppearanceNavIcon} label="Appearance" onClick={onNavigate} />
 
       {isSudo && (
         <>
@@ -140,8 +144,8 @@ export const Sidebar: FC = () => (
     w="56"
     flexShrink={0}
     borderRight="1px solid"
-    borderColor="rgba(255, 188, 226, 0.16)"
-    bg="rgba(24, 13, 26, 0.82)"
+    borderColor="var(--theme-glass-border)"
+    bg="var(--theme-sidebar-bg)"
     backdropFilter="blur(22px) saturate(135%)"
     position="sticky"
     top="0"

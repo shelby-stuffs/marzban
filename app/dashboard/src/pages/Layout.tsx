@@ -18,7 +18,8 @@ import { ResetUserUsageModal } from "components/ResetUserUsageModal";
 import { RevokeSubscriptionModal } from "components/RevokeSubscriptionModal";
 import { Sidebar, SidebarContent } from "components/Sidebar";
 import { UserDialog } from "components/UserDialog";
-import { FC } from "react";
+import { FC, useEffect } from "react";
+import { useDashboardTheme } from "contexts/ThemeContext";
 import { Outlet } from "react-router-dom";
 
 const MenuIcon = chakra(Bars3Icon, { baseStyle: { w: 5, h: 5 } });
@@ -27,6 +28,8 @@ const topbarDisplay = { base: "flex", md: "none" };
 
 export const Layout: FC = () => {
   const { isOpen, onOpen, onClose } = useDisclosure();
+  const { syncAccountTheme } = useDashboardTheme();
+  useEffect(() => { void syncAccountTheme(); }, []);
   return (
     <Flex direction="column" minH="100vh">
       <Flex
@@ -37,8 +40,8 @@ export const Layout: FC = () => {
         px="4"
         py="3"
         borderBottom="1px solid"
-        borderColor="rgba(255, 188, 226, 0.16)"
-        bg="rgba(24, 13, 26, 0.86)"
+        borderColor="var(--theme-glass-border)"
+        bg="var(--theme-topbar-bg)"
         backdropFilter="blur(22px) saturate(135%)"
         position="sticky"
         top="0"

@@ -9,6 +9,7 @@ import { SingBoxSettingsPage } from "./SingBoxSettings";
 import { SubscriptionSettingsPage } from "./SubscriptionSettings";
 import { WireGuardOutbounds } from "./WireGuardOutbounds";
 import { XHTTPSettingsPage } from "./XHTTPSettings";
+import { AppearanceSettingsPage } from "./AppearanceSettings";
 
 const fetchAdminLoader = () => {
   return fetch("/admin", {
@@ -34,6 +35,7 @@ export const router = createHashRouter([
       { path: "singbox", element: <SingBoxSettingsPage /> },
       { path: "hysteria2", element: <Navigate to="/singbox" replace /> },
       { path: "subscriptions", element: <SubscriptionSettingsPage /> },
+      { path: "settings", element: <AppearanceSettingsPage /> },
     ],
   },
   { path: "/login/", element: <Login /> },
