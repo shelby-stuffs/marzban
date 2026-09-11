@@ -1,22 +1,23 @@
 // Shared terminal component layer. Keep layout and application behavior local.
 const mono = '"JetBrains Mono","SFMono-Regular",Menlo,Consolas,"Liberation Mono",monospace';
-const bg = "#06080b";
-const surface = "#0b0f15";
-const overlay = "#101620";
-const border = "#1c2634";
-const controlBorder = "#566b83";
-const text = "#c8d6e2";
-const muted = "#8b9bb0";
-const focus = { boxShadow: "0 0 0 2px #00e08c", outline: "none" };
+const sans = 'Manrope,Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif';
+const bg = "#130a14";
+const surface = "#1d111f";
+const overlay = "#2a182d";
+const border = "#593653";
+const controlBorder = "#80506f";
+const text = "#ffe9f6";
+const muted = "#c892af";
+const focus = { boxShadow: "0 0 0 3px rgba(246,83,173,.28)", outline: "none" };
 
 type SchemeProps = { colorScheme?: string };
 const tones: Record<string, { ink: string; fill: string; hover: string; tint: string }> = {
-  primary: { ink: "#42ffb6", fill: "#00e08c", hover: "#42ffb6", tint: "#09231c" },
-  red: { ink: "#ff8794", fill: "#ff8794", hover: "#ffa6af", tint: "#2b141d" },
-  orange: { ink: "#ffc078", fill: "#ffc078", hover: "#ffd49f", tint: "#2b2015" },
-  yellow: { ink: "#f4d17a", fill: "#f4d17a", hover: "#ffe3a3", tint: "#292315" },
-  blue: { ink: "#89c5ff", fill: "#89c5ff", hover: "#b4daff", tint: "#122333" },
-  gray: { ink: text, fill: "#a9b7c6", hover: "#c8d6e2", tint: overlay },
+  primary: { ink: "#ff96d2", fill: "#f653ad", hover: "#ff72c2", tint: "#3a1931" },
+  red: { ink: "#ff8ca6", fill: "#ff6688", hover: "#ff9caf", tint: "#3a1825" },
+  orange: { ink: "#ffc08e", fill: "#f5a66d", hover: "#ffd1aa", tint: "#392319" },
+  yellow: { ink: "#ffe29a", fill: "#e7bd61", hover: "#ffedb8", tint: "#372d19" },
+  blue: { ink: "#d4b4ff", fill: "#bd91ff", hover: "#e3ceff", tint: "#291d3b" },
+  gray: { ink: text, fill: "#dca9c3", hover: "#ffe9f6", tint: overlay },
 };
 const tone = ({ colorScheme = "primary" }: SchemeProps) =>
   tones[colorScheme === "green" || colorScheme === "teal" ? "primary" : colorScheme] || tones.gray;
@@ -24,12 +25,12 @@ const tone = ({ colorScheme = "primary" }: SchemeProps) =>
 // Chakra's outline variants contain _dark overrides. Override that layer too;
 // baseStyle alone cannot reliably replace the stock component variants.
 const field = {
-  bg: surface, color: text, borderColor: controlBorder, borderRadius: "4px",
-  fontFamily: mono,
+  bg: surface, color: text, borderColor: controlBorder, borderRadius: "12px",
+  fontFamily: sans,
   _placeholder: { color: muted },
   _hover: { borderColor: muted },
-  _focus: { borderColor: "primary.500", boxShadow: "0 0 0 1px #00e08c" },
-  _focusVisible: { borderColor: "primary.500", boxShadow: "0 0 0 1px #00e08c" },
+  _focus: { borderColor: "primary.500", boxShadow: "0 0 0 2px rgba(246,83,173,.38)" },
+  _focusVisible: { borderColor: "primary.500", boxShadow: "0 0 0 2px rgba(246,83,173,.38)" },
   _invalid: { borderColor: "#ff8794", boxShadow: "0 0 0 1px #ff8794" },
   _disabled: { bg: overlay, color: muted, opacity: 0.6, cursor: "not-allowed" },
 };
@@ -51,10 +52,10 @@ const buttonVariant = (variant: "solid" | "outline" | "ghost", props: SchemeProp
 };
 
 export const terminalTheme = {
-  fonts: { body: mono, heading: mono, mono },
-  colors: { terminal: { dim: muted }, gray: { 400: muted, 500: "#8192a6" } },
+  fonts: { body: sans, heading: sans, mono },
+  colors: { terminal: { dim: muted }, gray: { 400: muted, 500: "#a87592" } },
   styles: { global: {
-    body: { fontFamily: mono },
+    body: { fontFamily: sans },
     "*::placeholder": { color: muted, opacity: 1 },
     "a:focus-visible, summary:focus-visible": focus,
     "@media (max-width: 48em)": {
@@ -86,23 +87,23 @@ export const terminalTheme = {
     FormError: { baseStyle: { text: { color: "#ff8794", fontSize: "sm" }, icon: { color: "#ff8794" } } },
     Accordion: { baseStyle: {
       container: { borderColor: border, bg: surface, color: text },
-      button: { fontFamily: mono, minH: "40px", _hover: { bg: overlay }, _expanded: { bg: overlay, color: "primary.300" }, _focusVisible: focus },
+      button: { fontFamily: sans, minH: "40px", _hover: { bg: overlay }, _expanded: { bg: overlay, color: "primary.300" }, _focusVisible: focus },
       panel: { bg: surface, pt: 3, pb: 4 },
       icon: { color: muted },
     } },
-    Checkbox: { baseStyle: { control: { borderColor: controlBorder, _focusVisible: focus }, label: { fontFamily: mono, color: text } } },
-    Radio: { defaultProps: { colorScheme: "primary" }, baseStyle: { control: { borderColor: controlBorder, _focusVisible: focus }, label: { fontFamily: mono } } },
+    Checkbox: { baseStyle: { control: { borderColor: controlBorder, _focusVisible: focus }, label: { fontFamily: sans, color: text } } },
+    Radio: { defaultProps: { colorScheme: "primary" }, baseStyle: { control: { borderColor: controlBorder, _focusVisible: focus }, label: { fontFamily: sans } } },
     Switch: { baseStyle: { track: { bg: "#566b83", _dark: { bg: "#566b83", _checked: { bg: "primary.500" } }, _checked: { bg: "primary.500" }, _focusVisible: focus }, thumb: { bg: text } } },
     Tabs: {
       baseStyle: { tablist: { overflowX: "auto", flexWrap: "nowrap" }, tab: { flexShrink: 0, whiteSpace: "nowrap", _focusVisible: focus } },
       variants: {
         line: { tablist: { borderColor: border }, tab: { color: muted, _selected: { color: "primary.300", borderColor: "primary.500" }, _dark: { _selected: { color: "primary.300", borderColor: "primary.500" } } } },
-        "soft-rounded": { tab: { borderRadius: "4px", color: muted, _selected: { bg: tones.primary.tint, color: tones.primary.ink } } },
+        "soft-rounded": { tab: { borderRadius: "999px", color: muted, _selected: { bg: tones.primary.tint, color: tones.primary.ink } } },
       },
     },
-    Card: { baseStyle: { container: { bg: surface, border: "1px solid", borderColor: border, borderRadius: "4px" } }, variants: { elevated: { container: { bg: surface, boxShadow: "none" } }, outline: { container: { bg: surface, borderColor: border } } } },
+    Card: { baseStyle: { container: { bg: surface, border: "1px solid", borderColor: border, borderRadius: "16px", backdropFilter: "blur(18px)" } }, variants: { elevated: { container: { bg: surface, boxShadow: "none" } }, outline: { container: { bg: surface, borderColor: border } } } },
     Modal: { baseStyle: {
-      dialog: { bg: surface, color: text, borderRadius: "4px", maxW: "calc(100vw - 32px)", _dark: { bg: surface } },
+      dialog: { bg: surface, color: text, borderRadius: "18px", border: "1px solid", borderColor: border, boxShadow: "panel", maxW: "calc(100vw - 32px)", _dark: { bg: surface } },
       header: { bg: overlay, pr: 12, overflowWrap: "anywhere" },
       body: { minW: 0, overflowWrap: "anywhere" },
       footer: { bg: overlay, flexWrap: "wrap", gap: 2 },
