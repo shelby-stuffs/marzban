@@ -12,18 +12,7 @@ from app.singbox.core import SingBoxCore
 from app.singbox.rulesets import RuleSetsSettings, load_rule_sets, merge_rule_sets
 from app.singbox.settings import generate_settings, load_settings
 from app.singbox.traffic import install_traffic_api
-from config import (
-    SINGBOX_ADVANCED_CONFIG_PATH,
-    SINGBOX_CONFIG_PATH,
-    SINGBOX_EXECUTABLE_PATH,
-    SINGBOX_HYSTERIA_SETTINGS_PATH,
-    SINGBOX_RULE_SETS_PATH,
-    SINGBOX_TRAFFIC_ACCOUNTING_ENABLED,
-    SINGBOX_TRAFFIC_API_HOST,
-    SINGBOX_TRAFFIC_API_PORT,
-    UVICORN_SSL_CERTFILE,
-    UVICORN_SSL_KEYFILE,
-)
+from config import (SINGBOX_ADVANCED_CONFIG_PATH, SINGBOX_CONFIG_PATH, SINGBOX_EXECUTABLE_PATH, SINGBOX_HYSTERIA_SETTINGS_PATH, SINGBOX_RULE_SETS_PATH, SINGBOX_TRAFFIC_ACCOUNTING_ENABLED, SINGBOX_TRAFFIC_API_HOST, SINGBOX_TRAFFIC_API_PORT, UVICORN_SSL_CERTFILE, UVICORN_SSL_KEYFILE)
 from xray_api import XRay as XRayAPI
 
 
@@ -32,20 +21,13 @@ class SingBoxHysteriaRuntime:
         self.core = SingBoxCore(SINGBOX_EXECUTABLE_PATH, SINGBOX_CONFIG_PATH)
         self._timer = None
         self._timer_lock = threading.Lock()
-        self.traffic_api = (
-            XRayAPI(SINGBOX_TRAFFIC_API_HOST, SINGBOX_TRAFFIC_API_PORT)
-            if SINGBOX_TRAFFIC_ACCOUNTING_ENABLED else None
-        )
+        self.traffic_api = XRayAPI(SINGBOX_TRAFFIC_API_HOST, SINGBOX_TRAFFIC_API_PORT) if SINGBOX_TRAFFIC_ACCOUNTING_ENABLED else None
 
     def current_settings(self):
         settings = load_settings(SINGBOX_HYSTERIA_SETTINGS_PATH)
         if settings:
             return settings
-        generated, _source = generate_settings(
-            xray.config,
-            fallback_certificate_path=UVICORN_SSL_CERTFILE or "",
-            fallback_key_path=UVICORN_SSL_KEYFILE or "",
-        )
+        generated, _source = generate_settings(xray.config, fallback_certificate_path=UVICORN_SSL_CERTFILE or "", fallback_key_path=UVICORN_SSL_KEYFILE or "")
         from app.singbox.settings import Hysteria2ServerSettings
         return Hysteria2ServerSettings.model_validate(generated)
 
@@ -54,17 +36,11 @@ class SingBoxHysteriaRuntime:
         with GetDB() as db:
             users = crud.get_users(db, status=[UserStatus.active, UserStatus.on_hold])
             for user in users:
-                proxy = next(
-                    (item for item in user.proxies
-                     if getattr(item.type, "value", item.type) == ProxyTypes.Hysteria2.value),
-                    None,
-                )
+                proxy = next((item for item in user.proxies if getattr(item.type, "value", item.type) == ProxyTypes.Hysteria2.value), None)
                 if proxy is None or tag in {item.tag for item in proxy.excluded_inbounds}:
                     continue
-                result.append({
-                    "name": f"{user.id}.{user.username}",
-                    "password": (proxy.settings or {}).get("auth"),
-                })
+                result.append({"name": f"{user.id}.{user.username}", "password": (proxy.settings or {}).get("auth")})
+        result.sort(key=lambda item: item["name"])
         return result
 
     def current_advanced_config(self) -> dict:
@@ -86,13 +62,7 @@ class SingBoxHysteriaRuntime:
         combined = merge_advanced_config(managed, advanced_config)
         combined = merge_rule_sets(combined, rule_sets)
         if settings.enabled and SINGBOX_TRAFFIC_ACCOUNTING_ENABLED:
-            combined = install_traffic_api(
-                combined,
-                host=SINGBOX_TRAFFIC_API_HOST,
-                port=SINGBOX_TRAFFIC_API_PORT,
-                inbound_tag=settings.tag,
-                users=(item["name"] for item in users),
-            )
+            combined = install_traffic_api(combined, host=SINGBOX_TRAFFIC_API_HOST, port=SINGBOX_TRAFFIC_API_PORT, inbound_tag=settings.tag, users=(item["name"] for item in users))
         return combined
 
     def apply_current(self) -> bool:
@@ -112,13 +82,21 @@ class SingBoxHysteriaRuntime:
         except Exception:
             logger.exception("Unable to apply sing-box Hysteria2 config")
 
-    def schedule_reload(self, delay: float = 0.75) -> None:
+    def schedule_reload(self, delay: float = 1.25) -> None:
         with self._timer_lock:
             if self._timer:
                 self._timer.cancel()
-            self._timer = threading.Timer(delay, self._apply_safely)
+            self._timer = threading.Timer(delay, self._run_scheduled_reload)
             self._timer.daemon = True
             self._timer.start()
+
+    def _run_scheduled_reload(self) -> None:
+        with self._timer_lock:
+            self._timer = None
+        self._apply_safely()
+
+    def reload_files(self) -> None:
+        self.core.reload()
 
 
 runtime = SingBoxHysteriaRuntime()
