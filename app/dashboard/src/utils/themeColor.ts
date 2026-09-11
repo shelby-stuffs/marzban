@@ -1,6 +1,4 @@
-// The dashboard ships with a single dark theme, so the browser theme color is
-// constant. Kept as a function to preserve the existing call site.
-export const updateThemeColor = () => {
+export const updateThemeColor = (color = "#130a14") => {
   const el = document.querySelector('meta[name="theme-color"]');
-  el?.setAttribute("content", "#06080b");
+  el?.setAttribute("content", color);
 };
