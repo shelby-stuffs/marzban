@@ -14,25 +14,7 @@ import { applyDashboardTheme, DashboardThemeProvider, getStoredTheme } from "con
 import { theme } from "../chakra.config";
 import App from "./App";
 import "index.scss";
-
-dayjs.extend(Timezone);
-dayjs.extend(LocalizedFormat);
-dayjs.extend(utc);
-dayjs.extend(RelativeTime);
-dayjs.extend(Duration);
-
-// Apply the cached account theme before React mounts to avoid a color flash.
-window.localStorage.setItem("chakra-ui-color-mode", "dark");
-applyDashboardTheme(getStoredTheme());
-
-ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
-  <React.StrictMode>
-    <DashboardThemeProvider>
-      <ChakraProvider theme={theme}>
-        <QueryClientProvider client={queryClient}>
-          <App />
-        </QueryClientProvider>
-      </ChakraProvider>
-    </DashboardThemeProvider>
-  </React.StrictMode>
-);
+import "theme/palettes.scss";
+dayjs.extend(Timezone);dayjs.extend(LocalizedFormat);dayjs.extend(utc);dayjs.extend(RelativeTime);dayjs.extend(Duration);
+window.localStorage.setItem("chakra-ui-color-mode","dark");applyDashboardTheme(getStoredTheme());
+ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(<React.StrictMode><DashboardThemeProvider><ChakraProvider theme={theme}><QueryClientProvider client={queryClient}><App /></QueryClientProvider></ChakraProvider></DashboardThemeProvider></React.StrictMode>);
