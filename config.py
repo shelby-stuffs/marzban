@@ -44,9 +44,13 @@ XRAY_EXECUTABLE_PATH = config("XRAY_EXECUTABLE_PATH", default="/usr/local/bin/xr
 XRAY_ASSETS_PATH = config("XRAY_ASSETS_PATH", default="/usr/local/share/xray")
 XRAY_EXCLUDE_INBOUND_TAGS = config("XRAY_EXCLUDE_INBOUND_TAGS", default='').split()
 
-# Stage-1 runtime split: Hysteria2 is served by a standalone sing-box process,
-# while its existing Xray-shaped metadata remains the control-plane source.
+# The standalone process is now a generic sing-box runtime. Keep the old
+# variable as a compatibility fallback for existing deployments.
 SINGBOX_HYSTERIA_ENABLED = config("SINGBOX_HYSTERIA_ENABLED", cast=bool, default=False)
+SINGBOX_ENABLED = config("SINGBOX_ENABLED", cast=bool, default=SINGBOX_HYSTERIA_ENABLED)
+# Existing modules still import the old name; its value follows the generic
+# switch so old Hysteria2 deployments keep working unchanged.
+SINGBOX_HYSTERIA_ENABLED = SINGBOX_ENABLED
 SINGBOX_EXECUTABLE_PATH = config("SINGBOX_EXECUTABLE_PATH", default="/usr/local/bin/sing-box")
 SINGBOX_CONFIG_PATH = config("SINGBOX_CONFIG_PATH", default="/var/lib/marzban/sing-box-hysteria.json")
 SINGBOX_HYSTERIA_SETTINGS_PATH = config(

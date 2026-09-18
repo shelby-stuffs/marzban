@@ -364,5 +364,12 @@
   "singbox.dynamicSubscriptionXrayOwned": "Handled by Xray",
   "singbox.dynamicSubscriptionXrayReason": "This VLESS inbound is handled by Xray.",
   "userDialog.singboxInbounds": "sing-box inbounds",
-  "userDialog.singboxInboundsHelp": "Select the sing-box inbounds for the user subscription."
+  "userDialog.singboxInboundsHelp": "Select the sing-box inbounds for the user subscription.",
+  "singbox.featureEnabled": "sing-box enabled",
+  "singbox.featureDisabled": "sing-box disabled",
+  "singbox.running": "sing-box running",
+  "singbox.stopped": "sing-box stopped",
+  "singbox.savedSource": "saved settings",
+  "singbox.generatedSource": "default settings",
+  "singbox.enableHint": "Set SINGBOX_ENABLED=true and restart Marzban to start the sing-box runtime."
 }

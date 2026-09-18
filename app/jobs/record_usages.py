@@ -143,8 +143,8 @@ def record_user_usages():
     # sing-box exposes the same V2Ray StatsService contract as Xray. Its
     # Hysteria user names use Marzban's existing "<uid>.<username>" shape, so
     # reset-on-read counters can share the normal main-server accounting path.
-    from config import SINGBOX_HYSTERIA_ENABLED, SINGBOX_TRAFFIC_ACCOUNTING_ENABLED
-    if SINGBOX_HYSTERIA_ENABLED and SINGBOX_TRAFFIC_ACCOUNTING_ENABLED:
+    from config import SINGBOX_ENABLED, SINGBOX_TRAFFIC_ACCOUNTING_ENABLED
+    if SINGBOX_ENABLED and SINGBOX_TRAFFIC_ACCOUNTING_ENABLED:
         try:
             from app.singbox.runtime import runtime
             if runtime.core.started and runtime.traffic_api is not None:

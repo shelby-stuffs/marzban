@@ -601,17 +601,17 @@ export const SingBoxSettingsPage = () => {
       <HStack justify="space-between" flexWrap="wrap" gap="3">
         <HStack>
           <Badge colorScheme={meta?.feature_enabled ? "green" : "orange"}>
-            {meta?.feature_enabled ? t("hysteria.featureEnabled") : t("hysteria.featureDisabled")}
+            {meta?.feature_enabled ? t("singbox.featureEnabled") : t("singbox.featureDisabled")}
           </Badge>
           <Badge colorScheme={meta?.runtime_started ? "green" : "gray"}>
-            {meta?.runtime_started ? t("hysteria.running") : t("hysteria.stopped")}
+            {meta?.runtime_started ? t("singbox.running") : t("singbox.stopped")}
           </Badge>
-          <Badge>{meta?.persisted ? t("hysteria.savedSource") : meta?.source || t("hysteria.generatedSource")}</Badge>
+          <Badge>{meta?.persisted ? t("singbox.savedSource") : meta?.source || t("singbox.generatedSource")}</Badge>
         </HStack>
       </HStack>
 
       {!meta?.feature_enabled && (
-        <Alert status="warning"><AlertIcon />{t("hysteria.enableHint")}</Alert>
+        <Alert status="warning"><AlertIcon />{t("singbox.enableHint")}</Alert>
       )}
 
       <Tabs colorScheme="primary" variant="enclosed" isLazy>

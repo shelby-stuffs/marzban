@@ -362,5 +362,12 @@
   "singbox.dynamicSubscriptionXrayOwned": "Обрабатывается Xray",
   "singbox.dynamicSubscriptionXrayReason": "Этот VLESS inbound остаётся в подписке Xray и не экспортируется через sing-box.",
   "userDialog.singboxInbounds": "sing-box inbound’ы",
-  "userDialog.singboxInboundsHelp": "Выберите sing-box inbound’ы, которые нужно добавить в основную подписку пользователя."
+  "userDialog.singboxInboundsHelp": "Выберите sing-box inbound’ы, которые нужно добавить в основную подписку пользователя.",
+  "singbox.featureEnabled": "sing-box включён",
+  "singbox.featureDisabled": "sing-box выключен",
+  "singbox.running": "sing-box работает",
+  "singbox.stopped": "sing-box остановлен",
+  "singbox.savedSource": "настройки сохранены",
+  "singbox.generatedSource": "настройки по умолчанию",
+  "singbox.enableHint": "Установите SINGBOX_ENABLED=true и перезапустите Marzban для запуска sing-box runtime."
 }

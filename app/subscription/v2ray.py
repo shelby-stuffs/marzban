@@ -658,6 +658,23 @@ class V2rayJsonConfig(str):
                         "password": outbound.get("password", ""),
                     }]},
                 })
+            elif protocol in ("socks", "http"):
+                server = {
+                    "address": outbound["server"],
+                    "port": int(outbound["server_port"]),
+                }
+                username = outbound.get("username")
+                password = outbound.get("password")
+                if username or password:
+                    server["users"] = [{
+                        "user": username or "",
+                        "pass": password or "",
+                    }]
+                xray_outbounds.append({
+                    "tag": outbound["tag"],
+                    "protocol": protocol,
+                    "settings": {"servers": [server]},
+                })
         if xray_outbounds:
             self.add_config(remarks="sing-box inbounds", outbounds=xray_outbounds)
 

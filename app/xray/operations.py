@@ -9,7 +9,7 @@ from app.models.node import NodeStatus
 from app.models.user import UserResponse
 from app.utils.concurrency import threaded_function
 from app.xray.node import XRayNode
-from config import SINGBOX_HYSTERIA_ENABLED
+from config import SINGBOX_ENABLED
 from xray_api import XRay as XRayAPI
 from xray_api.types.account import Account, XTLSFlows
 
@@ -19,7 +19,7 @@ if TYPE_CHECKING:
 
 
 def _schedule_singbox_reload():
-    if SINGBOX_HYSTERIA_ENABLED:
+    if SINGBOX_ENABLED:
         from app.singbox.runtime import runtime
         runtime.schedule_reload()
 
@@ -88,7 +88,7 @@ def add_user(dbuser: "DBUser"):
     email = f"{dbuser.id}.{dbuser.username}"
 
     for proxy_type, inbound_tags in user.inbounds.items():
-        if SINGBOX_HYSTERIA_ENABLED and getattr(proxy_type, "value", proxy_type) == "hysteria":
+        if SINGBOX_ENABLED and getattr(proxy_type, "value", proxy_type) == "hysteria":
             continue
         for inbound_tag in inbound_tags:
             inbound = xray.config.inbounds_by_tag.get(inbound_tag, {})
@@ -124,7 +124,7 @@ def remove_user(dbuser: "DBUser"):
     email = f"{dbuser.id}.{dbuser.username}"
 
     for inbound_tag, inbound in xray.config.inbounds_by_tag.items():
-        if SINGBOX_HYSTERIA_ENABLED and inbound.get("protocol") == "hysteria":
+        if SINGBOX_ENABLED and inbound.get("protocol") == "hysteria":
             continue
         _remove_user_from_inbound(xray.api, inbound_tag, email)
         for node in list(xray.nodes.values()):
@@ -139,7 +139,7 @@ def update_user(dbuser: "DBUser"):
 
     active_inbounds = []
     for proxy_type, inbound_tags in user.inbounds.items():
-        if SINGBOX_HYSTERIA_ENABLED and getattr(proxy_type, "value", proxy_type) == "hysteria":
+        if SINGBOX_ENABLED and getattr(proxy_type, "value", proxy_type) == "hysteria":
             continue
         for inbound_tag in inbound_tags:
             active_inbounds.append(inbound_tag)
@@ -171,7 +171,7 @@ def update_user(dbuser: "DBUser"):
                     _alter_inbound_user(node.api, inbound_tag, account)
 
     for inbound_tag, inbound in xray.config.inbounds_by_tag.items():
-        if SINGBOX_HYSTERIA_ENABLED and inbound.get("protocol") == "hysteria":
+        if SINGBOX_ENABLED and inbound.get("protocol") == "hysteria":
             continue
         if inbound_tag in active_inbounds:
             continue

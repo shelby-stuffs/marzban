@@ -360,5 +360,12 @@
   "singbox.dynamicSubscriptionXrayOwned": "由 Xray 处理",
   "singbox.dynamicSubscriptionXrayReason": "此 VLESS inbound 保留在 Xray 订阅中。",
   "userDialog.singboxInbounds": "sing-box 入站",
-  "userDialog.singboxInboundsHelp": "选择要加入该用户主订阅的 sing-box 入站。"
+  "userDialog.singboxInboundsHelp": "选择要加入该用户主订阅的 sing-box 入站。",
+  "singbox.featureEnabled": "sing-box 已启用",
+  "singbox.featureDisabled": "sing-box 已禁用",
+  "singbox.running": "sing-box 运行中",
+  "singbox.stopped": "sing-box 已停止",
+  "singbox.savedSource": "已保存设置",
+  "singbox.generatedSource": "默认设置",
+  "singbox.enableHint": "设置 SINGBOX_ENABLED=true 并重启 Marzban 以启动 sing-box runtime。"
 }

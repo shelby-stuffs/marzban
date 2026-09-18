@@ -14,7 +14,7 @@ from app.db import models as db_models
 from app.models.proxy import ProxyTypes
 from app.models.user import UserStatus
 from app.utils.crypto import get_cert_SANs
-from config import DEBUG, SINGBOX_HYSTERIA_ENABLED, XRAY_EXCLUDE_INBOUND_TAGS, XRAY_FALLBACKS_INBOUND_TAG
+from config import DEBUG, SINGBOX_ENABLED, XRAY_EXCLUDE_INBOUND_TAGS, XRAY_FALLBACKS_INBOUND_TAG
 from app.singbox.config import strip_hysteria_from_xray
 
 
@@ -554,7 +554,7 @@ class XRayConfig(dict):
                 ))
 
             for proxy_type, rows in grouped_data.items():
-                if SINGBOX_HYSTERIA_ENABLED and proxy_type == "hysteria":
+                if SINGBOX_ENABLED and proxy_type == "hysteria":
                     continue
 
                 inbounds = self.inbounds_by_protocol.get(proxy_type)
@@ -591,7 +591,7 @@ class XRayConfig(dict):
 
                         clients.append(client)
 
-        if SINGBOX_HYSTERIA_ENABLED:
+        if SINGBOX_ENABLED:
             runtime_config = strip_hysteria_from_xray(config)
             config.clear()
             config.update(runtime_config)

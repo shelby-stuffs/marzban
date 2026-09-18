@@ -10,7 +10,7 @@ from app.xray.config import XRayConfig as BaseXRayConfig
 from app.xray.core import XRayCore
 from app.xray.node import XRayNode
 from config import (
-    SINGBOX_HYSTERIA_ENABLED,
+    SINGBOX_ENABLED,
     SINGBOX_HYSTERIA_SETTINGS_PATH,
     UVICORN_SSL_CERTFILE,
     UVICORN_SSL_KEYFILE,
@@ -31,17 +31,22 @@ class XRayConfig(BaseXRayConfig):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         enrich_xhttp_inbound_metadata(self)
-        if SINGBOX_HYSTERIA_ENABLED:
+        if SINGBOX_ENABLED:
             settings = load_settings(SINGBOX_HYSTERIA_SETTINGS_PATH)
             if settings is None:
-                generated, _source = generate_settings(
+                generated, source = generate_settings(
                     self,
                     fallback_certificate_path=UVICORN_SSL_CERTFILE or "",
                     fallback_key_path=UVICORN_SSL_KEYFILE or "",
                 )
+                if source != "legacy_xray_inbound":
+                    generated = None
                 try:
                     from app.singbox.settings import Hysteria2ServerSettings
-                    settings = Hysteria2ServerSettings.model_validate(generated)
+                    settings = (
+                        Hysteria2ServerSettings.model_validate(generated)
+                        if generated is not None else None
+                    )
                 except ValueError:
                     settings = None
             if settings is not None:

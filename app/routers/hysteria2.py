@@ -30,7 +30,7 @@ from app.subscription import cache as subscription_cache
 from app.utils.crypto import generate_wireguard_keypair
 from config import (
     SINGBOX_ADVANCED_CONFIG_PATH,
-    SINGBOX_HYSTERIA_ENABLED,
+    SINGBOX_ENABLED,
     SINGBOX_HYSTERIA_SETTINGS_PATH,
     SINGBOX_RULE_SETS_PATH,
     UVICORN_SSL_CERTFILE,
@@ -83,18 +83,18 @@ def get_hysteria2_settings(_admin: Admin = Depends(Admin.check_sudo_admin)):
             "settings": generated,
             "source": source,
             "persisted": False,
-            "feature_enabled": SINGBOX_HYSTERIA_ENABLED,
+            "feature_enabled": SINGBOX_ENABLED,
             "runtime_started": False,
         }
     runtime_started = False
-    if SINGBOX_HYSTERIA_ENABLED:
+    if SINGBOX_ENABLED:
         from app.singbox.runtime import runtime
         runtime_started = runtime.core.started
     return {
         "settings": settings.model_dump(),
         "source": source,
         "persisted": True,
-        "feature_enabled": SINGBOX_HYSTERIA_ENABLED,
+        "feature_enabled": SINGBOX_ENABLED,
         "runtime_started": runtime_started,
     }
 
@@ -109,14 +109,11 @@ def generate_hysteria2_settings(_admin: Admin = Depends(Admin.check_sudo_admin))
 @router.get("/runtime-config")
 @singbox_router.get("/runtime-config")
 def get_generated_runtime_config(_admin: Admin = Depends(Admin.check_sudo_admin)):
-    settings = load_settings(SINGBOX_HYSTERIA_SETTINGS_PATH)
-    if settings is None:
-        generated, _source = _generated()
-        try:
-            settings = Hysteria2ServerSettings.model_validate(generated)
-        except ValueError as exc:
-            raise HTTPException(status_code=400, detail=str(exc)) from exc
     from app.singbox.runtime import runtime
+    try:
+        settings = runtime.current_settings()
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
     users = runtime._users(settings.tag)
     config = runtime.build_current(settings)
     return {"config": _redact(config), "user_count": len(users)}
@@ -167,7 +164,7 @@ def check_advanced_singbox_config(
         advanced = validate_advanced_config(payload)
         checked_by_binary = False
         generated = None
-        if SINGBOX_HYSTERIA_ENABLED:
+        if SINGBOX_ENABLED:
             from app.singbox.runtime import runtime
             generated = runtime.build_current(advanced_config=advanced)
             runtime.core.validate(generated)
@@ -189,7 +186,7 @@ def put_advanced_singbox_config(
     runtime = None
     try:
         advanced = validate_advanced_config(payload)
-        if SINGBOX_HYSTERIA_ENABLED:
+        if SINGBOX_ENABLED:
             from app.singbox.runtime import runtime
             generated = runtime.build_current(advanced_config=advanced)
             runtime.core.validate(generated)
@@ -214,7 +211,7 @@ def get_singbox_rule_sets(_admin: Admin = Depends(Admin.check_sudo_admin)):
     except (OSError, ValueError) as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     runtime_started = False
-    if SINGBOX_HYSTERIA_ENABLED:
+    if SINGBOX_ENABLED:
         from app.singbox.runtime import runtime
         runtime_started = runtime.core.started
     return {
@@ -231,7 +228,7 @@ def check_singbox_rule_sets(
 ):
     try:
         checked_by_binary = False
-        if SINGBOX_HYSTERIA_ENABLED:
+        if SINGBOX_ENABLED:
             from app.singbox.runtime import runtime
             generated = runtime.build_current(rule_sets=payload)
             runtime.core.validate(generated)
@@ -248,7 +245,7 @@ def put_singbox_rule_sets(
 ):
     runtime = None
     try:
-        if SINGBOX_HYSTERIA_ENABLED:
+        if SINGBOX_ENABLED:
             from app.singbox.runtime import runtime
             generated = runtime.build_current(rule_sets=payload)
             runtime.core.validate(generated)
@@ -266,7 +263,7 @@ def put_singbox_rule_sets(
 
 @singbox_router.post("/rule-sets/reload")
 def reload_singbox_rule_sets(_admin: Admin = Depends(Admin.check_sudo_admin)):
-    if not SINGBOX_HYSTERIA_ENABLED:
+    if not SINGBOX_ENABLED:
         raise HTTPException(status_code=400, detail="sing-box runtime is disabled")
     try:
         from app.singbox.runtime import runtime
@@ -283,7 +280,7 @@ def get_singbox_logs(
     limit: int = Query(default=200, ge=1, le=500),
     _admin: Admin = Depends(Admin.check_sudo_admin),
 ):
-    if not SINGBOX_HYSTERIA_ENABLED:
+    if not SINGBOX_ENABLED:
         return {
             "feature_enabled": False,
             "started": False,
@@ -305,7 +302,7 @@ def get_singbox_logs(
 @router.delete("/logs")
 @singbox_router.delete("/logs")
 def clear_singbox_logs(_admin: Admin = Depends(Admin.check_sudo_admin)):
-    if SINGBOX_HYSTERIA_ENABLED:
+    if SINGBOX_ENABLED:
         from app.singbox.runtime import runtime
         runtime.core.logs.clear()
     return {"cleared": True}
@@ -319,7 +316,7 @@ def put_hysteria2_settings(
 ):
     runtime = None
     try:
-        if SINGBOX_HYSTERIA_ENABLED:
+        if SINGBOX_ENABLED:
             from app.singbox.runtime import runtime
             generated = runtime.build_current(payload)
             if payload.enabled:
@@ -328,13 +325,13 @@ def put_hysteria2_settings(
         install_virtual_hysteria_inbound(xray.config, payload.model_dump())
         xray.hosts.update()
         subscription_cache.invalidate()
-        if SINGBOX_HYSTERIA_ENABLED:
+        if SINGBOX_ENABLED:
             runtime.apply_current()
     except (OSError, ValueError, RuntimeError, TimeoutError) as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     return {
         "settings": payload.model_dump(),
         "persisted": True,
-        "feature_enabled": SINGBOX_HYSTERIA_ENABLED,
+        "feature_enabled": SINGBOX_ENABLED,
         "runtime_started": bool(runtime and payload.enabled and runtime.core.started),
     }

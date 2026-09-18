@@ -1,12 +1,12 @@
 from app import app, logger, scheduler
-from config import SINGBOX_HEALTH_CHECK_INTERVAL, SINGBOX_HYSTERIA_ENABLED
+from config import SINGBOX_HEALTH_CHECK_INTERVAL, SINGBOX_ENABLED
 
-if SINGBOX_HYSTERIA_ENABLED:
+if SINGBOX_ENABLED:
     from app.singbox.runtime import runtime
 
     @app.on_event("startup")
     def start_singbox_hysteria():
-        logger.info("Starting standalone sing-box Hysteria2 core")
+        logger.info("Starting standalone sing-box core")
         runtime._apply_safely()
         scheduler.add_job(
             runtime._apply_safely,

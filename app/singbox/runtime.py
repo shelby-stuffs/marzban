@@ -18,7 +18,7 @@ from config import (SINGBOX_ADVANCED_CONFIG_PATH, SINGBOX_CONFIG_PATH, SINGBOX_E
 from xray_api import XRay as XRayAPI
 
 
-class SingBoxHysteriaRuntime:
+class SingBoxRuntime:
     def __init__(self):
         self.core = SingBoxCore(SINGBOX_EXECUTABLE_PATH, SINGBOX_CONFIG_PATH)
         self._timer = None
@@ -29,6 +29,16 @@ class SingBoxHysteriaRuntime:
         settings = load_settings(SINGBOX_HYSTERIA_SETTINGS_PATH)
         if settings:
             return settings
+        # A custom-only deployment must not require Hysteria2 certificates.
+        advanced, _persisted = load_advanced_config(SINGBOX_ADVANCED_CONFIG_PATH)
+        if advanced.get("inbounds"):
+            from app.singbox.settings import Hysteria2ServerSettings
+            return Hysteria2ServerSettings.model_validate({
+                "enabled": False,
+                "subscription_enabled": False,
+                "certificate_path": "",
+                "key_path": "",
+            })
         generated, _source = generate_settings(xray.config, fallback_certificate_path=UVICORN_SSL_CERTFILE or "", fallback_key_path=UVICORN_SSL_KEYFILE or "")
         from app.singbox.settings import Hysteria2ServerSettings
         return Hysteria2ServerSettings.model_validate(generated)
@@ -266,4 +276,5 @@ class SingBoxHysteriaRuntime:
         self.core.reload()
 
 
-runtime = SingBoxHysteriaRuntime()
+SingBoxHysteriaRuntime = SingBoxRuntime
+runtime = SingBoxRuntime()

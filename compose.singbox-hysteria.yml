@@ -5,7 +5,7 @@ services:
       args:
         SINGBOX_VERSION: ${SINGBOX_VERSION:-1.13.12}
     environment:
-      SINGBOX_HYSTERIA_ENABLED: "true"
+      SINGBOX_ENABLED: "true"
       SINGBOX_EXECUTABLE_PATH: /usr/local/bin/sing-box
       SINGBOX_CONFIG_PATH: /var/lib/marzban/sing-box-hysteria.json
       SINGBOX_HYSTERIA_SETTINGS_PATH: /var/lib/marzban/hysteria2-settings.json
