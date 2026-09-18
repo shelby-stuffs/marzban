@@ -7,6 +7,7 @@ from random import choice
 
 from app.utils.helpers import UUIDEncoder
 from app.utils.crypto import get_wireguard_public_key
+from app.singbox.managed_credentials import managed_password, managed_uuid
 from jinja2.exceptions import TemplateNotFound
 
 from app.subscription.funcs import get_grpc_gun
@@ -69,6 +70,21 @@ class SingBoxConfiguration(str):
         return None
 
     @staticmethod
+    def _managed_credentials(username: str, inbound_type: str, tag: str, secret: str) -> dict:
+        password = managed_password(secret, username, tag)
+        if inbound_type in ("http", "mixed", "naive", "socks"):
+            return {"username": username, "password": password}
+        if inbound_type in ("anytls", "hysteria2", "shadowtls", "trojan", "shadowsocks"):
+            return {"name": username, "password": password}
+        if inbound_type == "hysteria":
+            return {"name": username, "auth": password}
+        if inbound_type == "tuic":
+            return {"name": username, "uuid": managed_uuid(secret, username, tag), "password": password}
+        if inbound_type in ("vless", "vmess"):
+            return {"name": username, "uuid": managed_uuid(secret, username, tag), "alterId": 0}
+        return {}
+
+    @staticmethod
     def _client_tls(server_tls, address: str) -> dict:
         if not isinstance(server_tls, dict) or not server_tls.get("enabled"):
             return {}
@@ -122,6 +138,7 @@ class SingBoxConfiguration(str):
         }
         address = format_variables.get("SERVER_IP")
         username = format_variables.get("USERNAME", "")
+        managed_secret = None
         if not address:
             return
         for inbound in advanced_config.get("inbounds", []):
@@ -143,7 +160,17 @@ class SingBoxConfiguration(str):
                 else dict(settings) if settings
                 else {}
             )
-            credentials = user_settings if settings else (manual_user or {})
+            if settings:
+                credentials = user_settings
+            elif manual_user:
+                credentials = manual_user
+            elif isinstance(username, str) and username:
+                if managed_secret is None:
+                    from app.utils.jwt import get_secret_key
+                    managed_secret = get_secret_key()
+                credentials = self._managed_credentials(username, inbound_type, tag, managed_secret)
+            else:
+                credentials = {}
             remark = self._remark_validation(
                 f"{format_variables.get('USERNAME', '{USERNAME}')} [{inbound_type} / {tag}]"
             )

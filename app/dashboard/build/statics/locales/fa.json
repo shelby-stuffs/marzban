@@ -355,10 +355,10 @@
   "singbox.ruleSetIpCidrsHelp": "در هر خط یک IPv4، IPv6 یا CIDR وارد کنید.",
   "singbox.ruleSetMatchSourceIp": "تطبیق IP مبدأ",
   "singbox.dynamicSubscriptionTitle": "Dynamic sing-box subscription",
-  "singbox.dynamicSubscriptionHelp": "GUI-created inbounds with client protocols are exported automatically to the user sing-box subscription.",
+  "singbox.dynamicSubscriptionHelp": "Every supported GUI-created inbound receives credentials automatically for active users.",
   "singbox.dynamicSubscriptionEmpty": "No inbounds created yet.",
   "singbox.dynamicSubscriptionIncluded": "Included automatically",
   "singbox.dynamicSubscriptionUnsupported": "Not a client protocol",
-  "singbox.dynamicSubscriptionCredentials": "Exported when matching user credentials exist.",
+  "singbox.dynamicSubscriptionCredentials": "Credentials are injected automatically for active users.",
   "singbox.dynamicSubscriptionSkipReason": "Local or service-only inbound."
 }

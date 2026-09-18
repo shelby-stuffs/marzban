@@ -351,10 +351,10 @@
   "singbox.ruleSetIpCidrsHelp": "每行输入一个 IPv4、IPv6 或 CIDR；普通 IP 将转换为 /32 或 /128。",
   "singbox.ruleSetMatchSourceIp": "匹配源 IP",
   "singbox.dynamicSubscriptionTitle": "动态 sing-box 订阅",
-  "singbox.dynamicSubscriptionHelp": "通过 GUI 创建的客户端协议 inbound 会自动导出到用户的 sing-box 订阅。",
+  "singbox.dynamicSubscriptionHelp": "每个受支持的 GUI inbound 都会自动为活跃用户生成凭据。",
   "singbox.dynamicSubscriptionEmpty": "尚未创建 inbound。",
   "singbox.dynamicSubscriptionIncluded": "自动包含",
   "singbox.dynamicSubscriptionUnsupported": "不是客户端协议",
-  "singbox.dynamicSubscriptionCredentials": "找到匹配用户凭据后自动导出。",
+  "singbox.dynamicSubscriptionCredentials": "凭据会自动注入到活跃用户。",
   "singbox.dynamicSubscriptionSkipReason": "本地或服务专用 inbound。"
 }

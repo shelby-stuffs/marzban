@@ -11,6 +11,7 @@ from app.singbox.advanced import load_advanced_config
 from app.singbox.config import build_hysteria2_settings_config, merge_advanced_config
 from app.singbox.core import SingBoxCore
 from app.singbox.rulesets import RuleSetsSettings, load_rule_sets, merge_rule_sets
+from app.singbox.managed_credentials import managed_password, managed_uuid
 from app.singbox.settings import generate_settings, load_settings
 from app.singbox.traffic import install_traffic_api
 from config import (SINGBOX_ADVANCED_CONFIG_PATH, SINGBOX_CONFIG_PATH, SINGBOX_EXECUTABLE_PATH, SINGBOX_HYSTERIA_SETTINGS_PATH, SINGBOX_RULE_SETS_PATH, SINGBOX_TRAFFIC_ACCOUNTING_ENABLED, SINGBOX_TRAFFIC_API_HOST, SINGBOX_TRAFFIC_API_PORT, UVICORN_SSL_CERTFILE, UVICORN_SSL_KEYFILE)
@@ -82,6 +83,24 @@ class SingBoxHysteriaRuntime:
             password = None
         return {"name": name, "password": password} if password else None
 
+    @staticmethod
+    def _managed_user(user, inbound_type: str, tag: str, secret: str) -> dict | None:
+        name = f"{user.id}.{user.username}"
+        password = managed_password(secret, user.username, tag)
+        if inbound_type in ("http", "mixed", "naive", "socks"):
+            return {"Username": user.username, "Password": password}
+        if inbound_type in ("anytls", "hysteria2", "shadowtls", "trojan", "shadowsocks"):
+            return {"name": name, "password": password}
+        if inbound_type == "hysteria":
+            return {"name": name, "auth": password}
+        if inbound_type == "tuic":
+            return {"name": name, "uuid": managed_uuid(secret, user.username, tag), "password": password}
+        if inbound_type == "vless":
+            return {"name": name, "uuid": managed_uuid(secret, user.username, tag)}
+        if inbound_type == "vmess":
+            return {"name": name, "uuid": managed_uuid(secret, user.username, tag), "alterId": 0}
+        return None
+
     def _inject_users(self, config: dict) -> set[str]:
         """Add active Marzban users to compatible sing-box inbounds.
 
@@ -89,7 +108,10 @@ class SingBoxHysteriaRuntime:
         ``<uid>.<username>`` convention lets the existing Marzban usage job
         reuse those counters without a second accounting pipeline.
         """
+        from app.utils.jwt import get_secret_key
+
         with GetDB() as db:
+            secret = get_secret_key()
             users = crud.get_users(db, status=[UserStatus.active, UserStatus.on_hold])
             for inbound in config.get("inbounds", []):
                 if not isinstance(inbound, dict):
@@ -101,12 +123,12 @@ class SingBoxHysteriaRuntime:
                     manual_users = []
                 unnamed_users = [
                     item for item in manual_users
-                    if isinstance(item, dict) and not (item.get("name") or item.get("username"))
+                    if isinstance(item, dict) and not (item.get("name") or item.get("username") or item.get("Username"))
                 ]
                 by_name = {
-                    item.get("name") or item.get("username"): item
+                    item.get("name") or item.get("username") or item.get("Username"): item
                     for item in manual_users
-                    if isinstance(item, dict) and isinstance(item.get("name") or item.get("username"), str)
+                    if isinstance(item, dict) and isinstance(item.get("name") or item.get("username") or item.get("Username"), str)
                 }
                 if proxy_type is not None:
                     tag = inbound.get("tag")
@@ -118,15 +140,31 @@ class SingBoxHysteriaRuntime:
                             ),
                             None,
                         )
-                        if proxy is None or (
+                        if proxy is not None and (
                             isinstance(tag, str)
                             and tag in {item.tag for item in proxy.excluded_inbounds}
                         ):
                             continue
-                        generated = self._proxy_user(user, proxy_type, proxy)
+                        generated = (
+                            self._proxy_user(user, proxy_type, proxy)
+                            if proxy is not None
+                            else self._managed_user(user, inbound_type, tag, secret)
+                        )
                         if generated:
                             by_name[generated["name"]] = generated
-                if proxy_type is not None or manual_users:
+                elif isinstance(inbound_type, str):
+                    tag = inbound.get("tag")
+                    if isinstance(tag, str):
+                        for user in users:
+                            generated = self._managed_user(user, inbound_type, tag, secret)
+                            if generated:
+                                key = generated.get("name") or generated.get("Username")
+                                if key:
+                                    by_name[key] = generated
+                if proxy_type is not None or inbound_type in {
+                    "anytls", "http", "hysteria", "hysteria2", "mixed", "naive",
+                    "shadowsocks", "shadowtls", "socks", "trojan", "tuic", "vless", "vmess",
+                } or manual_users:
                     inbound["users"] = [*unnamed_users, *by_name.values()]
 
         names = set()
