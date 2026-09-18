@@ -29,6 +29,7 @@ import { AnsiLogViewer } from "components/AnsiLogViewer";
 import { Header } from "components/Header";
 import { JsonEditor } from "components/JsonEditor";
 import { Panel } from "components/Panel";
+import { SingBoxInboundDialog } from "components/SingBoxInboundDialog";
 import { SingBoxObjectDialog } from "components/SingBoxObjectDialog";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -153,6 +154,7 @@ export const SingBoxSettingsPage = () => {
   const logsRef = useRef<HTMLDivElement>(null);
   const [advancedConfig, setAdvancedConfig] = useState<Record<string, unknown>>({});
   const [singBoxSchema, setSingBoxSchema] = useState<SingBoxSchema | null>(null);
+  const [inboundDialog, setInboundDialog] = useState<{ index: number | null; value: SingBoxInbound } | null>(null);
   const [objectDialog, setObjectDialog] = useState<ObjectDialogState | null>(null);
   const [inbounds, setInbounds] = useState<SingBoxInbound[]>([]);
   const [outbounds, setOutbounds] = useState<SingBoxInbound[]>([]);
@@ -285,7 +287,7 @@ export const SingBoxSettingsPage = () => {
   };
 
   const addInbound = () => {
-    openObjectDialog("inbounds");
+    openInboundDialog();
   };
 
   const removeInbound = (index: number) => {
@@ -328,6 +330,22 @@ export const SingBoxSettingsPage = () => {
     if (section === "dnsServers") return dnsServers;
     if (section === "endpoints") return endpoints;
     return services;
+  };
+
+  const openInboundDialog = (index: number | null = null) => {
+    const current = index === null
+      ? { type: "vless", tag: `in-${inbounds.length + 1}`, listen: "::", listen_port: 443 }
+      : inbounds[index];
+    setInboundDialog({ index, value: { ...(current || {}) } });
+  };
+
+  const saveInboundDialog = (item: SingBoxInbound) => {
+    if (!inboundDialog) return;
+    if (inboundDialog.index === null) {
+      addCollectionItem("inbounds", item);
+    } else {
+      replaceCollectionItem("inbounds", inboundDialog.index, item);
+    }
   };
 
   const openObjectDialog = (section: ObjectDialogState["section"], index: number | null = null) => {
@@ -618,9 +636,9 @@ export const SingBoxSettingsPage = () => {
                     <Input size="sm" type="number" value={typeof inbound.listen_port === "number" ? inbound.listen_port : ""} onChange={(event) => updateInbound(index, "listen_port", event.target.value ? Number(event.target.value) : undefined)} />
                   </FormControl>
                 </Grid>
-                <HStack justify="space-between" flexWrap="wrap" gap="2">
+                  <HStack justify="space-between" flexWrap="wrap" gap="2">
                   <Text color="gray.500" fontSize="xs">{t("singbox.inboundAdvancedHelp")}</Text>
-                  <HStack><Button size="xs" variant="outline" onClick={() => openObjectDialog("inbounds", index)}>{t("singbox.editObject")}</Button><Button size="xs" variant="ghost" colorScheme="red" onClick={() => removeInbound(index)}>{t("delete")}</Button></HStack>
+                  <HStack><Button size="xs" variant="outline" onClick={() => openInboundDialog(index)}>{t("singbox.editObject")}</Button><Button size="xs" variant="ghost" colorScheme="red" onClick={() => removeInbound(index)}>{t("delete")}</Button></HStack>
                 </HStack>
               </VStack>
             </Panel>
@@ -930,6 +948,12 @@ export const SingBoxSettingsPage = () => {
         initialValue={objectDialog.value}
         onClose={() => setObjectDialog(null)}
         onSave={saveObjectDialog}
+      />}
+      {inboundDialog && <SingBoxInboundDialog
+        isOpen={Boolean(inboundDialog)}
+        initialValue={inboundDialog.value}
+        onClose={() => setInboundDialog(null)}
+        onSave={saveInboundDialog}
       />}
     </VStack>
   );
