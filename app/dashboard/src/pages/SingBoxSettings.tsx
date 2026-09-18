@@ -86,6 +86,7 @@ const OUTBOUND_TYPES = ["anytls", "block", "bridge", "direct", "http", "hysteria
 const DNS_SERVER_TYPES = ["dhcp", "fakeip", "h3", "hosts", "https", "local", "mdns", "openconnect", "openvpn", "quic", "resolved", "tailscale", "tcp", "tls", "udp"];
 const ENDPOINT_TYPES = ["openconnect", "openvpn-client", "openvpn-server", "tailscale", "wireguard"];
 const SERVICE_TYPES = ["api", "ccm", "derp", "hysteria-realm", "ocm", "oom-killer", "resolved", "ssm-api", "usbip-client"];
+const SUBSCRIPTION_INBOUND_TYPES = ["anytls", "http", "hysteria", "hysteria2", "mixed", "naive", "shadowsocks", "shadowtls", "socks", "trojan", "tuic", "vless", "vmess"];
 
 
 type RuleSetItem = {
@@ -858,27 +859,29 @@ export const SingBoxSettingsPage = () => {
       </HStack>
           </TabPanel>
           <TabPanel px="0">
-            <Alert status="info" mb="4"><AlertIcon />{t("singbox.subscriptionFormatsHelp")}</Alert>
-            <Panel label={t("singbox.subscription")}>
-            <VStack align="stretch" spacing="4">
-              <FormControl display="flex" justifyContent="space-between" alignItems="center">
-                <Box><FormLabel mb="0">{t("singbox.subscriptionEnabled")}</FormLabel><FormHelperText>{t("singbox.subscriptionHelp")}</FormHelperText></Box>
-                <Switch isChecked={form.subscription_enabled} onChange={(event) => update("subscription_enabled", event.target.checked)} />
-              </FormControl>
-              <Alert status="warning"><AlertIcon />{t("singbox.subscriptionTlsHint")}</Alert>
-              <Grid templateColumns={{ base: "1fr", md: "1fr 1fr" }} gap="4">
-                <FormControl isRequired={form.subscription_enabled}><FormLabel>{t("singbox.subscriptionAddress")}</FormLabel><Input fontFamily="mono" placeholder="hy.example.com" value={form.subscription_address} onChange={(event) => update("subscription_address", event.target.value)} /><FormHelperText>{t("singbox.subscriptionAddressHelp")}</FormHelperText></FormControl>
-                <FormControl><FormLabel>{t("singbox.subscriptionPort")}</FormLabel><Input type="number" placeholder={String(form.listen_port)} value={form.subscription_port ?? ""} onChange={(event) => update("subscription_port", event.target.value ? Number(event.target.value) : null)} /></FormControl>
-                <FormControl><FormLabel>SNI</FormLabel><Input fontFamily="mono" placeholder="hy.example.com" value={form.subscription_sni} onChange={(event) => update("subscription_sni", event.target.value)} /></FormControl>
-                <FormControl display="flex" justifyContent="space-between" alignItems="center" pt="7"><FormLabel mb="0">{t("singbox.subscriptionInsecure")}</FormLabel><Switch isChecked={form.subscription_insecure} onChange={(event) => update("subscription_insecure", event.target.checked)} /></FormControl>
-              </Grid>
-              <FormControl isRequired={form.subscription_enabled}><FormLabel>{t("singbox.subscriptionRemark")}</FormLabel><Input value={form.subscription_remark} onChange={(event) => update("subscription_remark", event.target.value)} /><FormHelperText>{t("singbox.subscriptionRemarkHelp")}</FormHelperText></FormControl>
-            </VStack>
-          </Panel>
-            <HStack justify="flex-end" position="sticky" bottom="0" bg="terminal.bg" py="3" borderTop="1px solid" borderColor="terminal.border">
-              <Button variant="ghost" onClick={() => void load()}>{t("cancel")}</Button>
-              <Button colorScheme="primary" isLoading={saving} onClick={() => void save()}>{t("hysteria.save")}</Button>
-            </HStack>
+            <Alert status="info" mb="4"><AlertIcon />{t("singbox.dynamicSubscriptionHelp")}</Alert>
+            <Panel label={t("singbox.dynamicSubscriptionTitle")}>
+              <VStack align="stretch" spacing="3">
+                {inbounds.length === 0 && <Alert status="warning" py="2"><AlertIcon />{t("singbox.dynamicSubscriptionEmpty")}</Alert>}
+                {inbounds.map((inbound, index) => {
+                  const type = String(inbound.type || "");
+                  const supported = SUBSCRIPTION_INBOUND_TYPES.includes(type);
+                  return (
+                    <Box key={`${String(inbound.tag || "inbound")}-${index}`} borderWidth="1px" borderColor="terminal.border" borderRadius="md" p="3">
+                      <HStack justify="space-between" flexWrap="wrap" gap="2">
+                        <Box display="flex" alignItems="center" gap="2"><>
+                          <Badge fontFamily="mono">{type || "unknown"}</Badge>
+                          <Text fontFamily="mono">{String(inbound.tag || "—")}</Text>
+                          {inbound.listen_port && <Text color="gray.500" fontFamily="mono">:{String(inbound.listen_port)}</Text>}
+                        </></Box>
+                        <Badge colorScheme={supported ? "green" : "gray"}>{supported ? t("singbox.dynamicSubscriptionIncluded") : t("singbox.dynamicSubscriptionUnsupported")}</Badge>
+                      </HStack>
+                      <Text mt="2" color="gray.500" fontSize="sm">{supported ? t("singbox.dynamicSubscriptionCredentials") : t("singbox.dynamicSubscriptionSkipReason")}</Text>
+                    </Box>
+                  );
+                })}
+              </VStack>
+            </Panel>
           </TabPanel>
           <TabPanel px="0">
       {ruleSetsLoading ? <Spinner /> : <VStack align="stretch" spacing="3">

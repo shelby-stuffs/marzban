@@ -351,5 +351,12 @@
   "singbox.ruleSetInlineIp": "inline IP/CIDR",
   "singbox.ruleSetIpCidrs": "IP-адреса и CIDR",
   "singbox.ruleSetIpCidrsHelp": "По одному IPv4, IPv6 или CIDR на строку. Обычные IP преобразуются в /32 или /128.",
-  "singbox.ruleSetMatchSourceIp": "Сопоставлять source IP"
+  "singbox.ruleSetMatchSourceIp": "Сопоставлять source IP",
+  "singbox.dynamicSubscriptionTitle": "Динамическая подписка sing-box",
+  "singbox.dynamicSubscriptionHelp": "Каждый созданный через GUI inbound с клиентским протоколом автоматически попадает в sing-box подписку пользователя. Данные берутся из proxy Marzban или ручного клиента.",
+  "singbox.dynamicSubscriptionEmpty": "Inbounds ещё не созданы.",
+  "singbox.dynamicSubscriptionIncluded": "Добавляется автоматически",
+  "singbox.dynamicSubscriptionUnsupported": "Не клиентский протокол",
+  "singbox.dynamicSubscriptionCredentials": "Inbound будет добавлен, если для текущего пользователя найдутся подходящие credentials.",
+  "singbox.dynamicSubscriptionSkipReason": "Это локальный или служебный inbound без клиентского outbound для подписки."
 }

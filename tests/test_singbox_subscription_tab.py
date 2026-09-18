@@ -11,11 +11,11 @@ class SingBoxSubscriptionTabTests(unittest.TestCase):
   self.assertIn('t("singbox.tabSubscription")',ui)
   inbound=ui.index('t("singbox.tabInbound")'); subscription=ui.index('t("singbox.tabSubscription")'); rules=ui.index('t("singbox.tabRuleSets")')
   self.assertLess(inbound,subscription); self.assertLess(subscription,rules)
-  self.assertEqual(ui.count('<Panel label={t("singbox.subscription")}>'),1)
+  self.assertEqual(ui.count('<Panel label={t("singbox.dynamicSubscriptionTitle")}>'),1)
 
  def test_all_locales_have_subscription_tab_copy(self):
   for lang in ("en","ru","fa","zh"):
    data=json.loads((ROOT/f"app/dashboard/public/statics/locales/{lang}.json").read_text())
-   self.assertIn("singbox.tabSubscription",data); self.assertIn("singbox.subscriptionFormatsHelp",data)
+   self.assertIn("singbox.tabSubscription",data); self.assertIn("singbox.dynamicSubscriptionHelp",data)
 
 if __name__=="__main__": unittest.main()

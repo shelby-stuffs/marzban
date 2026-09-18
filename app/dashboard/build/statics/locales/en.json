@@ -351,5 +351,12 @@
   "singbox.ruleSetInlineIp": "inline IP/CIDR",
   "singbox.ruleSetIpCidrs": "IP addresses and CIDRs",
   "singbox.ruleSetIpCidrsHelp": "One IPv4, IPv6 or CIDR per line. Plain IP addresses are normalized to /32 or /128.",
-  "singbox.ruleSetMatchSourceIp": "Match source IP"
+  "singbox.ruleSetMatchSourceIp": "Match source IP",
+  "singbox.dynamicSubscriptionTitle": "Dynamic sing-box subscription",
+  "singbox.dynamicSubscriptionHelp": "Every GUI-created inbound with a client protocol is exported automatically to the user's sing-box subscription. Credentials come from the matching Marzban proxy or manual client.",
+  "singbox.dynamicSubscriptionEmpty": "No inbounds created yet.",
+  "singbox.dynamicSubscriptionIncluded": "Included automatically",
+  "singbox.dynamicSubscriptionUnsupported": "Not a client protocol",
+  "singbox.dynamicSubscriptionCredentials": "The inbound is exported when the current user has matching credentials.",
+  "singbox.dynamicSubscriptionSkipReason": "This inbound is local or service-only and has no client outbound for a subscription."
 }
