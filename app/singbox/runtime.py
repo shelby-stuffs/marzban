@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import threading
+from collections.abc import Mapping
 
 from app import logger, xray
 from app.db import GetDB, crud
@@ -43,6 +44,107 @@ class SingBoxHysteriaRuntime:
         result.sort(key=lambda item: item["name"])
         return result
 
+    @staticmethod
+    def _singbox_proxy_type(inbound_type: str):
+        return {
+            "vless": ProxyTypes.VLESS,
+            "vmess": ProxyTypes.VMess,
+            "trojan": ProxyTypes.Trojan,
+            "shadowsocks": ProxyTypes.Shadowsocks,
+            "hysteria2": ProxyTypes.Hysteria2,
+        }.get(inbound_type)
+
+    @staticmethod
+    def _is_marzban_user_name(value: object) -> bool:
+        return isinstance(value, str) and value.partition(".")[0].isdigit() and "." in value
+
+    @staticmethod
+    def _proxy_user(user, proxy_type, proxy) -> dict | None:
+        settings = proxy.settings or {}
+        name = f"{user.id}.{user.username}"
+        if proxy_type in (ProxyTypes.VLESS, ProxyTypes.VMess):
+            identifier = settings.get("id")
+            if not identifier:
+                return None
+            item = {"name": name, "uuid": str(identifier)}
+            if proxy_type is ProxyTypes.VLESS and settings.get("flow") not in (None, "", "none"):
+                item["flow"] = settings["flow"]
+            if proxy_type is ProxyTypes.VMess and settings.get("alterId") is not None:
+                item["alterId"] = settings["alterId"]
+            return item
+        if proxy_type is ProxyTypes.Trojan:
+            password = settings.get("password")
+        elif proxy_type is ProxyTypes.Shadowsocks:
+            password = settings.get("password")
+        elif proxy_type is ProxyTypes.Hysteria2:
+            password = settings.get("auth")
+        else:
+            password = None
+        return {"name": name, "password": password} if password else None
+
+    def _inject_users(self, config: dict) -> set[str]:
+        """Add active Marzban users to compatible sing-box inbounds.
+
+        sing-box's V2Ray Stats API reports the configured user name.  The
+        ``<uid>.<username>`` convention lets the existing Marzban usage job
+        reuse those counters without a second accounting pipeline.
+        """
+        with GetDB() as db:
+            users = crud.get_users(db, status=[UserStatus.active, UserStatus.on_hold])
+            for inbound in config.get("inbounds", []):
+                if not isinstance(inbound, dict):
+                    continue
+                inbound_type = inbound.get("type")
+                proxy_type = self._singbox_proxy_type(inbound_type) if isinstance(inbound_type, str) else None
+                manual_users = inbound.get("users")
+                if not isinstance(manual_users, list):
+                    manual_users = []
+                unnamed_users = [
+                    item for item in manual_users
+                    if isinstance(item, dict) and not (item.get("name") or item.get("username"))
+                ]
+                by_name = {
+                    item.get("name") or item.get("username"): item
+                    for item in manual_users
+                    if isinstance(item, dict) and isinstance(item.get("name") or item.get("username"), str)
+                }
+                if proxy_type is not None:
+                    tag = inbound.get("tag")
+                    for user in users:
+                        proxy = next(
+                            (
+                                item for item in user.proxies
+                                if getattr(item.type, "value", item.type) == proxy_type.value
+                            ),
+                            None,
+                        )
+                        if proxy is None or (
+                            isinstance(tag, str)
+                            and tag in {item.tag for item in proxy.excluded_inbounds}
+                        ):
+                            continue
+                        generated = self._proxy_user(user, proxy_type, proxy)
+                        if generated:
+                            by_name[generated["name"]] = generated
+                if proxy_type is not None or manual_users:
+                    inbound["users"] = [*unnamed_users, *by_name.values()]
+
+        names = set()
+        for inbound in config.get("inbounds", []):
+            if not isinstance(inbound, Mapping) or not isinstance(inbound.get("users"), list):
+                continue
+            for user in inbound["users"]:
+                if not isinstance(user, Mapping):
+                    continue
+                name = user.get("name") or user.get("username")
+                if self._is_marzban_user_name(name):
+                    names.add(name)
+        return names
+
+    @staticmethod
+    def _has_explicit_inbounds(advanced_config: Mapping) -> bool:
+        return "inbounds" in advanced_config
+
     def current_advanced_config(self) -> dict:
         config, _persisted = load_advanced_config(SINGBOX_ADVANCED_CONFIG_PATH)
         return config
@@ -61,30 +163,29 @@ class SingBoxHysteriaRuntime:
         managed = build_hysteria2_settings_config(settings.model_dump(), users)
         combined = merge_advanced_config(managed, advanced_config)
         combined = merge_rule_sets(combined, rule_sets)
-        if settings.enabled and SINGBOX_TRAFFIC_ACCOUNTING_ENABLED:
-            inbound_tags = (
-                item.get("tag")
-                for item in combined.get("inbounds", [])
-                if isinstance(item, dict)
-            )
+        managed_user_names = self._inject_users(combined)
+        runtime_enabled = settings.enabled or self._has_explicit_inbounds(advanced_config)
+        if runtime_enabled and SINGBOX_TRAFFIC_ACCOUNTING_ENABLED:
+            inbound_tags = (item.get("tag") for item in combined.get("inbounds", []) if isinstance(item, dict))
             combined = install_traffic_api(
                 combined,
                 host=SINGBOX_TRAFFIC_API_HOST,
                 port=SINGBOX_TRAFFIC_API_PORT,
                 inbound_tags=inbound_tags,
-                users=(item["name"] for item in users),
+                users=managed_user_names,
             )
         return combined
 
     def apply_current(self) -> bool:
         settings = self.current_settings()
+        advanced_config = self.current_advanced_config()
         config = self.build_current(settings)
-        if not settings.enabled:
+        if not settings.enabled and not self._has_explicit_inbounds(advanced_config):
             self.core.stop()
             return False
         changed = self.core.apply(config)
         if changed:
-            logger.warning("sing-box Hysteria2 config applied")
+            logger.warning("sing-box config applied")
         return changed
 
     def _apply_safely(self):

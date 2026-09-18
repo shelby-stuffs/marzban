@@ -25,4 +25,10 @@ class SingBoxRuntimeWiringTests(unittest.TestCase):
   source=(ROOT/"config.py").read_text()
   self.assertIn('SINGBOX_HYSTERIA_ENABLED = config("SINGBOX_HYSTERIA_ENABLED", cast=bool, default=False)',source)
 
+ def test_custom_inbounds_can_run_without_hysteria_form(self):
+  source=(ROOT/"app/singbox/runtime.py").read_text()
+  self.assertIn('return "inbounds" in advanced_config',source)
+  self.assertIn('settings.enabled or self._has_explicit_inbounds(advanced_config)',source)
+  self.assertIn('not settings.enabled and not self._has_explicit_inbounds(advanced_config)',source)
+
 if __name__=="__main__": unittest.main()

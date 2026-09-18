@@ -33,6 +33,21 @@ class SingBoxTrafficAccountingTests(unittest.TestCase):
             "users": ["7.alice", "8.bob"],
         })
 
+    def test_tracks_multiple_custom_inbounds(self):
+        traffic = load_traffic()
+        config = traffic.install_traffic_api(
+            {},
+            host="127.0.0.1",
+            port=10085,
+            inbound_tags=["vless-in", "trojan-in", "vless-in"],
+            users=["7.alice"],
+        )
+        self.assertEqual(config["experimental"]["v2ray_api"]["stats"], {
+            "enabled": True,
+            "inbounds": ["vless-in", "trojan-in"],
+            "users": ["7.alice"],
+        })
+
     def test_formats_ipv6_api_listener(self):
         self.assertEqual(load_traffic().api_listen("::1", 10085), "[::1]:10085")
 
@@ -43,7 +58,8 @@ class SingBoxTrafficAccountingTests(unittest.TestCase):
 
     def test_runtime_registers_exact_managed_user_names(self):
         source = (ROOT / "app/singbox/runtime.py").read_text()
-        self.assertIn('users=(item["name"] for item in users)', source)
+        self.assertIn("_inject_users(combined)", source)
+        self.assertIn("managed_user_names", source)
         self.assertIn("install_traffic_api", source)
         self.assertIn("self.traffic_api", source)
 
