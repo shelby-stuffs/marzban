@@ -67,7 +67,9 @@ class User(BaseModel):
     data_limit_reset_strategy: UserDataLimitResetStrategy = (
         UserDataLimitResetStrategy.no_reset
     )
-    inbounds: Dict[ProxyTypes, List[str]] = {}
+    # The special ``singbox`` key stores selected custom sing-box inbound tags.
+    # Xray protocols continue to use ProxyTypes keys.
+    inbounds: Dict[str, List[str]] = {}
     note: Optional[str] = Field(None, nullable=True)
     sub_updated_at: Optional[datetime] = Field(None, nullable=True)
     sub_last_user_agent: Optional[str] = Field(None, nullable=True)
@@ -162,6 +164,8 @@ class UserCreate(User):
     def excluded_inbounds(self):
         excluded = {}
         for proxy_type in self.proxies:
+            if getattr(proxy_type, "value", proxy_type) == "singbox":
+                continue
             excluded[proxy_type] = []
             for inbound in xray.config.inbounds_by_protocol.get(proxy_type, []):
                 if not inbound["tag"] in self.inbounds.get(proxy_type, []):
@@ -171,10 +175,37 @@ class UserCreate(User):
 
     @field_validator("inbounds", mode="before")
     def validate_inbounds(cls, inbounds, values, **kwargs):
+        inbounds = dict(inbounds or {})
+        singbox_tags = inbounds.get("singbox")
+        if singbox_tags is not None:
+            if not isinstance(singbox_tags, list) or any(
+                not isinstance(tag, str) for tag in singbox_tags
+            ):
+                raise ValueError("singbox inbounds must be a list of tags")
+            try:
+                from app.singbox.advanced import load_advanced_config
+                from config import SINGBOX_ADVANCED_CONFIG_PATH
+
+                advanced, _ = load_advanced_config(SINGBOX_ADVANCED_CONFIG_PATH)
+                known_tags = {
+                    item.get("tag")
+                    for item in advanced.get("inbounds", [])
+                    if isinstance(item, dict)
+                }
+            except (OSError, ValueError):
+                known_tags = set()
+            unknown = [tag for tag in singbox_tags if tag not in known_tags]
+            if unknown:
+                raise ValueError(
+                    f"Sing-box inbound {unknown[0]} doesn't exist"
+                )
+
         proxies = values.data.get("proxies", [])
 
         # delete inbounds that are for protocols not activated
         for proxy_type in inbounds.copy():
+            if proxy_type == "singbox":
+                continue
             if proxy_type not in proxies:
                 del inbounds[proxy_type]
 
@@ -248,6 +279,8 @@ class UserModify(User):
     def excluded_inbounds(self):
         excluded = {}
         for proxy_type in self.inbounds:
+            if proxy_type == "singbox":
+                continue
             excluded[proxy_type] = []
             for inbound in xray.config.inbounds_by_protocol.get(proxy_type, []):
                 if not inbound["tag"] in self.inbounds.get(proxy_type, []):
@@ -257,10 +290,34 @@ class UserModify(User):
 
     @field_validator("inbounds", mode="before")
     def validate_inbounds(cls, inbounds, values, **kwargs):
+        inbounds = dict(inbounds or {})
         # check with inbounds, "proxies" is optional on modifying
         # so inbounds particularly can be modified
         if inbounds:
             for proxy_type, tags in inbounds.items():
+                if proxy_type == "singbox":
+                    if not isinstance(tags, list) or any(
+                        not isinstance(tag, str) for tag in tags
+                    ):
+                        raise ValueError("singbox inbounds must be a list of tags")
+                    try:
+                        from app.singbox.advanced import load_advanced_config
+                        from config import SINGBOX_ADVANCED_CONFIG_PATH
+
+                        advanced, _ = load_advanced_config(SINGBOX_ADVANCED_CONFIG_PATH)
+                        known_tags = {
+                            item.get("tag")
+                            for item in advanced.get("inbounds", [])
+                            if isinstance(item, dict)
+                        }
+                    except (OSError, ValueError):
+                        known_tags = set()
+                    unknown = [tag for tag in tags if tag not in known_tags]
+                    if unknown:
+                        raise ValueError(
+                            f"Sing-box inbound {unknown[0]} doesn't exist"
+                        )
+                    continue
 
                 # if not tags:
                 #     raise ValueError(f"{proxy_type} inbounds cannot be empty")
@@ -300,7 +357,7 @@ class UserResponse(User):
     links: List[str] = []
     subscription_url: str = ""
     proxies: dict
-    excluded_inbounds: Dict[ProxyTypes, List[str]] = {}
+    excluded_inbounds: Dict[str, List[str]] = {}
 
     admin: Optional[Admin] = None
     model_config = ConfigDict(from_attributes=True)
@@ -343,7 +400,7 @@ class SubscriptionUserResponse(UserResponse):
     admin: Admin | None = Field(default=None, exclude=True)
     excluded_inbounds: Dict[ProxyTypes, List[str]] | None = Field(None, exclude=True)
     note: str | None = Field(None, exclude=True)
-    inbounds: Dict[ProxyTypes, List[str]] | None = Field(None, exclude=True)
+    inbounds: Dict[str, List[str]] | None = Field(None, exclude=True)
     auto_delete_in_days: int | None = Field(None, exclude=True)
     model_config = ConfigDict(from_attributes=True)
 

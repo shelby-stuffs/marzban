@@ -114,7 +114,9 @@ class SingBoxConfiguration(str):
             tls["utls"] = deepcopy(server_tls["utls"])
         return tls
 
-    def add_custom_inbounds(self, proxies, format_variables, advanced_config=None):
+    def add_custom_inbounds(
+        self, proxies, format_variables, advanced_config=None, selected_inbounds=None
+    ):
         """Expose GUI-created sing-box inbounds as per-user client outbounds.
 
         Marzban-managed proxy credentials take precedence.  Protocols that do
@@ -149,6 +151,12 @@ class SingBoxConfiguration(str):
             inbound_type = inbound.get("type")
             protocol = protocol_map.get(inbound_type)
             tag = inbound.get("tag")
+            if (
+                isinstance(selected_inbounds, list)
+                and isinstance(tag, str)
+                and tag not in selected_inbounds
+            ):
+                continue
             port = inbound.get("listen_port")
             settings = self._proxy_settings(proxies, protocol) if protocol else None
             manual_user = self._manual_inbound_user(inbound, username) if isinstance(username, str) else None

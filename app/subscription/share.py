@@ -62,7 +62,7 @@ def generate_v2ray_links(proxies: dict, inbounds: dict, extra_data: dict, revers
     format_variables = setup_format_variables(extra_data)
     conf = V2rayShareLink()
     process_inbounds_and_tags(inbounds, proxies, format_variables, conf=conf, reverse=False, render=False)
-    conf.add_singbox_outbounds(_custom_singbox_outbounds(proxies, format_variables))
+    conf.add_singbox_outbounds(_custom_singbox_outbounds(proxies, format_variables, inbounds))
     return conf.render(reverse=reverse)
 
 
@@ -78,16 +78,19 @@ def generate_clash_subscription(
     process_inbounds_and_tags(
         inbounds, proxies, format_variables, conf=conf, reverse=False, render=False
     )
-    conf.add_singbox_outbounds(_custom_singbox_outbounds(proxies, format_variables))
+    conf.add_singbox_outbounds(_custom_singbox_outbounds(proxies, format_variables, inbounds))
     return conf.render(reverse=reverse)
 
 
-def _custom_singbox_outbounds(proxies: dict, format_variables: dict) -> list:
+def _custom_singbox_outbounds(proxies: dict, format_variables: dict, inbounds: dict | None = None) -> list:
     advanced_config = _load_custom_advanced_config()
     builder = SingBoxConfiguration()
     builder.config = {"outbounds": []}
     builder.proxy_remarks = []
-    return builder.add_custom_inbounds(proxies, format_variables, advanced_config)
+    selected = None if inbounds is None else inbounds.get("singbox")
+    return builder.add_custom_inbounds(
+        proxies, format_variables, advanced_config, selected_inbounds=selected
+    )
 
 
 def generate_singbox_subscription(
@@ -99,7 +102,12 @@ def generate_singbox_subscription(
     process_inbounds_and_tags(
         inbounds, proxies, format_variables, conf=conf, reverse=False, render=False
     )
-    conf.add_custom_inbounds(proxies, format_variables, _load_custom_advanced_config())
+    conf.add_custom_inbounds(
+        proxies,
+        format_variables,
+        _load_custom_advanced_config(),
+        selected_inbounds=inbounds.get("singbox"),
+    )
     return conf.render(reverse=reverse)
 
 
@@ -123,7 +131,7 @@ def generate_v2ray_json_subscription(
     process_inbounds_and_tags(
         inbounds, proxies, format_variables, conf=conf, reverse=False, render=False
     )
-    conf.add_singbox_outbounds(_custom_singbox_outbounds(proxies, format_variables))
+    conf.add_singbox_outbounds(_custom_singbox_outbounds(proxies, format_variables, inbounds))
     return conf.render(reverse=reverse)
 
 
@@ -366,6 +374,8 @@ def process_inbounds_and_tags(
 ) -> Union[List, str]:
     _inbounds = []
     for protocol, tags in inbounds.items():
+        if protocol == "singbox":
+            continue
         for tag in tags:
             _inbounds.append((protocol, [tag]))
     index_dict = {proxy: index for index, proxy in enumerate(

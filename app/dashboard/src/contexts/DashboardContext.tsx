@@ -28,6 +28,11 @@ export type InboundType = {
   port?: number;
 };
 export type Inbounds = Map<ProtocolType, InboundType[]>;
+export type SingBoxInbound = {
+  tag: string;
+  type: string;
+  port?: number;
+};
 
 type DashboardStateType = {
   isCreatingNewUser: boolean;
@@ -40,6 +45,7 @@ type DashboardStateType = {
   };
   usageStats: Map<string, UserUsageStat>;
   inbounds: Inbounds;
+  singboxInbounds: SingBoxInbound[];
   loading: boolean;
   filters: FilterType;
   subscribeUrl: string | null;
@@ -109,6 +115,16 @@ export const fetchInbounds = () => {
     });
 };
 
+export const fetchSingBoxInbounds = () => {
+  return fetch("/singbox/inbounds")
+    .then((singboxInbounds: SingBoxInbound[]) => {
+      useDashboard.setState({ singboxInbounds });
+    })
+    .catch(() => {
+      useDashboard.setState({ singboxInbounds: [] });
+    });
+};
+
 export const useDashboard = create(
   subscribeWithSelector<DashboardStateType>((set, get) => ({
     version: null,
@@ -135,6 +151,7 @@ export const useDashboard = create(
       sort: "-created_at",
     },
     inbounds: new Map(),
+    singboxInbounds: [],
     isEditingCore: false,
     refetchUsers: () => {
       fetchUsers(get().filters);

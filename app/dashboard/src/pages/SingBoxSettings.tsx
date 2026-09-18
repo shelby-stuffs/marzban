@@ -29,6 +29,7 @@ import { AnsiLogViewer } from "components/AnsiLogViewer";
 import { Header } from "components/Header";
 import { JsonEditor } from "components/JsonEditor";
 import { Panel } from "components/Panel";
+import { SingBoxDnsDialog } from "components/SingBoxDnsDialog";
 import { SingBoxInboundDialog } from "components/SingBoxInboundDialog";
 import { SingBoxObjectDialog } from "components/SingBoxObjectDialog";
 import { useEffect, useRef, useState } from "react";
@@ -157,6 +158,7 @@ export const SingBoxSettingsPage = () => {
   const [advancedConfig, setAdvancedConfig] = useState<Record<string, unknown>>({});
   const [singBoxSchema, setSingBoxSchema] = useState<SingBoxSchema | null>(null);
   const [inboundDialog, setInboundDialog] = useState<{ index: number | null; value: SingBoxInbound } | null>(null);
+  const [dnsDialog, setDnsDialog] = useState<{ index: number | null; value: SingBoxInbound } | null>(null);
   const [objectDialog, setObjectDialog] = useState<ObjectDialogState | null>(null);
   const [inbounds, setInbounds] = useState<SingBoxInbound[]>([]);
   const [outbounds, setOutbounds] = useState<SingBoxInbound[]>([]);
@@ -317,13 +319,26 @@ export const SingBoxSettingsPage = () => {
   };
 
   const addDnsServer = () => {
-    updateDns({
-      servers: [...dnsServers, { type: "local", tag: `dns-${dnsServers.length + 1}` }],
-    });
+    openDnsDialog();
   };
 
   const removeDnsServer = (index: number) => {
     updateDns({ servers: dnsServers.filter((_, itemIndex) => itemIndex !== index) });
+  };
+
+  const openDnsDialog = (index: number | null = null) => {
+    const current = index === null
+      ? { type: "local", tag: `dns-${dnsServers.length + 1}` }
+      : dnsServers[index];
+    setDnsDialog({ index, value: { ...(current || {}) } });
+  };
+
+  const saveDnsDialog = (item: SingBoxInbound) => {
+    if (!dnsDialog) return;
+    const servers = dnsDialog.index === null
+      ? [...dnsServers, item]
+      : dnsServers.map((server, index) => index === dnsDialog.index ? item : server);
+    updateDns({ servers });
   };
 
   const collectionFor = (section: ObjectDialogState["section"]) => {
@@ -690,7 +705,7 @@ export const SingBoxSettingsPage = () => {
           <Checkbox size="sm" mb="3" isChecked={dnsConfig.disable_cache === true} onChange={(event) => updateDns({ disable_cache: event.target.checked })}>{t("singbox.dnsDisableCache")}</Checkbox>
           <HStack justify="space-between" mb="3" flexWrap="wrap" gap="2">
             <Text color="gray.500" fontSize="sm">{t("singbox.dnsServersHelp")}</Text>
-            <Button size="sm" colorScheme="primary" onClick={() => openObjectDialog("dnsServers")}>{t("singbox.addDnsServer")}</Button>
+            <Button size="sm" colorScheme="primary" onClick={addDnsServer}>{t("singbox.addDnsServer")}</Button>
           </HStack>
           {dnsServers.length === 0 && <Alert status="info" py="2" fontSize="sm"><AlertIcon />{t("singbox.noDnsServers")}</Alert>}
           <VStack align="stretch" spacing="3">
@@ -705,7 +720,7 @@ export const SingBoxSettingsPage = () => {
                   </FormControl>
                   <FormControl>
                     <FormLabel fontSize="xs" mb="1">{t("singbox.dnsServerTag")}</FormLabel>
-                    <HStack><Input size="sm" fontFamily="mono" value={String(server.tag || "")} onChange={(event) => updateDnsServer(index, { tag: event.target.value })} /><Button size="sm" variant="outline" onClick={() => openObjectDialog("dnsServers", index)}>{t("singbox.editObject")}</Button><Button size="sm" variant="ghost" colorScheme="red" onClick={() => removeDnsServer(index)}>{t("delete")}</Button></HStack>
+                    <HStack><Input size="sm" fontFamily="mono" value={String(server.tag || "")} onChange={(event) => updateDnsServer(index, { tag: event.target.value })} /><Button size="sm" variant="outline" onClick={() => openDnsDialog(index)}>{t("singbox.editObject")}</Button><Button size="sm" variant="ghost" colorScheme="red" onClick={() => removeDnsServer(index)}>{t("delete")}</Button></HStack>
                   </FormControl>
                 </Grid>
               </Panel>
@@ -959,6 +974,12 @@ export const SingBoxSettingsPage = () => {
         initialValue={inboundDialog.value}
         onClose={() => setInboundDialog(null)}
         onSave={saveInboundDialog}
+      />}
+      {dnsDialog && <SingBoxDnsDialog
+        isOpen={Boolean(dnsDialog)}
+        initialValue={dnsDialog.value}
+        onClose={() => setDnsDialog(null)}
+        onSave={saveDnsDialog}
       />}
     </VStack>
   );

@@ -3,6 +3,7 @@ import {
   AlertIcon,
   Box,
   Button,
+  Checkbox,
   Collapse,
   Flex,
   FormControl,
@@ -21,6 +22,7 @@ import {
   ModalHeader,
   ModalOverlay,
   Select,
+  SimpleGrid,
   Spinner,
   Switch,
   Text,
@@ -90,6 +92,9 @@ export type FormType = Pick<UserCreate, keyof UserCreate> & {
 };
 
 const formatUser = (user: User): FormType => {
+  const singboxTags = useDashboard
+    .getState()
+    .singboxInbounds.map((inbound) => inbound.tag);
   return {
     ...user,
     data_limit: user.data_limit
@@ -99,6 +104,12 @@ const formatUser = (user: User): FormType => {
       ? Number(user.on_hold_expire_duration / (24 * 60 * 60))
       : user.on_hold_expire_duration,
     selected_proxies: Object.keys(user.proxies) as ProxyKeys,
+    inbounds: {
+      ...user.inbounds,
+      ...(user.inbounds?.singbox === undefined
+        ? { singbox: singboxTags }
+        : {}),
+    },
   };
 };
 const generateHysteriaPassword = () =>
@@ -108,10 +119,14 @@ const generateHysteriaPassword = () =>
 
 const getDefaultValues = (): FormType => {
   const defaultInbounds = Object.fromEntries(useDashboard.getState().inbounds);
+  const singboxInbounds = useDashboard
+    .getState()
+    .singboxInbounds.map((inbound) => inbound.tag);
   const inbounds: UserInbounds = {};
   for (const key in defaultInbounds) {
     inbounds[key] = defaultInbounds[key].map((i) => i.tag);
   }
+  inbounds.singbox = singboxInbounds;
   return {
     selected_proxies: Object.keys(defaultInbounds) as ProxyKeys,
     data_limit: null,
@@ -188,7 +203,11 @@ const baseSchema = {
   data_limit_reset_strategy: z.string(),
   inbounds: z.record(z.string(), z.array(z.string())).transform((ins) => {
     Object.keys(ins).forEach((protocol) => {
-      if (Array.isArray(ins[protocol]) && !ins[protocol]?.length)
+      if (
+        protocol !== "singbox" &&
+        Array.isArray(ins[protocol]) &&
+        !ins[protocol]?.length
+      )
         delete ins[protocol];
     });
     return ins;
@@ -235,6 +254,7 @@ export const UserDialog: FC<UserDialogProps> = () => {
     createUser,
     onDeletingUser,
   } = useDashboard();
+  const singboxInbounds = useDashboard((state) => state.singboxInbounds);
   const isEditing = !!editingUser;
   const isOpen = isCreatingNewUser || isEditing;
   const [loading, setLoading] = useState(false);
@@ -318,6 +338,12 @@ export const UserDialog: FC<UserDialogProps> = () => {
           ? values.status
           : "active",
     };
+    // No configured sing-box inbound means "use the future defaults". Do not
+    // persist an empty opt-out list until the administrator actually has
+    // something to deselect.
+    if (singboxInbounds.length === 0) {
+      delete body.inbounds.singbox;
+    }
 
     methods[method](body)
       .then(() => {
@@ -793,6 +819,46 @@ export const UserDialog: FC<UserDialogProps> = () => {
                       )}
                     </FormErrorMessage>
                   </FormControl>
+                  {singboxInbounds.length > 0 && (
+                    <FormControl mt="4">
+                      <FormLabel>{t("userDialog.singboxInbounds")}</FormLabel>
+                      <Text fontSize="xs" color="gray.500" mb="2">
+                        {t("userDialog.singboxInboundsHelp")}
+                      </Text>
+                      <SimpleGrid columns={1} gap={2}>
+                        {singboxInbounds.map((inbound) => {
+                          const selected =
+                            form.watch("inbounds.singbox") || [];
+                          return (
+                            <Checkbox
+                              key={inbound.tag}
+                              size="sm"
+                              colorScheme="primary"
+                              isChecked={selected.includes(inbound.tag)}
+                              onChange={(event) => {
+                                const next = event.target.checked
+                                  ? [...selected, inbound.tag]
+                                  : selected.filter((tag) => tag !== inbound.tag);
+                                form.setValue("inbounds.singbox", next, {
+                                  shouldDirty: true,
+                                  shouldValidate: true,
+                                });
+                              }}
+                              isDisabled={disabled}
+                            >
+                              <Text fontSize="sm">
+                                {inbound.tag}
+                                <Text as="span" color="gray.500" ml="2">
+                                  {inbound.type}
+                                  {inbound.port ? `:${inbound.port}` : ""}
+                                </Text>
+                              </Text>
+                            </Checkbox>
+                          );
+                        })}
+                      </SimpleGrid>
+                    </FormControl>
+                  )}
                   <Collapse
                     in={(selectedProxies || []).includes("hysteria")}
                     animateOpacity

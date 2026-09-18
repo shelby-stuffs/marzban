@@ -103,6 +103,10 @@ class User(Base):
     sub_last_user_agent = Column(String(512), nullable=True, default=None)
     created_at = Column(DateTime, default=datetime.utcnow)
     note = Column(String(500), nullable=True, default=None)
+    # ``NULL`` keeps legacy users compatible: when it is unset, all configured
+    # custom sing-box inbounds are available to the user.  An empty list is an
+    # explicit opt-out.
+    singbox_inbounds = Column(JSON, nullable=True, default=None)
     online_at = Column(DateTime, nullable=True, default=None)
     on_hold_expire_duration = Column(BigInteger, nullable=True, default=None)
     on_hold_timeout = Column(DateTime, nullable=True, default=None)
@@ -161,6 +165,8 @@ class User(Base):
             for inbound in xray.config.inbounds_by_protocol.get(proxy.type, []):
                 if inbound["tag"] not in excluded_tags:
                     _[proxy.type].append(inbound["tag"])
+        if self.singbox_inbounds is not None:
+            _["singbox"] = list(self.singbox_inbounds)
 
         return _
 

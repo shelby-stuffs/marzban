@@ -362,5 +362,7 @@
   "singbox.dynamicSubscriptionCredentials": "Credentials are injected automatically for active users.",
   "singbox.dynamicSubscriptionSkipReason": "Local or service-only inbound.",
   "singbox.dynamicSubscriptionXrayOwned": "Handled by Xray",
-  "singbox.dynamicSubscriptionXrayReason": "This VLESS inbound is handled by Xray."
+  "singbox.dynamicSubscriptionXrayReason": "This VLESS inbound is handled by Xray.",
+  "userDialog.singboxInbounds": "sing-box inbounds",
+  "userDialog.singboxInboundsHelp": "Select the sing-box inbounds for the user subscription."
 }

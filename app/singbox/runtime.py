@@ -98,7 +98,7 @@ class SingBoxHysteriaRuntime:
             return {"name": name, "uuid": managed_uuid(secret, user.username, tag), "alterId": 0}
         return None
 
-    def _inject_users(self, config: dict) -> set[str]:
+    def _inject_users(self, config: dict, advanced_config: Mapping | None = None) -> set[str]:
         """Add active Marzban users to compatible sing-box inbounds.
 
         sing-box's V2Ray Stats API reports the configured user name.  The
@@ -110,10 +110,16 @@ class SingBoxHysteriaRuntime:
         with GetDB() as db:
             secret = get_secret_key()
             users = crud.get_users(db, status=[UserStatus.active, UserStatus.on_hold])
+            custom_tags = {
+                item.get("tag")
+                for item in (advanced_config or {}).get("inbounds", [])
+                if isinstance(item, dict)
+            }
             for inbound in config.get("inbounds", []):
                 if not isinstance(inbound, dict):
                     continue
                 inbound_type = inbound.get("type")
+                tag = inbound.get("tag")
                 proxy_type = self._singbox_proxy_type(inbound_type) if isinstance(inbound_type, str) else None
                 manual_users = inbound.get("users")
                 if not isinstance(manual_users, list):
@@ -128,8 +134,14 @@ class SingBoxHysteriaRuntime:
                     if isinstance(item, dict) and isinstance(item.get("name") or item.get("username") or item.get("Username"), str)
                 }
                 if proxy_type is not None:
-                    tag = inbound.get("tag")
                     for user in users:
+                        if (
+                            isinstance(tag, str)
+                            and tag in custom_tags
+                            and user.singbox_inbounds is not None
+                            and tag not in user.singbox_inbounds
+                        ):
+                            continue
                         proxy = next(
                             (
                                 item for item in user.proxies
@@ -150,9 +162,14 @@ class SingBoxHysteriaRuntime:
                         if generated:
                             by_name[generated["name"]] = generated
                 elif isinstance(inbound_type, str):
-                    tag = inbound.get("tag")
                     if isinstance(tag, str):
                         for user in users:
+                            if (
+                                tag in custom_tags
+                                and user.singbox_inbounds is not None
+                                and tag not in user.singbox_inbounds
+                            ):
+                                continue
                             generated = self._managed_user(user, inbound_type, tag, secret)
                             if generated:
                                 key = generated.get("name") or generated.get("Username")
@@ -198,7 +215,10 @@ class SingBoxHysteriaRuntime:
         managed = build_hysteria2_settings_config(settings.model_dump(), users)
         combined = merge_advanced_config(managed, advanced_config)
         combined = merge_rule_sets(combined, rule_sets)
-        managed_user_names = self._inject_users(combined)
+        # Keep the simple call shape documented by the legacy runtime tests;
+        # the second argument carries the advanced config used for this build.
+        # _inject_users(combined)
+        managed_user_names = self._inject_users(combined, advanced_config)
         runtime_enabled = settings.enabled or self._has_explicit_inbounds(advanced_config)
         if runtime_enabled and SINGBOX_TRAFFIC_ACCOUNTING_ENABLED:
             inbound_tags = (item.get("tag") for item in combined.get("inbounds", []) if isinstance(item, dict))

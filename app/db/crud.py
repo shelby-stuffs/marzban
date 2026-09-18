@@ -383,6 +383,11 @@ def create_user(db: Session, user: UserCreate, admin: Admin = None) -> User:
     dbuser = User(
         username=user.username,
         proxies=proxies,
+        singbox_inbounds=(
+            list(user.inbounds["singbox"])
+            if "singbox" in user.inbounds
+            else None
+        ),
         status=user.status,
         data_limit=(user.data_limit or None),
         expire=(user.expire or None),
@@ -462,6 +467,9 @@ def update_user(db: Session, dbuser: User, modify: UserModify) -> User:
         for proxy in dbuser.proxies:
             if proxy.type not in modify.proxies:
                 db.delete(proxy)
+    if "singbox" in modify.inbounds:
+        dbuser.singbox_inbounds = list(modify.inbounds["singbox"])
+
     if modify.inbounds:
         for proxy_type, tags in modify.excluded_inbounds.items():
             dbproxy = db.query(Proxy) \

@@ -122,6 +122,28 @@ def get_generated_runtime_config(_admin: Admin = Depends(Admin.check_sudo_admin)
     return {"config": _redact(config), "user_count": len(users)}
 
 
+@singbox_router.get("/inbounds")
+def get_singbox_inbounds(_admin: Admin = Depends(Admin.get_current)):
+    """Return safe metadata used by the user protocol selector.
+
+    Client credentials and the rest of the advanced configuration never leave
+    the server through this endpoint.
+    """
+    try:
+        advanced, _persisted = load_advanced_config(SINGBOX_ADVANCED_CONFIG_PATH)
+    except (OSError, ValueError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return [
+        {
+            "tag": inbound["tag"],
+            "type": inbound.get("type", ""),
+            "port": inbound.get("listen_port"),
+        }
+        for inbound in advanced.get("inbounds", [])
+        if isinstance(inbound, dict) and isinstance(inbound.get("tag"), str)
+    ]
+
+
 @singbox_router.get("/advanced-config")
 def get_advanced_singbox_config(_admin: Admin = Depends(Admin.check_sudo_admin)):
     try:
