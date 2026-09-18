@@ -122,7 +122,8 @@ class SingBoxConfiguration(str):
         current username matches a manually configured inbound client.
         """
         if advanced_config is None:
-            return
+            return []
+        initial_count = len(self.config.get("outbounds", []))
         protocol_map = {
             "anytls": "anytls",
             "http": "http",
@@ -252,6 +253,7 @@ class SingBoxConfiguration(str):
             if protocol in ("hysteria", "hysteria2") and inbound.get("obfs"):
                 outbound["obfs"] = deepcopy(inbound["obfs"])
             self.add_outbound(outbound)
+        return self.config.get("outbounds", [])[initial_count:]
 
     def render(self, reverse=False):
         urltest_types = ["anytls", "vmess", "trojan", "shadowsocks", "hysteria", "hysteria2", "naive", "shadowtls", "socks", "tuic", "http", "ssh"]

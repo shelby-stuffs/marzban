@@ -67,6 +67,52 @@ class ClashConfiguration(object):
     def __repr__(self) -> str:
         return self.render()
 
+    def add_singbox_outbounds(self, outbounds):
+        for outbound in outbounds:
+            protocol = outbound.get("type")
+            tls = outbound.get("tls") or {}
+            if protocol == "hysteria2":
+                obfs = outbound.get("obfs") or {}
+                profile = Hysteria2Client(
+                    address=outbound["server"],
+                    port=int(outbound["server_port"]),
+                    auth=outbound.get("password", ""),
+                    sni=tls.get("server_name", ""),
+                    alpn=tuple(tls.get("alpn") or ()),
+                    insecure=bool(tls.get("insecure")),
+                    obfs=obfs.get("type", ""),
+                    obfs_password=obfs.get("password", ""),
+                )
+                self.data["proxies"].append(profile.clash(self._remark_validation(outbound["tag"])))
+                self.proxy_remarks.append(outbound["tag"])
+                continue
+            if protocol not in {"vmess", "trojan", "shadowsocks", "socks", "http"}:
+                continue
+            node = {
+                "name": self._remark_validation(outbound["tag"]),
+                "type": "ss" if protocol == "shadowsocks" else "socks5" if protocol == "socks" else protocol,
+                "server": outbound["server"],
+                "port": int(outbound["server_port"]),
+            }
+            if protocol == "vmess":
+                node.update(uuid=outbound.get("uuid"), alterId=outbound.get("alter_id", 0), cipher="auto")
+            elif protocol == "trojan":
+                node["password"] = outbound.get("password", "")
+            elif protocol == "shadowsocks":
+                node.update(password=outbound.get("password", ""), cipher=outbound.get("method", "chacha20-ietf-poly1305"))
+            else:
+                if outbound.get("username"):
+                    node["username"] = outbound["username"]
+                node["password"] = outbound.get("password", "")
+            if tls.get("enabled"):
+                node["tls"] = True
+                if tls.get("server_name"):
+                    node["sni"] = tls["server_name"]
+                if tls.get("insecure"):
+                    node["skip-cert-verify"] = True
+            self.data["proxies"].append(node)
+            self.proxy_remarks.append(node["name"])
+
     def _remark_validation(self, remark):
         if not remark in self.proxy_remarks:
             return remark

@@ -31,6 +31,25 @@ class V2rayShareLink(str):
     def add_link(self, link):
         self.links.append(link)
 
+    def add_singbox_outbounds(self, outbounds):
+        for outbound in outbounds:
+            if outbound.get("type") != "hysteria2":
+                continue
+            tls = outbound.get("tls") or {}
+            reality = tls.get("reality") or {}
+            obfs = outbound.get("obfs") or {}
+            profile = Hysteria2Client(
+                address=outbound["server"],
+                port=int(outbound["server_port"]),
+                auth=outbound.get("password", ""),
+                sni=tls.get("server_name", ""),
+                alpn=tuple(tls.get("alpn") or ()),
+                insecure=bool(tls.get("insecure")),
+                obfs=obfs.get("type", ""),
+                obfs_password=obfs.get("password", ""),
+            )
+            self.add_link(profile.share_link(outbound["tag"]))
+
     def render(self, reverse=False):
         if EXTERNAL_CONFIG:
             self.links.append(EXTERNAL_CONFIG)
@@ -588,6 +607,59 @@ class V2rayJsonConfig(str):
         json_template["remarks"] = remarks
         json_template["outbounds"] = outbounds + json_template["outbounds"]
         self.config.append(json_template)
+
+    def add_singbox_outbounds(self, outbounds):
+        xray_outbounds = []
+        for outbound in outbounds:
+            protocol = outbound.get("type")
+            if protocol == "hysteria2":
+                tls = outbound.get("tls") or {}
+                obfs = outbound.get("obfs") or {}
+                profile = Hysteria2Client(
+                    address=outbound["server"],
+                    port=int(outbound["server_port"]),
+                    auth=outbound.get("password", ""),
+                    sni=tls.get("server_name", ""),
+                    alpn=tuple(tls.get("alpn") or ()),
+                    insecure=bool(tls.get("insecure")),
+                    obfs=obfs.get("type", ""),
+                    obfs_password=obfs.get("password", ""),
+                )
+                xray_outbounds.append(profile.xray(self.settings.get("hysteriaSettings", {})))
+                continue
+            if protocol == "vmess":
+                xray_outbounds.append({
+                    "tag": outbound["tag"],
+                    "protocol": "vmess",
+                    "settings": {"vnext": [{
+                        "address": outbound["server"],
+                        "port": int(outbound["server_port"]),
+                        "users": [{"id": outbound.get("uuid"), "alterId": outbound.get("alter_id", 0), "security": "auto"}],
+                    }]},
+                })
+            elif protocol == "trojan":
+                xray_outbounds.append({
+                    "tag": outbound["tag"],
+                    "protocol": "trojan",
+                    "settings": {"servers": [{
+                        "address": outbound["server"],
+                        "port": int(outbound["server_port"]),
+                        "password": outbound.get("password", ""),
+                    }]},
+                })
+            elif protocol == "shadowsocks":
+                xray_outbounds.append({
+                    "tag": outbound["tag"],
+                    "protocol": "shadowsocks",
+                    "settings": {"servers": [{
+                        "address": outbound["server"],
+                        "port": int(outbound["server_port"]),
+                        "method": outbound.get("method", "chacha20-ietf-poly1305"),
+                        "password": outbound.get("password", ""),
+                    }]},
+                })
+        if xray_outbounds:
+            self.add_config(remarks="sing-box inbounds", outbounds=xray_outbounds)
 
     def render(self, reverse=False):
         if reverse:

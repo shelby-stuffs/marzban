@@ -49,10 +49,21 @@ STATUS_TEXTS = {
 }
 
 
+def _load_custom_advanced_config() -> dict:
+    try:
+        from app.singbox.advanced import load_advanced_config
+        config, _persisted = load_advanced_config(SINGBOX_ADVANCED_CONFIG_PATH)
+        return config
+    except (OSError, ValueError):
+        return {}
+
+
 def generate_v2ray_links(proxies: dict, inbounds: dict, extra_data: dict, reverse: bool) -> list:
     format_variables = setup_format_variables(extra_data)
     conf = V2rayShareLink()
-    return process_inbounds_and_tags(inbounds, proxies, format_variables, conf=conf, reverse=reverse)
+    process_inbounds_and_tags(inbounds, proxies, format_variables, conf=conf, reverse=False, render=False)
+    conf.add_singbox_outbounds(_custom_singbox_outbounds(proxies, format_variables))
+    return conf.render(reverse=reverse)
 
 
 def generate_clash_subscription(
@@ -64,9 +75,19 @@ def generate_clash_subscription(
         conf = ClashConfiguration()
 
     format_variables = setup_format_variables(extra_data)
-    return process_inbounds_and_tags(
-        inbounds, proxies, format_variables, conf=conf, reverse=reverse
+    process_inbounds_and_tags(
+        inbounds, proxies, format_variables, conf=conf, reverse=False, render=False
     )
+    conf.add_singbox_outbounds(_custom_singbox_outbounds(proxies, format_variables))
+    return conf.render(reverse=reverse)
+
+
+def _custom_singbox_outbounds(proxies: dict, format_variables: dict) -> list:
+    advanced_config = _load_custom_advanced_config()
+    builder = SingBoxConfiguration()
+    builder.config = {"outbounds": []}
+    builder.proxy_remarks = []
+    return builder.add_custom_inbounds(proxies, format_variables, advanced_config)
 
 
 def generate_singbox_subscription(
@@ -78,12 +99,7 @@ def generate_singbox_subscription(
     process_inbounds_and_tags(
         inbounds, proxies, format_variables, conf=conf, reverse=False, render=False
     )
-    try:
-        from app.singbox.advanced import load_advanced_config
-        advanced_config, _persisted = load_advanced_config(SINGBOX_ADVANCED_CONFIG_PATH)
-    except (OSError, ValueError):
-        advanced_config = {}
-    conf.add_custom_inbounds(proxies, format_variables, advanced_config)
+    conf.add_custom_inbounds(proxies, format_variables, _load_custom_advanced_config())
     return conf.render(reverse=reverse)
 
 
@@ -104,9 +120,11 @@ def generate_v2ray_json_subscription(
     conf = V2rayJsonConfig()
 
     format_variables = setup_format_variables(extra_data)
-    return process_inbounds_and_tags(
-        inbounds, proxies, format_variables, conf=conf, reverse=reverse
+    process_inbounds_and_tags(
+        inbounds, proxies, format_variables, conf=conf, reverse=False, render=False
     )
+    conf.add_singbox_outbounds(_custom_singbox_outbounds(proxies, format_variables))
+    return conf.render(reverse=reverse)
 
 
 def generate_hysteria2_subscription(
