@@ -118,3 +118,33 @@ def test_singbox_hysteria2_outbound_uses_tls_and_obfs():
             },
         }
     ]
+
+
+def test_singbox_subscription_adds_custom_vless_inbound_for_existing_user():
+    config = object.__new__(SingBoxConfiguration)
+    config.proxy_remarks = []
+    config.config = {"outbounds": []}
+
+    config.add_custom_inbounds(
+        {"vless": {"id": "00000000-0000-0000-0000-000000000001"}},
+        {"SERVER_IP": "203.0.113.10", "USERNAME": "alice"},
+        {
+            "inbounds": [{
+                "type": "vless",
+                "tag": "vless-custom",
+                "listen_port": 8443,
+                "tls": {"enabled": True, "server_name": "edge.example.com"},
+                "transport": {"type": "ws", "path": "/edge"},
+            }]
+        },
+    )
+
+    assert config.config["outbounds"] == [{
+        "type": "vless",
+        "tag": "alice [vless / vless-custom]",
+        "server": "203.0.113.10",
+        "server_port": 8443,
+        "uuid": "00000000-0000-0000-0000-000000000001",
+        "tls": {"enabled": True, "server_name": "edge.example.com"},
+        "transport": {"type": "ws", "path": "/edge"},
+    }]

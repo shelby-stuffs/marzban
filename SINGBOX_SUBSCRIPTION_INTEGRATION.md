@@ -23,3 +23,15 @@ Salamander и ALPN наследуются из серверных настрое
 
 После сохранения раздела кэш подписок очищается. Для корректной TLS-проверки
 публичный адрес/SNI должны входить в SAN сертификата sing-box.
+
+## Custom inbounds
+
+Custom `vless`, `vmess`, `trojan`, `shadowsocks` и `hysteria2` inbounds из
+`sing-box-advanced.json` также добавляются в sing-box-подписку пользователя.
+Они экспортируются как client outbounds с адресом `SERVER_IP`, `listen_port`,
+TLS/transport из inbound и credentials соответствующего proxy пользователя
+Marzban.
+
+Пользователь должен иметь соответствующий proxy в Marzban. Для custom inbound
+используется его database credential, поэтому отдельное ручное дублирование
+пароля или UUID в подписке не требуется.

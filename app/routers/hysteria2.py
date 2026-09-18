@@ -165,6 +165,7 @@ def put_advanced_singbox_config(
             generated = runtime.build_current(advanced_config=advanced)
             runtime.core.validate(generated)
         save_advanced_config(SINGBOX_ADVANCED_CONFIG_PATH, advanced)
+        subscription_cache.invalidate()
         if runtime is not None:
             runtime.apply_current()
     except (OSError, ValueError, RuntimeError, TimeoutError) as exc:

@@ -1,4 +1,5 @@
 from app.subscription.hysteria2 import Hysteria2Client
+from copy import deepcopy
 
 import copy
 import json
@@ -49,6 +50,93 @@ class SingBoxConfiguration(str):
 
     def add_outbound(self, outbound_data):
         self.config["outbounds"].append(outbound_data)
+
+    @staticmethod
+    def _proxy_settings(proxies, protocol: str):
+        for proxy_type, settings in proxies.items():
+            if getattr(proxy_type, "value", proxy_type) == protocol:
+                return settings
+        return None
+
+    @staticmethod
+    def _client_tls(server_tls, address: str) -> dict:
+        if not isinstance(server_tls, dict) or not server_tls.get("enabled"):
+            return {}
+        tls = {"enabled": True, "server_name": server_tls.get("server_name") or address}
+        for key in ("insecure", "alpn", "min_version", "max_version"):
+            if key in server_tls:
+                tls[key] = deepcopy(server_tls[key])
+        if isinstance(server_tls.get("reality"), dict):
+            tls["reality"] = deepcopy(server_tls["reality"])
+        if isinstance(server_tls.get("utls"), dict):
+            tls["utls"] = deepcopy(server_tls["utls"])
+        return tls
+
+    def add_custom_inbounds(self, proxies, format_variables, advanced_config=None):
+        """Expose configured sing-box server inbounds as client outbounds."""
+        if advanced_config is None:
+            return
+        protocol_map = {
+            "vless": "vless",
+            "vmess": "vmess",
+            "trojan": "trojan",
+            "shadowsocks": "shadowsocks",
+            "hysteria2": "hysteria2",
+        }
+        address = format_variables.get("SERVER_IP")
+        if not address:
+            return
+        for inbound in advanced_config.get("inbounds", []):
+            if not isinstance(inbound, dict):
+                continue
+            protocol = protocol_map.get(inbound.get("type"))
+            tag = inbound.get("tag")
+            port = inbound.get("listen_port")
+            settings = self._proxy_settings(proxies, protocol) if protocol else None
+            if not protocol or not isinstance(tag, str) or not tag or not settings:
+                continue
+            if not isinstance(port, int) or isinstance(port, bool) or not 1 <= port <= 65535:
+                continue
+
+            user_settings = settings.model_dump() if hasattr(settings, "model_dump") else dict(settings)
+            remark = self._remark_validation(
+                f"{format_variables.get('USERNAME', '{USERNAME}')} [{protocol} / {tag}]"
+            )
+            outbound = {
+                "type": protocol,
+                "tag": remark,
+                "server": address,
+                "server_port": port,
+            }
+            if protocol in ("vless", "vmess"):
+                if not user_settings.get("id"):
+                    continue
+                outbound["uuid"] = user_settings["id"]
+            elif protocol == "trojan":
+                if not user_settings.get("password"):
+                    continue
+                outbound["password"] = user_settings["password"]
+            elif protocol == "shadowsocks":
+                if not user_settings.get("password"):
+                    continue
+                outbound["password"] = user_settings["password"]
+                outbound["method"] = user_settings.get("method", "chacha20-ietf-poly1305")
+            elif protocol == "hysteria2":
+                if not user_settings.get("auth"):
+                    continue
+                outbound["password"] = user_settings["auth"]
+
+            if isinstance(inbound.get("tls"), dict):
+                tls = self._client_tls(inbound["tls"], address)
+                if tls:
+                    outbound["tls"] = tls
+            if isinstance(inbound.get("transport"), dict):
+                outbound["transport"] = deepcopy(inbound["transport"])
+            if isinstance(inbound.get("multiplex"), dict):
+                outbound["multiplex"] = deepcopy(inbound["multiplex"])
+            if protocol == "hysteria2" and isinstance(inbound.get("obfs"), dict):
+                outbound["obfs"] = deepcopy(inbound["obfs"])
+            self.add_outbound(outbound)
 
     def render(self, reverse=False):
         urltest_types = ["vmess", "vless", "trojan", "shadowsocks", "hysteria2", "tuic", "http", "ssh"]

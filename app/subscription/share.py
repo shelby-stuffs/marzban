@@ -26,6 +26,7 @@ from config import (
     EXPIRED_STATUS_TEXT,
     LIMITED_STATUS_TEXT,
     ONHOLD_STATUS_TEXT,
+    SINGBOX_ADVANCED_CONFIG_PATH,
 )
 
 SERVER_IP = get_public_ip()
@@ -74,9 +75,16 @@ def generate_singbox_subscription(
     conf = SingBoxConfiguration()
 
     format_variables = setup_format_variables(extra_data)
-    return process_inbounds_and_tags(
-        inbounds, proxies, format_variables, conf=conf, reverse=reverse
+    process_inbounds_and_tags(
+        inbounds, proxies, format_variables, conf=conf, reverse=False, render=False
     )
+    try:
+        from app.singbox.advanced import load_advanced_config
+        advanced_config, _persisted = load_advanced_config(SINGBOX_ADVANCED_CONFIG_PATH)
+    except (OSError, ValueError):
+        advanced_config = {}
+    conf.add_custom_inbounds(proxies, format_variables, advanced_config)
+    return conf.render(reverse=reverse)
 
 
 def generate_outline_subscription(
@@ -336,6 +344,7 @@ def process_inbounds_and_tags(
             OutlineConfiguration
         ],
         reverse=False,
+        render=True,
 ) -> Union[List, str]:
     _inbounds = []
     for protocol, tags in inbounds.items():
@@ -424,7 +433,7 @@ def process_inbounds_and_tags(
                     settings=settings.model_dump()
                 )
 
-    return conf.render(reverse=reverse)
+    return conf.render(reverse=reverse) if render else conf
 
 
 def encode_title(text: str) -> str:
