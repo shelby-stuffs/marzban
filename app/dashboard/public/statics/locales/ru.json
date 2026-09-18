@@ -358,5 +358,7 @@
   "singbox.dynamicSubscriptionIncluded": "Добавляется автоматически",
   "singbox.dynamicSubscriptionUnsupported": "Не клиентский протокол",
   "singbox.dynamicSubscriptionCredentials": "Credentials автоматически добавляются каждому активному пользователю и пользователю на удержании.",
-  "singbox.dynamicSubscriptionSkipReason": "Это локальный или служебный inbound без клиентского outbound для подписки."
+  "singbox.dynamicSubscriptionSkipReason": "Это локальный или служебный inbound без клиентского outbound для подписки.",
+  "singbox.dynamicSubscriptionXrayOwned": "Обрабатывается Xray",
+  "singbox.dynamicSubscriptionXrayReason": "Этот VLESS inbound остаётся в подписке Xray и не экспортируется через sing-box."
 }

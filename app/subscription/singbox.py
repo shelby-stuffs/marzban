@@ -55,8 +55,10 @@ class SingBoxConfiguration(str):
 
     @staticmethod
     def _proxy_settings(proxies, protocol: str):
+        protocol_aliases = {"hysteria2": "hysteria"}
         for proxy_type, settings in proxies.items():
-            if getattr(proxy_type, "value", proxy_type) == protocol:
+            value = getattr(proxy_type, "value", proxy_type)
+            if value == protocol or value == protocol_aliases.get(protocol):
                 return settings
         return None
 
@@ -80,7 +82,7 @@ class SingBoxConfiguration(str):
             return {"name": username, "auth": password}
         if inbound_type == "tuic":
             return {"name": username, "uuid": managed_uuid(secret, username, tag), "password": password}
-        if inbound_type in ("vless", "vmess"):
+        if inbound_type == "vmess":
             return {"name": username, "uuid": managed_uuid(secret, username, tag), "alterId": 0}
         return {}
 
@@ -133,7 +135,6 @@ class SingBoxConfiguration(str):
             "socks": "socks",
             "trojan": "trojan",
             "tuic": "tuic",
-            "vless": "vless",
             "vmess": "vmess",
         }
         address = format_variables.get("SERVER_IP")
@@ -180,12 +181,10 @@ class SingBoxConfiguration(str):
                 "server": address,
                 "server_port": port,
             }
-            if protocol in ("vless", "vmess"):
+            if protocol == "vmess":
                 if not credentials.get("id") and not credentials.get("uuid"):
                     continue
                 outbound["uuid"] = credentials.get("id") or credentials["uuid"]
-                if protocol == "vless" and credentials.get("flow") not in (None, "", "none"):
-                    outbound["flow"] = credentials["flow"]
                 if protocol == "vmess":
                     if credentials.get("alterId") is not None:
                         outbound["alter_id"] = credentials["alterId"]
@@ -255,10 +254,10 @@ class SingBoxConfiguration(str):
             self.add_outbound(outbound)
 
     def render(self, reverse=False):
-        urltest_types = ["anytls", "vmess", "vless", "trojan", "shadowsocks", "hysteria", "hysteria2", "naive", "shadowtls", "socks", "tuic", "http", "ssh"]
+        urltest_types = ["anytls", "vmess", "trojan", "shadowsocks", "hysteria", "hysteria2", "naive", "shadowtls", "socks", "tuic", "http", "ssh"]
         urltest_tags = [outbound["tag"]
                         for outbound in self.config["outbounds"] if outbound["type"] in urltest_types]
-        selector_types = ["anytls", "vmess", "vless", "trojan", "shadowsocks", "hysteria", "hysteria2", "naive", "shadowtls", "socks", "tuic", "http", "ssh", "urltest"]
+        selector_types = ["anytls", "vmess", "trojan", "shadowsocks", "hysteria", "hysteria2", "naive", "shadowtls", "socks", "tuic", "http", "ssh", "urltest"]
         selector_tags = [outbound["tag"]
                          for outbound in self.config["outbounds"] if outbound["type"] in selector_types]
 

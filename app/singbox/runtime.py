@@ -48,7 +48,6 @@ class SingBoxHysteriaRuntime:
     @staticmethod
     def _singbox_proxy_type(inbound_type: str):
         return {
-            "vless": ProxyTypes.VLESS,
             "vmess": ProxyTypes.VMess,
             "trojan": ProxyTypes.Trojan,
             "shadowsocks": ProxyTypes.Shadowsocks,
@@ -95,8 +94,6 @@ class SingBoxHysteriaRuntime:
             return {"name": name, "auth": password}
         if inbound_type == "tuic":
             return {"name": name, "uuid": managed_uuid(secret, user.username, tag), "password": password}
-        if inbound_type == "vless":
-            return {"name": name, "uuid": managed_uuid(secret, user.username, tag)}
         if inbound_type == "vmess":
             return {"name": name, "uuid": managed_uuid(secret, user.username, tag), "alterId": 0}
         return None
@@ -163,7 +160,7 @@ class SingBoxHysteriaRuntime:
                                     by_name[key] = generated
                 if proxy_type is not None or inbound_type in {
                     "anytls", "http", "hysteria", "hysteria2", "mixed", "naive",
-                    "shadowsocks", "shadowtls", "socks", "trojan", "tuic", "vless", "vmess",
+                    "shadowsocks", "shadowtls", "socks", "trojan", "tuic", "vmess",
                 } or manual_users:
                     inbound["users"] = [*unnamed_users, *by_name.values()]
 

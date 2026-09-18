@@ -86,7 +86,8 @@ const OUTBOUND_TYPES = ["anytls", "block", "bridge", "direct", "http", "hysteria
 const DNS_SERVER_TYPES = ["dhcp", "fakeip", "h3", "hosts", "https", "local", "mdns", "openconnect", "openvpn", "quic", "resolved", "tailscale", "tcp", "tls", "udp"];
 const ENDPOINT_TYPES = ["openconnect", "openvpn-client", "openvpn-server", "tailscale", "wireguard"];
 const SERVICE_TYPES = ["api", "ccm", "derp", "hysteria-realm", "ocm", "oom-killer", "resolved", "ssm-api", "usbip-client"];
-const SUBSCRIPTION_INBOUND_TYPES = ["anytls", "http", "hysteria", "hysteria2", "mixed", "naive", "shadowsocks", "shadowtls", "socks", "trojan", "tuic", "vless", "vmess"];
+const SUBSCRIPTION_INBOUND_TYPES = ["anytls", "http", "hysteria", "hysteria2", "mixed", "naive", "shadowsocks", "shadowtls", "socks", "trojan", "tuic", "vmess"];
+const XRAY_OWNED_INBOUND_TYPES = ["vless"];
 
 
 type RuleSetItem = {
@@ -866,6 +867,7 @@ export const SingBoxSettingsPage = () => {
                 {inbounds.map((inbound, index) => {
                   const type = String(inbound.type || "");
                   const supported = SUBSCRIPTION_INBOUND_TYPES.includes(type);
+                  const xrayOwned = XRAY_OWNED_INBOUND_TYPES.includes(type);
                   return (
                     <Box key={`${String(inbound.tag || "inbound")}-${index}`} borderWidth="1px" borderColor="terminal.border" borderRadius="md" p="3">
                       <HStack justify="space-between" flexWrap="wrap" gap="2">
@@ -874,9 +876,9 @@ export const SingBoxSettingsPage = () => {
                           <Text fontFamily="mono">{String(inbound.tag || "—")}</Text>
                           {inbound.listen_port && <Text color="gray.500" fontFamily="mono">:{String(inbound.listen_port)}</Text>}
                         </></Box>
-                        <Badge colorScheme={supported ? "green" : "gray"}>{supported ? t("singbox.dynamicSubscriptionIncluded") : t("singbox.dynamicSubscriptionUnsupported")}</Badge>
+                        <Badge colorScheme={supported ? "green" : "gray"}>{supported ? t("singbox.dynamicSubscriptionIncluded") : xrayOwned ? t("singbox.dynamicSubscriptionXrayOwned") : t("singbox.dynamicSubscriptionUnsupported")}</Badge>
                       </HStack>
-                      <Text mt="2" color="gray.500" fontSize="sm">{supported ? t("singbox.dynamicSubscriptionCredentials") : t("singbox.dynamicSubscriptionSkipReason")}</Text>
+                      <Text mt="2" color="gray.500" fontSize="sm">{supported ? t("singbox.dynamicSubscriptionCredentials") : xrayOwned ? t("singbox.dynamicSubscriptionXrayReason") : t("singbox.dynamicSubscriptionSkipReason")}</Text>
                     </Box>
                   );
                 })}

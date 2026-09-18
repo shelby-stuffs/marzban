@@ -356,5 +356,7 @@
   "singbox.dynamicSubscriptionIncluded": "自动包含",
   "singbox.dynamicSubscriptionUnsupported": "不是客户端协议",
   "singbox.dynamicSubscriptionCredentials": "凭据会自动注入到活跃用户。",
-  "singbox.dynamicSubscriptionSkipReason": "本地或服务专用 inbound。"
+  "singbox.dynamicSubscriptionSkipReason": "本地或服务专用 inbound。",
+  "singbox.dynamicSubscriptionXrayOwned": "由 Xray 处理",
+  "singbox.dynamicSubscriptionXrayReason": "此 VLESS inbound 保留在 Xray 订阅中。"
 }

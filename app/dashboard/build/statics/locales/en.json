@@ -358,5 +358,7 @@
   "singbox.dynamicSubscriptionIncluded": "Included automatically",
   "singbox.dynamicSubscriptionUnsupported": "Not a client protocol",
   "singbox.dynamicSubscriptionCredentials": "Credentials are injected automatically for every active or on-hold user.",
-  "singbox.dynamicSubscriptionSkipReason": "This inbound is local or service-only and has no client outbound for a subscription."
+  "singbox.dynamicSubscriptionSkipReason": "This inbound is local or service-only and has no client outbound for a subscription.",
+  "singbox.dynamicSubscriptionXrayOwned": "Handled by Xray",
+  "singbox.dynamicSubscriptionXrayReason": "This VLESS inbound stays in the Xray subscription and is not exported by sing-box."
 }

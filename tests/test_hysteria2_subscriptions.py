@@ -120,7 +120,7 @@ def test_singbox_hysteria2_outbound_uses_tls_and_obfs():
     ]
 
 
-def test_singbox_subscription_adds_custom_vless_inbound_for_existing_user():
+def test_singbox_subscription_does_not_export_custom_vless_inbound():
     config = object.__new__(SingBoxConfiguration)
     config.proxy_remarks = []
     config.config = {"outbounds": []}
@@ -139,15 +139,7 @@ def test_singbox_subscription_adds_custom_vless_inbound_for_existing_user():
         },
     )
 
-    assert config.config["outbounds"] == [{
-        "type": "vless",
-        "tag": "alice [vless / vless-custom]",
-        "server": "203.0.113.10",
-        "server_port": 8443,
-        "uuid": "00000000-0000-0000-0000-000000000001",
-        "tls": {"enabled": True, "server_name": "edge.example.com"},
-        "transport": {"type": "ws", "path": "/edge"},
-    }]
+    assert config.config["outbounds"] == []
 
 
 def test_singbox_custom_inbound_subscription_keeps_client_fields_and_flow():
