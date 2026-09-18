@@ -71,6 +71,8 @@ type AdvancedConfigResponse = {
   reserved_top_level_keys: string[];
 };
 
+type SingBoxInbound = Record<string, unknown>;
+
 
 type RuleSetItem = {
   enabled: boolean;
@@ -115,6 +117,11 @@ const password = () =>
 const errorMessage = (error: any) =>
   error?.response?._data?.detail || error?.data?.detail || error?.message || "Request failed";
 
+const readInbounds = (config: Record<string, unknown>): SingBoxInbound[] =>
+  Array.isArray(config.inbounds)
+    ? config.inbounds.filter((item): item is SingBoxInbound => Boolean(item) && typeof item === "object" && !Array.isArray(item))
+    : [];
+
 export const SingBoxSettingsPage = () => {
   const { t } = useTranslation();
   const toast = useToast();
@@ -131,6 +138,7 @@ export const SingBoxSettingsPage = () => {
   const [autoRefresh, setAutoRefresh] = useState(true);
   const logsRef = useRef<HTMLDivElement>(null);
   const [advancedConfig, setAdvancedConfig] = useState<Record<string, unknown>>({});
+  const [inbounds, setInbounds] = useState<SingBoxInbound[]>([]);
   const [advancedText, setAdvancedText] = useState("{}");
   const [advancedMeta, setAdvancedMeta] = useState<AdvancedConfigResponse | null>(null);
   const [advancedLoading, setAdvancedLoading] = useState(true);
@@ -164,6 +172,7 @@ export const SingBoxSettingsPage = () => {
       const response = await fetch<AdvancedConfigResponse>("/singbox/advanced-config");
       setAdvancedMeta(response);
       setAdvancedConfig(response.config);
+      setInbounds(readInbounds(response.config));
       setAdvancedText(JSON.stringify(response.config, null, 2));
     } catch (error) {
       toast({ title: errorMessage(error), status: "error", position: "top" });
@@ -180,6 +189,52 @@ export const SingBoxSettingsPage = () => {
       throw new Error(t("singbox.editorObjectRequired"));
     }
     return parsed as Record<string, unknown>;
+  };
+
+  const setAdvancedDocument = (config: Record<string, unknown>) => {
+    setAdvancedConfig(config);
+    setInbounds(readInbounds(config));
+    setAdvancedText(JSON.stringify(config, null, 2));
+  };
+
+  const updateInbound = (index: number, key: string, value: unknown) => {
+    try {
+      const config = parseAdvanced();
+      const current = readInbounds(config);
+      if (!current[index]) return;
+      current[index] = { ...current[index], [key]: value };
+      config.inbounds = current;
+      setAdvancedDocument(config);
+    } catch (error) {
+      toast({ title: errorMessage(error), status: "error", position: "top" });
+    }
+  };
+
+  const addInbound = () => {
+    try {
+      const config = parseAdvanced();
+      const current = readInbounds(config);
+      current.push({
+        type: "mixed",
+        tag: `in-${current.length + 1}`,
+        listen: "::",
+        listen_port: 8080 + current.length,
+      });
+      config.inbounds = current;
+      setAdvancedDocument(config);
+    } catch (error) {
+      toast({ title: errorMessage(error), status: "error", position: "top" });
+    }
+  };
+
+  const removeInbound = (index: number) => {
+    try {
+      const config = parseAdvanced();
+      config.inbounds = readInbounds(config).filter((_, itemIndex) => itemIndex !== index);
+      setAdvancedDocument(config);
+    } catch (error) {
+      toast({ title: errorMessage(error), status: "error", position: "top" });
+    }
   };
 
   const checkAdvanced = async () => {
@@ -201,8 +256,7 @@ export const SingBoxSettingsPage = () => {
       const parsed = parseAdvanced();
       const response = await fetch<AdvancedConfigResponse>("/singbox/advanced-config", { method: "PUT", body: parsed });
       setAdvancedMeta(response);
-      setAdvancedConfig(response.config);
-      setAdvancedText(JSON.stringify(response.config, null, 2));
+      setAdvancedDocument(response.config);
       toast({ title: t("singbox.editorSaved"), status: "success", position: "top" });
       await showPreview();
       await loadLogs(true);
@@ -215,8 +269,7 @@ export const SingBoxSettingsPage = () => {
 
   const resetAdvanced = () => {
     const defaults = { outbounds: [{ type: "direct", tag: "direct" }], route: { rules: [], final: "direct" } };
-    setAdvancedConfig(defaults);
-    setAdvancedText(JSON.stringify(defaults, null, 2));
+    setAdvancedDocument(defaults);
   };
 
   const loadRuleSets = async () => {
@@ -403,15 +456,59 @@ export const SingBoxSettingsPage = () => {
         </TabList>
         <TabPanels>
           <TabPanel px="0">
+      <Panel label={t("singbox.inboundBuilder")} mb="4">
+        <HStack justify="space-between" mb="3" flexWrap="wrap" gap="2">
+          <Text color="gray.500" fontSize="sm">{t("singbox.inboundBuilderHelp")}</Text>
+          <Button size="sm" colorScheme="primary" onClick={addInbound}>{t("singbox.addInbound")}</Button>
+        </HStack>
+        {inbounds.length === 0 && <Alert status="info" py="2" fontSize="sm"><AlertIcon />{t("singbox.noInbounds")}</Alert>}
+        <VStack align="stretch" spacing="3">
+          {inbounds.map((inbound, index) => (
+            <Panel key={`${String(inbound.tag || "inbound")}-${index}`} compact label={`${t("singbox.inbound")} ${index + 1}: ${String(inbound.tag || "—")}`}>
+              <VStack align="stretch" spacing="3">
+                <Grid templateColumns={{ base: "1fr", md: "repeat(2, 1fr)", xl: "repeat(4, 1fr)" }} gap="3">
+                  <FormControl isRequired>
+                    <FormLabel fontSize="xs" mb="1">{t("singbox.inboundType")}</FormLabel>
+                    <Input size="sm" fontFamily="mono" value={String(inbound.type || "")} placeholder="vless / hysteria2 / mixed" onChange={(event) => updateInbound(index, "type", event.target.value)} />
+                  </FormControl>
+                  <FormControl isRequired>
+                    <FormLabel fontSize="xs" mb="1">{t("singbox.inboundTag")}</FormLabel>
+                    <Input size="sm" fontFamily="mono" value={String(inbound.tag || "")} onChange={(event) => updateInbound(index, "tag", event.target.value)} />
+                  </FormControl>
+                  <FormControl>
+                    <FormLabel fontSize="xs" mb="1">{t("singbox.inboundListen")}</FormLabel>
+                    <Input size="sm" fontFamily="mono" value={String(inbound.listen || "")} placeholder="::" onChange={(event) => updateInbound(index, "listen", event.target.value)} />
+                  </FormControl>
+                  <FormControl>
+                    <FormLabel fontSize="xs" mb="1">{t("singbox.inboundPort")}</FormLabel>
+                    <Input size="sm" type="number" value={typeof inbound.listen_port === "number" ? inbound.listen_port : ""} onChange={(event) => updateInbound(index, "listen_port", event.target.value ? Number(event.target.value) : undefined)} />
+                  </FormControl>
+                </Grid>
+                <HStack justify="space-between" flexWrap="wrap" gap="2">
+                  <Text color="gray.500" fontSize="xs">{t("singbox.inboundAdvancedHelp")}</Text>
+                  <Button size="xs" variant="ghost" colorScheme="red" onClick={() => removeInbound(index)}>{t("delete")}</Button>
+                </HStack>
+              </VStack>
+            </Panel>
+          ))}
+        </VStack>
+      </Panel>
       <Panel label={t("singbox.advancedEditor")}>
         <Alert status="warning" mb="4"><AlertIcon />{t("singbox.editorWarning")}</Alert>
         <HStack justify="space-between" mb="3" flexWrap="wrap" gap="2">
           <Text color="gray.500" fontFamily="mono" fontSize="xs">
-            {t("singbox.editorAllowed")}: {(advancedMeta?.allowed_top_level_keys || ["log", "dns", "outbounds", "route", "experimental"]).join(", ")}
+            {t("singbox.editorAllowed")}: {(advancedMeta?.allowed_top_level_keys || ["log", "dns", "inbounds", "outbounds", "route", "experimental"]).join(", ")}
           </Text>
           <Badge colorScheme={advancedMeta?.persisted ? "green" : "gray"}>{advancedMeta?.persisted ? t("singbox.editorSavedSource") : t("singbox.editorDefaultSource")}</Badge>
         </HStack>
-        {advancedLoading ? <Spinner /> : <JsonEditor json={advancedConfig} onChange={setAdvancedText} />}
+        {advancedLoading ? <Spinner /> : <JsonEditor json={advancedConfig} onChange={(value) => {
+          setAdvancedText(value);
+          try {
+            setInbounds(readInbounds(JSON.parse(value) as Record<string, unknown>));
+          } catch {
+            // The editor may be temporarily invalid while the user is typing.
+          }
+        }} />}
         <HStack justify="flex-end" mt="4" flexWrap="wrap">
           <Button variant="ghost" onClick={resetAdvanced}>{t("singbox.editorReset")}</Button>
           <Button variant="outline" isLoading={advancedChecking} onClick={() => void checkAdvanced()}>{t("singbox.editorCheck")}</Button>

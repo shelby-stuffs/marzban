@@ -22,10 +22,16 @@ def install_traffic_api(
     *,
     host: str,
     port: int,
-    inbound_tag: str,
+    inbound_tag: str | None = None,
+    inbound_tags: Iterable[str] | None = None,
     users: Iterable[str],
 ) -> dict:
-    """Install the protected per-user V2Ray Stats API in a merged config."""
+    """Install the per-user V2Ray Stats API in a merged config.
+
+    ``inbound_tag`` is kept for compatibility with existing callers.  New
+    callers should pass ``inbound_tags`` so custom sing-box protocols can be
+    included in accounting as well.
+    """
     result = deepcopy(dict(config))
     experimental = result.get("experimental")
     if experimental is None:
@@ -38,11 +44,16 @@ def install_traffic_api(
     tracked_users = list(dict.fromkeys(
         user for user in users if isinstance(user, str) and user
     ))
+    if inbound_tags is None:
+        inbound_tags = [inbound_tag] if inbound_tag else []
+    tracked_inbounds = list(dict.fromkeys(
+        tag for tag in inbound_tags if isinstance(tag, str) and tag
+    ))
     experimental["v2ray_api"] = {
         "listen": api_listen(host, port),
         "stats": {
             "enabled": True,
-            "inbounds": [inbound_tag],
+            "inbounds": tracked_inbounds,
             "users": tracked_users,
         },
     }

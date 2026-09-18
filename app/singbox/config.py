@@ -176,11 +176,14 @@ def build_hysteria2_settings_config(settings: Mapping, users: Iterable[Mapping])
 
 
 def merge_advanced_config(managed: Mapping, advanced: Mapping | None) -> dict:
-    """Overlay editable top-level sections while preserving managed inbounds."""
+    """Overlay editable top-level sections, including user-managed inbounds.
+
+    When ``inbounds`` is omitted, the generated Hysteria 2 inbound remains
+    active for backwards compatibility.  When it is present, even as an empty
+    list, it becomes the source of truth and replaces the generated inbound.
+    """
     result = deepcopy(dict(managed))
     for key, value in (advanced or {}).items():
-        if key == "inbounds":
-            raise ValueError("sing-box inbounds are managed by Marzban")
         result[key] = deepcopy(value)
     return result
 

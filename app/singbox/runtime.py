@@ -62,7 +62,18 @@ class SingBoxHysteriaRuntime:
         combined = merge_advanced_config(managed, advanced_config)
         combined = merge_rule_sets(combined, rule_sets)
         if settings.enabled and SINGBOX_TRAFFIC_ACCOUNTING_ENABLED:
-            combined = install_traffic_api(combined, host=SINGBOX_TRAFFIC_API_HOST, port=SINGBOX_TRAFFIC_API_PORT, inbound_tag=settings.tag, users=(item["name"] for item in users))
+            inbound_tags = (
+                item.get("tag")
+                for item in combined.get("inbounds", [])
+                if isinstance(item, dict)
+            )
+            combined = install_traffic_api(
+                combined,
+                host=SINGBOX_TRAFFIC_API_HOST,
+                port=SINGBOX_TRAFFIC_API_PORT,
+                inbound_tags=inbound_tags,
+                users=(item["name"] for item in users),
+            )
         return combined
 
     def apply_current(self) -> bool:

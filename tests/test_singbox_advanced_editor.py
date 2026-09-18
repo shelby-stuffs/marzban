@@ -16,19 +16,29 @@ class SingBoxAdvancedEditorTests(unittest.TestCase):
   value,persisted=advanced.load_advanced_config("/definitely/missing/config.json")
   self.assertFalse(persisted); self.assertEqual(value["route"]["final"],"direct")
 
- def test_managed_inbounds_are_reserved(self):
-  with self.assertRaisesRegex(ValueError,"inbounds"):
-   advanced.validate_advanced_config({"inbounds":[]})
+ def test_custom_inbounds_are_editable(self):
+  value=advanced.validate_advanced_config({"inbounds":[{"type":"vless","tag":"vless-in"}]})
+  self.assertEqual(value["inbounds"][0]["type"],"vless")
+
+ def test_duplicate_inbound_tags_are_rejected(self):
+  with self.assertRaisesRegex(ValueError,"Duplicate"):
+   advanced.validate_advanced_config({"inbounds":[{"type":"vless","tag":"x"},{"type":"trojan","tag":"x"}]})
 
  def test_duplicate_outbound_tags_are_rejected(self):
   with self.assertRaisesRegex(ValueError,"Duplicate"):
    advanced.validate_advanced_config({"outbounds":[{"type":"direct","tag":"x"},{"type":"block","tag":"x"}]})
 
- def test_merge_replaces_outbounds_and_route_but_preserves_inbounds(self):
+ def test_merge_replaces_editable_sections_and_preserves_implicit_inbounds(self):
   managed={"inbounds":[{"type":"hysteria2","tag":"hy2"}],"outbounds":[{"type":"direct","tag":"direct"}],"route":{"final":"direct"}}
   custom={"outbounds":[{"type":"block","tag":"blocked"}],"route":{"rules":[{"outbound":"blocked"}],"final":"blocked"}}
   result=config.merge_advanced_config(managed,custom)
   self.assertEqual(result["inbounds"],managed["inbounds"]); self.assertEqual(result["outbounds"],custom["outbounds"]); self.assertEqual(result["route"],custom["route"])
+
+ def test_merge_uses_custom_inbounds_when_present(self):
+  managed={"inbounds":[{"type":"hysteria2","tag":"hy2"}]}
+  custom={"inbounds":[{"type":"vless","tag":"vless-in"}]}
+  result=config.merge_advanced_config(managed,custom)
+  self.assertEqual(result["inbounds"],custom["inbounds"])
 
  def test_atomic_save_and_load(self):
   with tempfile.TemporaryDirectory() as directory:
@@ -40,5 +50,6 @@ class SingBoxAdvancedEditorTests(unittest.TestCase):
   router=(ROOT/"app/routers/hysteria2.py").read_text(); runtime=(ROOT/"app/singbox/runtime.py").read_text(); ui=(ROOT/"app/dashboard/src/pages/SingBoxSettings.tsx").read_text()
   self.assertIn('@singbox_router.put("/advanced-config")',router); self.assertIn('@singbox_router.post("/advanced-config/check")',router)
   self.assertIn('current_advanced_config',runtime); self.assertIn('<JsonEditor',ui); self.assertIn('/singbox/advanced-config/check',ui)
+  self.assertIn('addInbound',ui); self.assertIn('updateInbound',ui); self.assertIn('removeInbound',ui)
 
 if __name__=="__main__": unittest.main()

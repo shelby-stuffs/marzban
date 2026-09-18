@@ -8,13 +8,17 @@ from pathlib import Path
 from typing import Mapping
 
 
-RESERVED_TOP_LEVEL_KEYS = {"inbounds"}
+# Inbounds are intentionally user-editable.  The advanced configuration is
+# the escape hatch for protocols that are not represented by Marzban's
+# Hysteria settings form.
+RESERVED_TOP_LEVEL_KEYS: set[str] = set()
 ALLOWED_TOP_LEVEL_KEYS = {
     "log",
     "dns",
     "ntp",
     "certificate",
     "endpoints",
+    "inbounds",
     "outbounds",
     "route",
     "services",
@@ -47,6 +51,7 @@ def validate_advanced_config(value: Mapping) -> dict:
         "ntp": dict,
         "certificate": dict,
         "endpoints": list,
+        "inbounds": list,
         "outbounds": list,
         "route": dict,
         "services": list,
@@ -58,6 +63,17 @@ def validate_advanced_config(value: Mapping) -> dict:
     for key, expected in typed_sections.items():
         if key in config and not isinstance(config[key], expected):
             raise ValueError(f"sing-box {key} must be a JSON {expected.__name__}")
+    if "inbounds" in config:
+        tags = []
+        for index, inbound in enumerate(config["inbounds"]):
+            if not isinstance(inbound, dict):
+                raise ValueError(f"sing-box inbound #{index + 1} must be an object")
+            tag = inbound.get("tag")
+            if not isinstance(tag, str) or not tag:
+                raise ValueError(f"sing-box inbound #{index + 1} must have a non-empty tag")
+            if tag in tags:
+                raise ValueError(f"Duplicate sing-box inbound tag: {tag}")
+            tags.append(tag)
     if "outbounds" in config:
         tags = []
         for index, outbound in enumerate(config["outbounds"]):
