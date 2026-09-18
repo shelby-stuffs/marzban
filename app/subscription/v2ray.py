@@ -33,22 +33,92 @@ class V2rayShareLink(str):
 
     def add_singbox_outbounds(self, outbounds):
         for outbound in outbounds:
-            if outbound.get("type") != "hysteria2":
+            protocol = outbound.get("type")
+            address = outbound.get("server")
+            port = outbound.get("server_port")
+            remark = outbound.get("tag", "sing-box")
+            if not address or not port:
                 continue
+
+            if protocol in ("socks", "http"):
+                username = str(outbound.get("username") or "")
+                password = str(outbound.get("password") or "")
+                credentials = ""
+                if username or password:
+                    credentials = (
+                        f"{urlparse.quote(username, safe='')}:"
+                        f"{urlparse.quote(password, safe='')}@"
+                    )
+                scheme = "socks" if protocol == "socks" else "http"
+                self.add_link(
+                    f"{scheme}://{credentials}{address}:{int(port)}"
+                    f"#{urlparse.quote(remark)}"
+                )
+                continue
+
+            if protocol == "shadowsocks":
+                self.add_link(self.shadowsocks(
+                    remark=remark,
+                    address=address,
+                    port=int(port),
+                    password=outbound.get("password", ""),
+                    method=outbound.get("method", "chacha20-ietf-poly1305"),
+                ))
+                continue
+
             tls = outbound.get("tls") or {}
             reality = tls.get("reality") or {}
             obfs = outbound.get("obfs") or {}
-            profile = Hysteria2Client(
-                address=outbound["server"],
-                port=int(outbound["server_port"]),
-                auth=outbound.get("password", ""),
-                sni=tls.get("server_name", ""),
-                alpn=tuple(tls.get("alpn") or ()),
-                insecure=bool(tls.get("insecure")),
-                obfs=obfs.get("type", ""),
-                obfs_password=obfs.get("password", ""),
+            network = (outbound.get("transport") or {}).get(
+                "type", outbound.get("network", "tcp")
             )
-            self.add_link(profile.share_link(outbound["tag"]))
+            transport = outbound.get("transport") or {}
+            headers = transport.get("headers") or {}
+            host = headers.get("Host") or headers.get("host") or ""
+            path = transport.get("path") or ""
+            tls_mode = "tls" if tls.get("enabled") else "none"
+            sni = tls.get("server_name") or ""
+            alpn = ",".join(tls.get("alpn") or [])
+            if protocol == "hysteria2":
+                profile = Hysteria2Client(
+                    address=address,
+                    port=int(port),
+                    auth=outbound.get("password", ""),
+                    sni=sni,
+                    alpn=tuple(tls.get("alpn") or ()),
+                    insecure=bool(tls.get("insecure")),
+                    obfs=obfs.get("type", ""),
+                    obfs_password=obfs.get("password", ""),
+                )
+                self.add_link(profile.share_link(remark))
+            elif protocol == "vmess" and outbound.get("uuid"):
+                self.add_link(self.vmess(
+                    remark=remark,
+                    address=address,
+                    port=int(port),
+                    id=outbound["uuid"],
+                    net=network,
+                    path=path,
+                    host=host,
+                    tls=tls_mode,
+                    sni=sni,
+                    alpn=alpn,
+                    ais="1" if tls.get("insecure") else "",
+                ))
+            elif protocol == "trojan" and outbound.get("password"):
+                self.add_link(self.trojan(
+                    remark=remark,
+                    address=address,
+                    port=int(port),
+                    password=outbound["password"],
+                    net=network,
+                    path=path,
+                    host=host,
+                    tls=tls_mode,
+                    sni=sni,
+                    alpn=alpn,
+                    ais="1" if tls.get("insecure") else "",
+                ))
 
     def render(self, reverse=False):
         if EXTERNAL_CONFIG:
