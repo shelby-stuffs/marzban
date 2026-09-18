@@ -67,7 +67,16 @@ class SingBoxConfiguration(str):
             if key in server_tls:
                 tls[key] = deepcopy(server_tls[key])
         if isinstance(server_tls.get("reality"), dict):
-            tls["reality"] = deepcopy(server_tls["reality"])
+            # Never expose server-only Reality material in a client
+            # subscription.  The client only needs the public key and the
+            # short ID to validate the server.
+            reality = {
+                key: deepcopy(server_tls["reality"][key])
+                for key in ("enabled", "public_key", "short_id")
+                if key in server_tls["reality"]
+            }
+            if reality:
+                tls["reality"] = reality
         if isinstance(server_tls.get("utls"), dict):
             tls["utls"] = deepcopy(server_tls["utls"])
         return tls
@@ -112,6 +121,13 @@ class SingBoxConfiguration(str):
                 if not user_settings.get("id"):
                     continue
                 outbound["uuid"] = user_settings["id"]
+                if protocol == "vless" and user_settings.get("flow") not in (None, "", "none"):
+                    outbound["flow"] = user_settings["flow"]
+                if protocol == "vmess":
+                    if user_settings.get("alterId") is not None:
+                        outbound["alter_id"] = user_settings["alterId"]
+                    if user_settings.get("security"):
+                        outbound["security"] = user_settings["security"]
             elif protocol == "trojan":
                 if not user_settings.get("password"):
                     continue
@@ -120,7 +136,7 @@ class SingBoxConfiguration(str):
                 if not user_settings.get("password"):
                     continue
                 outbound["password"] = user_settings["password"]
-                outbound["method"] = user_settings.get("method", "chacha20-ietf-poly1305")
+                outbound["method"] = inbound.get("method") or user_settings.get("method", "chacha20-ietf-poly1305")
             elif protocol == "hysteria2":
                 if not user_settings.get("auth"):
                     continue

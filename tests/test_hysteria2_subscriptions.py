@@ -148,3 +148,66 @@ def test_singbox_subscription_adds_custom_vless_inbound_for_existing_user():
         "tls": {"enabled": True, "server_name": "edge.example.com"},
         "transport": {"type": "ws", "path": "/edge"},
     }]
+
+
+def test_singbox_custom_inbound_subscription_keeps_client_fields_and_flow():
+    config = object.__new__(SingBoxConfiguration)
+    config.proxy_remarks = []
+    config.config = {"outbounds": []}
+
+    config.add_custom_inbounds(
+        {"vless": {
+            "id": "00000000-0000-0000-0000-000000000002",
+            "flow": "xtls-rprx-vision",
+        }},
+        {"SERVER_IP": "203.0.113.11", "USERNAME": "bob"},
+        {
+            "inbounds": [{
+                "type": "vless",
+                "tag": "reality-in",
+                "listen_port": 443,
+                "tls": {
+                    "enabled": True,
+                    "server_name": "edge.example.com",
+                    "reality": {
+                        "enabled": True,
+                        "public_key": "public-key",
+                        "short_id": "abcd",
+                        "private_key": "must-not-leak",
+                    },
+                },
+            }]
+        },
+    )
+
+    outbound = config.config["outbounds"][0]
+    assert outbound["flow"] == "xtls-rprx-vision"
+    assert outbound["tls"]["reality"] == {
+        "enabled": True,
+        "public_key": "public-key",
+        "short_id": "abcd",
+    }
+
+
+def test_singbox_custom_shadowsocks_inbound_uses_server_method():
+    config = object.__new__(SingBoxConfiguration)
+    config.proxy_remarks = []
+    config.config = {"outbounds": []}
+
+    config.add_custom_inbounds(
+        {"shadowsocks": {
+            "password": "user-password",
+            "method": "aes-128-gcm",
+        }},
+        {"SERVER_IP": "203.0.113.12", "USERNAME": "sam"},
+        {
+            "inbounds": [{
+                "type": "shadowsocks",
+                "tag": "ss-in",
+                "listen_port": 8388,
+                "method": "chacha20-ietf-poly1305",
+            }]
+        },
+    )
+
+    assert config.config["outbounds"][0]["method"] == "chacha20-ietf-poly1305"
