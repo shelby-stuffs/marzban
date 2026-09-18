@@ -388,7 +388,14 @@ def process_inbounds_and_tags(
         if not settings:
             continue
 
-        format_variables.update({"PROTOCOL": protocol.name})
+        # ``UserResponse.inbounds`` intentionally supports the special
+        # string-keyed ``singbox`` selection.  Depending on the response
+        # model, regular keys can also arrive as plain strings rather than
+        # ProxyTypes enum members.
+        protocol_name = getattr(protocol, "name", None)
+        if protocol_name is None:
+            protocol_name = getattr(protocol, "value", protocol)
+        format_variables.update({"PROTOCOL": protocol_name})
         for tag in tags:
             inbound = xray.config.inbounds_by_tag.get(tag)
             if not inbound:
