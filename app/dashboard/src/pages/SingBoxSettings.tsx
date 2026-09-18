@@ -81,7 +81,7 @@ type ObjectDialogState = {
   value: SingBoxInbound;
 };
 
-const INBOUND_TYPES = ["anytls", "cloudflared", "direct", "http", "hysteria", "hysteria2", "mixed", "naive", "redirect", "shadowsocks", "shadowtls", "socks", "tproxy", "trojan", "tuic", "tun", "vless", "vmess"];
+const INBOUND_TYPES = ["anytls", "cloudflared", "direct", "http", "hysteria", "hysteria2", "mixed", "naive", "redirect", "shadowsocks", "shadowtls", "snell", "socks", "tproxy", "trojan", "tuic", "tun", "vless", "vmess"];
 const OUTBOUND_TYPES = ["anytls", "block", "bridge", "direct", "http", "hysteria", "hysteria2", "naive", "selector", "shadowsocks", "shadowtls", "socks", "ssh", "tor", "trojan", "tuic", "urltest", "vless", "vmess"];
 const DNS_SERVER_TYPES = ["dhcp", "fakeip", "h3", "hosts", "https", "local", "mdns", "openconnect", "openvpn", "quic", "resolved", "tailscale", "tcp", "tls", "udp"];
 const ENDPOINT_TYPES = ["openconnect", "openvpn-client", "openvpn-server", "tailscale", "wireguard"];
