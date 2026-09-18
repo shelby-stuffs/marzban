@@ -47,9 +47,10 @@ class SingBoxAdvancedEditorTests(unittest.TestCase):
    self.assertTrue(persisted); self.assertEqual(loaded,value); self.assertEqual(list(Path(directory).glob("*.tmp")),[])
 
  def test_api_and_dashboard_wiring(self):
-  router=(ROOT/"app/routers/hysteria2.py").read_text(); runtime=(ROOT/"app/singbox/runtime.py").read_text(); ui=(ROOT/"app/dashboard/src/pages/SingBoxSettings.tsx").read_text()
+  router=(ROOT/"app/routers/hysteria2.py").read_text(); runtime=(ROOT/"app/singbox/runtime.py").read_text(); ui=(ROOT/"app/dashboard/src/pages/SingBoxSettings.tsx").read_text(); dialog=(ROOT/"app/dashboard/src/components/SingBoxObjectDialog.tsx").read_text()
   self.assertIn('@singbox_router.put("/advanced-config")',router); self.assertIn('@singbox_router.post("/advanced-config/check")',router)
   self.assertIn('current_advanced_config',runtime); self.assertIn('<JsonEditor',ui); self.assertIn('/singbox/advanced-config/check',ui)
   self.assertIn('addInbound',ui); self.assertIn('updateInbound',ui); self.assertIn('removeInbound',ui)
+  self.assertIn('semanticRequired',dialog); self.assertIn('sectionTypeOptions',dialog); self.assertIn('Modal',dialog)
 
 if __name__=="__main__": unittest.main()

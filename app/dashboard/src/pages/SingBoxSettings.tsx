@@ -29,6 +29,7 @@ import { AnsiLogViewer } from "components/AnsiLogViewer";
 import { Header } from "components/Header";
 import { JsonEditor } from "components/JsonEditor";
 import { Panel } from "components/Panel";
+import { SingBoxObjectDialog } from "components/SingBoxObjectDialog";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { fetch } from "service/http";
@@ -72,6 +73,12 @@ type AdvancedConfigResponse = {
 };
 
 type SingBoxInbound = Record<string, unknown>;
+type SingBoxSchema = Record<string, any>;
+type ObjectDialogState = {
+  section: "inbounds" | "outbounds" | "dnsServers" | "endpoints" | "services";
+  index: number | null;
+  value: SingBoxInbound;
+};
 
 const INBOUND_TYPES = ["anytls", "cloudflared", "direct", "http", "hysteria", "hysteria2", "mixed", "naive", "redirect", "shadowsocks", "shadowtls", "socks", "tproxy", "trojan", "tuic", "tun", "vless", "vmess"];
 const OUTBOUND_TYPES = ["anytls", "block", "bridge", "direct", "http", "hysteria", "hysteria2", "naive", "selector", "shadowsocks", "shadowtls", "socks", "ssh", "tor", "trojan", "tuic", "urltest", "vless", "vmess"];
@@ -131,6 +138,7 @@ const readInbounds = (config: Record<string, unknown>): SingBoxInbound[] =>
 export const SingBoxSettingsPage = () => {
   const { t } = useTranslation();
   const toast = useToast();
+  const singBoxSchemaUri = new URL("sing-box-schema-1.14.json", globalThis.location.href).toString();
   const [form, setForm] = useState<HysteriaSettings | null>(null);
   const [meta, setMeta] = useState<SettingsResponse | null>(null);
   const [preview, setPreview] = useState("");
@@ -144,6 +152,8 @@ export const SingBoxSettingsPage = () => {
   const [autoRefresh, setAutoRefresh] = useState(true);
   const logsRef = useRef<HTMLDivElement>(null);
   const [advancedConfig, setAdvancedConfig] = useState<Record<string, unknown>>({});
+  const [singBoxSchema, setSingBoxSchema] = useState<SingBoxSchema | null>(null);
+  const [objectDialog, setObjectDialog] = useState<ObjectDialogState | null>(null);
   const [inbounds, setInbounds] = useState<SingBoxInbound[]>([]);
   const [outbounds, setOutbounds] = useState<SingBoxInbound[]>([]);
   const [dnsServers, setDnsServers] = useState<SingBoxInbound[]>([]);
@@ -191,6 +201,13 @@ export const SingBoxSettingsPage = () => {
   };
 
   useEffect(() => { void loadAdvanced(); }, []);
+
+  useEffect(() => {
+    void globalThis.fetch(singBoxSchemaUri)
+      .then((response) => response.json())
+      .then((schema) => setSingBoxSchema(schema))
+      .catch((error) => toast({ title: errorMessage(error), status: "error", position: "top" }));
+  }, [singBoxSchemaUri]);
 
   const parseAdvanced = () => {
     const parsed = JSON.parse(advancedText);
@@ -268,12 +285,7 @@ export const SingBoxSettingsPage = () => {
   };
 
   const addInbound = () => {
-    addCollectionItem("inbounds", {
-      type: "mixed",
-      tag: `in-${inbounds.length + 1}`,
-      listen: "::",
-      listen_port: 8080 + inbounds.length,
-    });
+    openObjectDialog("inbounds");
   };
 
   const removeInbound = (index: number) => {
@@ -308,6 +320,53 @@ export const SingBoxSettingsPage = () => {
 
   const removeDnsServer = (index: number) => {
     updateDns({ servers: dnsServers.filter((_, itemIndex) => itemIndex !== index) });
+  };
+
+  const collectionFor = (section: ObjectDialogState["section"]) => {
+    if (section === "inbounds") return inbounds;
+    if (section === "outbounds") return outbounds;
+    if (section === "dnsServers") return dnsServers;
+    if (section === "endpoints") return endpoints;
+    return services;
+  };
+
+  const openObjectDialog = (section: ObjectDialogState["section"], index: number | null = null) => {
+    const current = index === null ? {
+      inbounds: { type: "mixed" },
+      outbounds: { type: "direct" },
+      dnsServers: { type: "local" },
+      endpoints: { type: "wireguard" },
+      services: { type: "api" },
+    }[section] : collectionFor(section)[index];
+    setObjectDialog({ section, index, value: { ...(current || {}) } });
+  };
+
+  const replaceCollectionItem = (section: Exclude<ObjectDialogState["section"], "dnsServers">, index: number, item: SingBoxInbound) => {
+    try {
+      const config = parseAdvanced();
+      const current = readInbounds({ inbounds: config[section] });
+      current[index] = item;
+      config[section] = current;
+      setAdvancedDocument(config);
+    } catch (error) {
+      toast({ title: errorMessage(error), status: "error", position: "top" });
+    }
+  };
+
+  const saveObjectDialog = (item: SingBoxInbound) => {
+    if (!objectDialog) return;
+    if (objectDialog.section === "dnsServers") {
+      const servers = objectDialog.index === null
+        ? [...dnsServers, item]
+        : dnsServers.map((server, index) => index === objectDialog.index ? item : server);
+      updateDns({ servers });
+      return;
+    }
+    if (objectDialog.index === null) {
+      addCollectionItem(objectDialog.section, item);
+    } else {
+      replaceCollectionItem(objectDialog.section, objectDialog.index, item);
+    }
   };
 
   const checkAdvanced = async () => {
@@ -561,7 +620,7 @@ export const SingBoxSettingsPage = () => {
                 </Grid>
                 <HStack justify="space-between" flexWrap="wrap" gap="2">
                   <Text color="gray.500" fontSize="xs">{t("singbox.inboundAdvancedHelp")}</Text>
-                  <Button size="xs" variant="ghost" colorScheme="red" onClick={() => removeInbound(index)}>{t("delete")}</Button>
+                  <HStack><Button size="xs" variant="outline" onClick={() => openObjectDialog("inbounds", index)}>{t("singbox.editObject")}</Button><Button size="xs" variant="ghost" colorScheme="red" onClick={() => removeInbound(index)}>{t("delete")}</Button></HStack>
                 </HStack>
               </VStack>
             </Panel>
@@ -572,7 +631,7 @@ export const SingBoxSettingsPage = () => {
         <Panel label={t("singbox.outboundBuilder")}>
           <HStack justify="space-between" mb="3" flexWrap="wrap" gap="2">
             <Text color="gray.500" fontSize="sm">{t("singbox.outboundBuilderHelp")}</Text>
-            <Button size="sm" colorScheme="primary" onClick={() => addCollectionItem("outbounds", { type: "direct", tag: `out-${outbounds.length + 1}` })}>{t("singbox.addOutbound")}</Button>
+            <Button size="sm" colorScheme="primary" onClick={() => openObjectDialog("outbounds")}>{t("singbox.addOutbound")}</Button>
           </HStack>
           {outbounds.length === 0 && <Alert status="info" py="2" fontSize="sm"><AlertIcon />{t("singbox.noOutbounds")}</Alert>}
           <VStack align="stretch" spacing="3">
@@ -587,7 +646,7 @@ export const SingBoxSettingsPage = () => {
                   </FormControl>
                   <FormControl>
                     <FormLabel fontSize="xs" mb="1">{t("singbox.outboundTag")}</FormLabel>
-                    <HStack><Input size="sm" fontFamily="mono" value={String(outbound.tag || "")} onChange={(event) => updateCollection("outbounds", index, { tag: event.target.value })} /><Button size="sm" variant="ghost" colorScheme="red" onClick={() => removeCollectionItem("outbounds", index)}>{t("delete")}</Button></HStack>
+                    <HStack><Input size="sm" fontFamily="mono" value={String(outbound.tag || "")} onChange={(event) => updateCollection("outbounds", index, { tag: event.target.value })} /><Button size="sm" variant="outline" onClick={() => openObjectDialog("outbounds", index)}>{t("singbox.editObject")}</Button><Button size="sm" variant="ghost" colorScheme="red" onClick={() => removeCollectionItem("outbounds", index)}>{t("delete")}</Button></HStack>
                   </FormControl>
                 </Grid>
               </Panel>
@@ -611,7 +670,7 @@ export const SingBoxSettingsPage = () => {
           <Checkbox size="sm" mb="3" isChecked={dnsConfig.disable_cache === true} onChange={(event) => updateDns({ disable_cache: event.target.checked })}>{t("singbox.dnsDisableCache")}</Checkbox>
           <HStack justify="space-between" mb="3" flexWrap="wrap" gap="2">
             <Text color="gray.500" fontSize="sm">{t("singbox.dnsServersHelp")}</Text>
-            <Button size="sm" colorScheme="primary" onClick={addDnsServer}>{t("singbox.addDnsServer")}</Button>
+            <Button size="sm" colorScheme="primary" onClick={() => openObjectDialog("dnsServers")}>{t("singbox.addDnsServer")}</Button>
           </HStack>
           {dnsServers.length === 0 && <Alert status="info" py="2" fontSize="sm"><AlertIcon />{t("singbox.noDnsServers")}</Alert>}
           <VStack align="stretch" spacing="3">
@@ -626,7 +685,7 @@ export const SingBoxSettingsPage = () => {
                   </FormControl>
                   <FormControl>
                     <FormLabel fontSize="xs" mb="1">{t("singbox.dnsServerTag")}</FormLabel>
-                    <HStack><Input size="sm" fontFamily="mono" value={String(server.tag || "")} onChange={(event) => updateDnsServer(index, { tag: event.target.value })} /><Button size="sm" variant="ghost" colorScheme="red" onClick={() => removeDnsServer(index)}>{t("delete")}</Button></HStack>
+                    <HStack><Input size="sm" fontFamily="mono" value={String(server.tag || "")} onChange={(event) => updateDnsServer(index, { tag: event.target.value })} /><Button size="sm" variant="outline" onClick={() => openObjectDialog("dnsServers", index)}>{t("singbox.editObject")}</Button><Button size="sm" variant="ghost" colorScheme="red" onClick={() => removeDnsServer(index)}>{t("delete")}</Button></HStack>
                   </FormControl>
                 </Grid>
               </Panel>
@@ -639,14 +698,14 @@ export const SingBoxSettingsPage = () => {
         <Panel label={t("singbox.endpointBuilder")}>
           <HStack justify="space-between" mb="3" flexWrap="wrap" gap="2">
             <Text color="gray.500" fontSize="sm">{t("singbox.endpointBuilderHelp")}</Text>
-            <Button size="sm" colorScheme="primary" onClick={() => addCollectionItem("endpoints", { type: "wireguard", tag: `endpoint-${endpoints.length + 1}` })}>{t("singbox.addEndpoint")}</Button>
+            <Button size="sm" colorScheme="primary" onClick={() => openObjectDialog("endpoints")}>{t("singbox.addEndpoint")}</Button>
           </HStack>
           <VStack align="stretch" spacing="3">
             {endpoints.map((endpoint, index) => (
               <Panel key={`${String(endpoint.tag || "endpoint")}-${index}`} compact label={`${t("singbox.endpoint")} ${index + 1}: ${String(endpoint.tag || "—")}`}>
                 <Grid templateColumns={{ base: "1fr", md: "1fr 1fr" }} gap="3">
                   <Select size="sm" fontFamily="mono" value={String(endpoint.type || "")} onChange={(event) => updateCollection("endpoints", index, { type: event.target.value })}>{ENDPOINT_TYPES.map((type) => <option key={type} value={type}>{type}</option>)}</Select>
-                  <HStack><Input size="sm" fontFamily="mono" value={String(endpoint.tag || "")} onChange={(event) => updateCollection("endpoints", index, { tag: event.target.value })} /><Button size="sm" variant="ghost" colorScheme="red" onClick={() => removeCollectionItem("endpoints", index)}>{t("delete")}</Button></HStack>
+                  <HStack><Input size="sm" fontFamily="mono" value={String(endpoint.tag || "")} onChange={(event) => updateCollection("endpoints", index, { tag: event.target.value })} /><Button size="sm" variant="outline" onClick={() => openObjectDialog("endpoints", index)}>{t("singbox.editObject")}</Button><Button size="sm" variant="ghost" colorScheme="red" onClick={() => removeCollectionItem("endpoints", index)}>{t("delete")}</Button></HStack>
                 </Grid>
               </Panel>
             ))}
@@ -656,14 +715,14 @@ export const SingBoxSettingsPage = () => {
         <Panel label={t("singbox.serviceBuilder")}>
           <HStack justify="space-between" mb="3" flexWrap="wrap" gap="2">
             <Text color="gray.500" fontSize="sm">{t("singbox.serviceBuilderHelp")}</Text>
-            <Button size="sm" colorScheme="primary" onClick={() => addCollectionItem("services", { type: "api", tag: `service-${services.length + 1}` })}>{t("singbox.addService")}</Button>
+            <Button size="sm" colorScheme="primary" onClick={() => openObjectDialog("services")}>{t("singbox.addService")}</Button>
           </HStack>
           <VStack align="stretch" spacing="3">
             {services.map((service, index) => (
               <Panel key={`${String(service.tag || "service")}-${index}`} compact label={`${t("singbox.service")} ${index + 1}: ${String(service.tag || "—")}`}>
                 <Grid templateColumns={{ base: "1fr", md: "1fr 1fr" }} gap="3">
                   <Select size="sm" fontFamily="mono" value={String(service.type || "")} onChange={(event) => updateCollection("services", index, { type: event.target.value })}>{SERVICE_TYPES.map((type) => <option key={type} value={type}>{type}</option>)}</Select>
-                  <HStack><Input size="sm" fontFamily="mono" value={String(service.tag || "")} onChange={(event) => updateCollection("services", index, { tag: event.target.value })} /><Button size="sm" variant="ghost" colorScheme="red" onClick={() => removeCollectionItem("services", index)}>{t("delete")}</Button></HStack>
+                  <HStack><Input size="sm" fontFamily="mono" value={String(service.tag || "")} onChange={(event) => updateCollection("services", index, { tag: event.target.value })} /><Button size="sm" variant="outline" onClick={() => openObjectDialog("services", index)}>{t("singbox.editObject")}</Button><Button size="sm" variant="ghost" colorScheme="red" onClick={() => removeCollectionItem("services", index)}>{t("delete")}</Button></HStack>
                 </Grid>
               </Panel>
             ))}
@@ -679,7 +738,7 @@ export const SingBoxSettingsPage = () => {
           </Text>
           <Badge colorScheme={advancedMeta?.persisted ? "green" : "gray"}>{advancedMeta?.persisted ? t("singbox.editorSavedSource") : t("singbox.editorDefaultSource")}</Badge>
         </HStack>
-        {advancedLoading ? <Spinner /> : <JsonEditor schemaUri="/sing-box-schema-1.14.json" json={advancedConfig} onChange={(value) => {
+        {advancedLoading ? <Spinner /> : <JsonEditor schemaUri={singBoxSchemaUri} json={advancedConfig} onChange={(value) => {
           setAdvancedText(value);
           try {
             syncBuilderState(JSON.parse(value) as Record<string, unknown>);
@@ -863,6 +922,15 @@ export const SingBoxSettingsPage = () => {
           </TabPanel>
         </TabPanels>
       </Tabs>
+      {objectDialog && <SingBoxObjectDialog
+        isOpen={Boolean(objectDialog)}
+        title={t("singbox.objectEditor")}
+        schema={singBoxSchema}
+        section={objectDialog.section}
+        initialValue={objectDialog.value}
+        onClose={() => setObjectDialog(null)}
+        onSave={saveObjectDialog}
+      />}
     </VStack>
   );
 };
