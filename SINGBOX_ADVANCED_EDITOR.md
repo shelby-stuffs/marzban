@@ -15,6 +15,12 @@ Hysteria 2. Если `inbounds` указан, он полностью замен
 TLS, transport и остальные protocol-specific параметры настраиваются в
 расширенном JSON-редакторе.
 
+Редактор подключает официальную JSON Schema sing-box `1.14.0`, поэтому
+поддерживает автодополнение и диагностику для всех актуальных верхнеуровневых
+секций: `log`, `dns`, `ntp`, `certificate`, `certificate_providers`,
+`http_clients`, `network_namespaces`, `endpoints`, `inbounds`, `outbounds`,
+`route`, `services` и `experimental`.
+
 Конфиг хранится в `/var/lib/marzban/sing-box-advanced.json`. При проверке или
 сохранении он объединяется с настройками rule sets и проходит `sing-box check`.
 Только после успешной проверки файл атомарно заменяется и runtime применяется.

@@ -13,10 +13,14 @@ from typing import Mapping
 # Hysteria settings form.
 RESERVED_TOP_LEVEL_KEYS: set[str] = set()
 ALLOWED_TOP_LEVEL_KEYS = {
+    "$schema",
     "log",
     "dns",
     "ntp",
     "certificate",
+    "certificate_providers",
+    "http_clients",
+    "network_namespaces",
     "endpoints",
     "inbounds",
     "outbounds",
@@ -46,10 +50,14 @@ def validate_advanced_config(value: Mapping) -> dict:
             "Unsupported sing-box top-level keys: " + ", ".join(sorted(unsupported))
         )
     typed_sections = {
+        "$schema": str,
         "log": dict,
         "dns": dict,
         "ntp": dict,
         "certificate": dict,
+        "certificate_providers": list,
+        "http_clients": list,
+        "network_namespaces": list,
         "endpoints": list,
         "inbounds": list,
         "outbounds": list,

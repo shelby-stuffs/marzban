@@ -73,6 +73,12 @@ type AdvancedConfigResponse = {
 
 type SingBoxInbound = Record<string, unknown>;
 
+const INBOUND_TYPES = ["anytls", "cloudflared", "direct", "http", "hysteria", "hysteria2", "mixed", "naive", "redirect", "shadowsocks", "shadowtls", "socks", "tproxy", "trojan", "tuic", "tun", "vless", "vmess"];
+const OUTBOUND_TYPES = ["anytls", "block", "bridge", "direct", "http", "hysteria", "hysteria2", "naive", "selector", "shadowsocks", "shadowtls", "socks", "ssh", "tor", "trojan", "tuic", "urltest", "vless", "vmess"];
+const DNS_SERVER_TYPES = ["dhcp", "fakeip", "h3", "hosts", "https", "local", "mdns", "openconnect", "openvpn", "quic", "resolved", "tailscale", "tcp", "tls", "udp"];
+const ENDPOINT_TYPES = ["openconnect", "openvpn-client", "openvpn-server", "tailscale", "wireguard"];
+const SERVICE_TYPES = ["api", "ccm", "derp", "hysteria-realm", "ocm", "oom-killer", "resolved", "ssm-api", "usbip-client"];
+
 
 type RuleSetItem = {
   enabled: boolean;
@@ -139,6 +145,11 @@ export const SingBoxSettingsPage = () => {
   const logsRef = useRef<HTMLDivElement>(null);
   const [advancedConfig, setAdvancedConfig] = useState<Record<string, unknown>>({});
   const [inbounds, setInbounds] = useState<SingBoxInbound[]>([]);
+  const [outbounds, setOutbounds] = useState<SingBoxInbound[]>([]);
+  const [dnsServers, setDnsServers] = useState<SingBoxInbound[]>([]);
+  const [endpoints, setEndpoints] = useState<SingBoxInbound[]>([]);
+  const [services, setServices] = useState<SingBoxInbound[]>([]);
+  const [dnsConfig, setDnsConfig] = useState<Record<string, unknown>>({});
   const [advancedText, setAdvancedText] = useState("{}");
   const [advancedMeta, setAdvancedMeta] = useState<AdvancedConfigResponse | null>(null);
   const [advancedLoading, setAdvancedLoading] = useState(true);
@@ -171,9 +182,7 @@ export const SingBoxSettingsPage = () => {
     try {
       const response = await fetch<AdvancedConfigResponse>("/singbox/advanced-config");
       setAdvancedMeta(response);
-      setAdvancedConfig(response.config);
-      setInbounds(readInbounds(response.config));
-      setAdvancedText(JSON.stringify(response.config, null, 2));
+      setAdvancedDocument(response.config);
     } catch (error) {
       toast({ title: errorMessage(error), status: "error", position: "top" });
     } finally {
@@ -191,50 +200,114 @@ export const SingBoxSettingsPage = () => {
     return parsed as Record<string, unknown>;
   };
 
+  const syncBuilderState = (config: Record<string, unknown>) => {
+    setInbounds(readInbounds(config));
+    setOutbounds(readInbounds({ inbounds: config.outbounds }));
+    const nextDns = config.dns && typeof config.dns === "object" && !Array.isArray(config.dns)
+      ? config.dns as Record<string, unknown>
+      : {};
+    setDnsConfig(nextDns);
+    setDnsServers(readInbounds({ inbounds: nextDns.servers }));
+    setEndpoints(readInbounds({ inbounds: config.endpoints }));
+    setServices(readInbounds({ inbounds: config.services }));
+  };
+
   const setAdvancedDocument = (config: Record<string, unknown>) => {
     setAdvancedConfig(config);
-    setInbounds(readInbounds(config));
+    syncBuilderState(config);
     setAdvancedText(JSON.stringify(config, null, 2));
   };
 
-  const updateInbound = (index: number, key: string, value: unknown) => {
+  const updateCollection = (
+    key: "inbounds" | "outbounds" | "endpoints" | "services",
+    index: number,
+    patch: Record<string, unknown>,
+  ) => {
     try {
       const config = parseAdvanced();
-      const current = readInbounds(config);
+      const current = readInbounds({ inbounds: config[key] });
       if (!current[index]) return;
-      current[index] = { ...current[index], [key]: value };
-      config.inbounds = current;
+      current[index] = { ...current[index], ...patch };
+      config[key] = current;
       setAdvancedDocument(config);
     } catch (error) {
       toast({ title: errorMessage(error), status: "error", position: "top" });
     }
+  };
+
+  const addCollectionItem = (
+    key: "inbounds" | "outbounds" | "endpoints" | "services",
+    item: SingBoxInbound,
+  ) => {
+    try {
+      const config = parseAdvanced();
+      const current = readInbounds({ inbounds: config[key] });
+      current.push(item);
+      config[key] = current;
+      setAdvancedDocument(config);
+    } catch (error) {
+      toast({ title: errorMessage(error), status: "error", position: "top" });
+    }
+  };
+
+  const removeCollectionItem = (
+    key: "inbounds" | "outbounds" | "endpoints" | "services",
+    index: number,
+  ) => {
+    try {
+      const config = parseAdvanced();
+      config[key] = readInbounds({ inbounds: config[key] }).filter((_, itemIndex) => itemIndex !== index);
+      setAdvancedDocument(config);
+    } catch (error) {
+      toast({ title: errorMessage(error), status: "error", position: "top" });
+    }
+  };
+
+  const updateInbound = (index: number, key: string, value: unknown) => {
+    updateCollection("inbounds", index, { [key]: value });
   };
 
   const addInbound = () => {
+    addCollectionItem("inbounds", {
+      type: "mixed",
+      tag: `in-${inbounds.length + 1}`,
+      listen: "::",
+      listen_port: 8080 + inbounds.length,
+    });
+  };
+
+  const removeInbound = (index: number) => {
+    removeCollectionItem("inbounds", index);
+  };
+
+  const updateDns = (patch: Record<string, unknown>) => {
     try {
       const config = parseAdvanced();
-      const current = readInbounds(config);
-      current.push({
-        type: "mixed",
-        tag: `in-${current.length + 1}`,
-        listen: "::",
-        listen_port: 8080 + current.length,
-      });
-      config.inbounds = current;
+      const current = config.dns && typeof config.dns === "object" && !Array.isArray(config.dns)
+        ? config.dns as Record<string, unknown>
+        : {};
+      config.dns = { ...current, ...patch };
       setAdvancedDocument(config);
     } catch (error) {
       toast({ title: errorMessage(error), status: "error", position: "top" });
     }
   };
 
-  const removeInbound = (index: number) => {
-    try {
-      const config = parseAdvanced();
-      config.inbounds = readInbounds(config).filter((_, itemIndex) => itemIndex !== index);
-      setAdvancedDocument(config);
-    } catch (error) {
-      toast({ title: errorMessage(error), status: "error", position: "top" });
-    }
+  const updateDnsServer = (index: number, patch: Record<string, unknown>) => {
+    if (!dnsServers[index]) return;
+    updateDns({
+      servers: dnsServers.map((item, itemIndex) => itemIndex === index ? { ...item, ...patch } : item),
+    });
+  };
+
+  const addDnsServer = () => {
+    updateDns({
+      servers: [...dnsServers, { type: "local", tag: `dns-${dnsServers.length + 1}` }],
+    });
+  };
+
+  const removeDnsServer = (index: number) => {
+    updateDns({ servers: dnsServers.filter((_, itemIndex) => itemIndex !== index) });
   };
 
   const checkAdvanced = async () => {
@@ -469,7 +542,9 @@ export const SingBoxSettingsPage = () => {
                 <Grid templateColumns={{ base: "1fr", md: "repeat(2, 1fr)", xl: "repeat(4, 1fr)" }} gap="3">
                   <FormControl isRequired>
                     <FormLabel fontSize="xs" mb="1">{t("singbox.inboundType")}</FormLabel>
-                    <Input size="sm" fontFamily="mono" value={String(inbound.type || "")} placeholder="vless / hysteria2 / mixed" onChange={(event) => updateInbound(index, "type", event.target.value)} />
+                    <Select size="sm" fontFamily="mono" value={String(inbound.type || "")} onChange={(event) => updateInbound(index, "type", event.target.value)}>
+                      {INBOUND_TYPES.map((type) => <option key={type} value={type}>{type}</option>)}
+                    </Select>
                   </FormControl>
                   <FormControl isRequired>
                     <FormLabel fontSize="xs" mb="1">{t("singbox.inboundTag")}</FormLabel>
@@ -493,6 +568,109 @@ export const SingBoxSettingsPage = () => {
           ))}
         </VStack>
       </Panel>
+      <Grid templateColumns={{ base: "1fr", xl: "1fr 1fr" }} gap="4" mb="4" alignItems="start">
+        <Panel label={t("singbox.outboundBuilder")}>
+          <HStack justify="space-between" mb="3" flexWrap="wrap" gap="2">
+            <Text color="gray.500" fontSize="sm">{t("singbox.outboundBuilderHelp")}</Text>
+            <Button size="sm" colorScheme="primary" onClick={() => addCollectionItem("outbounds", { type: "direct", tag: `out-${outbounds.length + 1}` })}>{t("singbox.addOutbound")}</Button>
+          </HStack>
+          {outbounds.length === 0 && <Alert status="info" py="2" fontSize="sm"><AlertIcon />{t("singbox.noOutbounds")}</Alert>}
+          <VStack align="stretch" spacing="3">
+            {outbounds.map((outbound, index) => (
+              <Panel key={`${String(outbound.tag || "outbound")}-${index}`} compact label={`${t("singbox.outbound")} ${index + 1}: ${String(outbound.tag || "—")}`}>
+                <Grid templateColumns={{ base: "1fr", md: "1fr 1fr" }} gap="3">
+                  <FormControl isRequired>
+                    <FormLabel fontSize="xs" mb="1">{t("singbox.outboundType")}</FormLabel>
+                    <Select size="sm" fontFamily="mono" value={String(outbound.type || "")} onChange={(event) => updateCollection("outbounds", index, { type: event.target.value })}>
+                      {OUTBOUND_TYPES.map((type) => <option key={type} value={type}>{type}</option>)}
+                    </Select>
+                  </FormControl>
+                  <FormControl>
+                    <FormLabel fontSize="xs" mb="1">{t("singbox.outboundTag")}</FormLabel>
+                    <HStack><Input size="sm" fontFamily="mono" value={String(outbound.tag || "")} onChange={(event) => updateCollection("outbounds", index, { tag: event.target.value })} /><Button size="sm" variant="ghost" colorScheme="red" onClick={() => removeCollectionItem("outbounds", index)}>{t("delete")}</Button></HStack>
+                  </FormControl>
+                </Grid>
+              </Panel>
+            ))}
+          </VStack>
+        </Panel>
+
+        <Panel label={t("singbox.dnsBuilder")}>
+          <Grid templateColumns={{ base: "1fr", md: "1fr 1fr" }} gap="3" mb="4">
+            <FormControl>
+              <FormLabel fontSize="xs" mb="1">{t("singbox.dnsFinal")}</FormLabel>
+              <Input size="sm" fontFamily="mono" value={String(dnsConfig.final || "")} placeholder="local" onChange={(event) => updateDns({ final: event.target.value })} />
+            </FormControl>
+            <FormControl>
+              <FormLabel fontSize="xs" mb="1">{t("singbox.dnsStrategy")}</FormLabel>
+              <Select size="sm" value={String(dnsConfig.strategy || "")} onChange={(event) => updateDns({ strategy: event.target.value || undefined })}>
+                <option value="">default</option><option value="prefer_ipv4">prefer_ipv4</option><option value="prefer_ipv6">prefer_ipv6</option><option value="ipv4_only">ipv4_only</option><option value="ipv6_only">ipv6_only</option>
+              </Select>
+            </FormControl>
+          </Grid>
+          <Checkbox size="sm" mb="3" isChecked={dnsConfig.disable_cache === true} onChange={(event) => updateDns({ disable_cache: event.target.checked })}>{t("singbox.dnsDisableCache")}</Checkbox>
+          <HStack justify="space-between" mb="3" flexWrap="wrap" gap="2">
+            <Text color="gray.500" fontSize="sm">{t("singbox.dnsServersHelp")}</Text>
+            <Button size="sm" colorScheme="primary" onClick={addDnsServer}>{t("singbox.addDnsServer")}</Button>
+          </HStack>
+          {dnsServers.length === 0 && <Alert status="info" py="2" fontSize="sm"><AlertIcon />{t("singbox.noDnsServers")}</Alert>}
+          <VStack align="stretch" spacing="3">
+            {dnsServers.map((server, index) => (
+              <Panel key={`${String(server.tag || "dns")}-${index}`} compact label={`${t("singbox.dnsServer")} ${index + 1}: ${String(server.tag || "—")}`}>
+                <Grid templateColumns={{ base: "1fr", md: "1fr 1fr" }} gap="3">
+                  <FormControl isRequired>
+                    <FormLabel fontSize="xs" mb="1">{t("singbox.dnsServerType")}</FormLabel>
+                    <Select size="sm" fontFamily="mono" value={String(server.type || "")} onChange={(event) => updateDnsServer(index, { type: event.target.value })}>
+                      {DNS_SERVER_TYPES.map((type) => <option key={type} value={type}>{type}</option>)}
+                    </Select>
+                  </FormControl>
+                  <FormControl>
+                    <FormLabel fontSize="xs" mb="1">{t("singbox.dnsServerTag")}</FormLabel>
+                    <HStack><Input size="sm" fontFamily="mono" value={String(server.tag || "")} onChange={(event) => updateDnsServer(index, { tag: event.target.value })} /><Button size="sm" variant="ghost" colorScheme="red" onClick={() => removeDnsServer(index)}>{t("delete")}</Button></HStack>
+                  </FormControl>
+                </Grid>
+              </Panel>
+            ))}
+          </VStack>
+        </Panel>
+      </Grid>
+
+      <Grid templateColumns={{ base: "1fr", xl: "1fr 1fr" }} gap="4" mb="4" alignItems="start">
+        <Panel label={t("singbox.endpointBuilder")}>
+          <HStack justify="space-between" mb="3" flexWrap="wrap" gap="2">
+            <Text color="gray.500" fontSize="sm">{t("singbox.endpointBuilderHelp")}</Text>
+            <Button size="sm" colorScheme="primary" onClick={() => addCollectionItem("endpoints", { type: "wireguard", tag: `endpoint-${endpoints.length + 1}` })}>{t("singbox.addEndpoint")}</Button>
+          </HStack>
+          <VStack align="stretch" spacing="3">
+            {endpoints.map((endpoint, index) => (
+              <Panel key={`${String(endpoint.tag || "endpoint")}-${index}`} compact label={`${t("singbox.endpoint")} ${index + 1}: ${String(endpoint.tag || "—")}`}>
+                <Grid templateColumns={{ base: "1fr", md: "1fr 1fr" }} gap="3">
+                  <Select size="sm" fontFamily="mono" value={String(endpoint.type || "")} onChange={(event) => updateCollection("endpoints", index, { type: event.target.value })}>{ENDPOINT_TYPES.map((type) => <option key={type} value={type}>{type}</option>)}</Select>
+                  <HStack><Input size="sm" fontFamily="mono" value={String(endpoint.tag || "")} onChange={(event) => updateCollection("endpoints", index, { tag: event.target.value })} /><Button size="sm" variant="ghost" colorScheme="red" onClick={() => removeCollectionItem("endpoints", index)}>{t("delete")}</Button></HStack>
+                </Grid>
+              </Panel>
+            ))}
+          </VStack>
+        </Panel>
+
+        <Panel label={t("singbox.serviceBuilder")}>
+          <HStack justify="space-between" mb="3" flexWrap="wrap" gap="2">
+            <Text color="gray.500" fontSize="sm">{t("singbox.serviceBuilderHelp")}</Text>
+            <Button size="sm" colorScheme="primary" onClick={() => addCollectionItem("services", { type: "api", tag: `service-${services.length + 1}` })}>{t("singbox.addService")}</Button>
+          </HStack>
+          <VStack align="stretch" spacing="3">
+            {services.map((service, index) => (
+              <Panel key={`${String(service.tag || "service")}-${index}`} compact label={`${t("singbox.service")} ${index + 1}: ${String(service.tag || "—")}`}>
+                <Grid templateColumns={{ base: "1fr", md: "1fr 1fr" }} gap="3">
+                  <Select size="sm" fontFamily="mono" value={String(service.type || "")} onChange={(event) => updateCollection("services", index, { type: event.target.value })}>{SERVICE_TYPES.map((type) => <option key={type} value={type}>{type}</option>)}</Select>
+                  <HStack><Input size="sm" fontFamily="mono" value={String(service.tag || "")} onChange={(event) => updateCollection("services", index, { tag: event.target.value })} /><Button size="sm" variant="ghost" colorScheme="red" onClick={() => removeCollectionItem("services", index)}>{t("delete")}</Button></HStack>
+                </Grid>
+              </Panel>
+            ))}
+          </VStack>
+        </Panel>
+      </Grid>
+
       <Panel label={t("singbox.advancedEditor")}>
         <Alert status="warning" mb="4"><AlertIcon />{t("singbox.editorWarning")}</Alert>
         <HStack justify="space-between" mb="3" flexWrap="wrap" gap="2">
@@ -501,10 +679,10 @@ export const SingBoxSettingsPage = () => {
           </Text>
           <Badge colorScheme={advancedMeta?.persisted ? "green" : "gray"}>{advancedMeta?.persisted ? t("singbox.editorSavedSource") : t("singbox.editorDefaultSource")}</Badge>
         </HStack>
-        {advancedLoading ? <Spinner /> : <JsonEditor json={advancedConfig} onChange={(value) => {
+        {advancedLoading ? <Spinner /> : <JsonEditor schemaUri="/sing-box-schema-1.14.json" json={advancedConfig} onChange={(value) => {
           setAdvancedText(value);
           try {
-            setInbounds(readInbounds(JSON.parse(value) as Record<string, unknown>));
+            syncBuilderState(JSON.parse(value) as Record<string, unknown>);
           } catch {
             // The editor may be temporarily invalid while the user is typing.
           }
