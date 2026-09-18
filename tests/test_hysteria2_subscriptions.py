@@ -211,3 +211,32 @@ def test_singbox_custom_shadowsocks_inbound_uses_server_method():
     )
 
     assert config.config["outbounds"][0]["method"] == "chacha20-ietf-poly1305"
+
+
+def test_singbox_subscription_exports_manual_anytls_client_by_username():
+    config = object.__new__(SingBoxConfiguration)
+    config.proxy_remarks = []
+    config.config = {"outbounds": []}
+
+    config.add_custom_inbounds(
+        {},
+        {"SERVER_IP": "203.0.113.13", "USERNAME": "alice"},
+        {
+            "inbounds": [{
+                "type": "anytls",
+                "tag": "anytls-in",
+                "listen_port": 8443,
+                "tls": {"enabled": True, "server_name": "edge.example.com"},
+                "users": [{"name": "alice", "password": "client-secret"}],
+            }]
+        },
+    )
+
+    assert config.config["outbounds"] == [{
+        "type": "anytls",
+        "tag": "alice [anytls / anytls-in]",
+        "server": "203.0.113.13",
+        "server_port": 8443,
+        "password": "client-secret",
+        "tls": {"enabled": True, "server_name": "edge.example.com"},
+    }]

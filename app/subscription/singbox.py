@@ -59,6 +59,15 @@ class SingBoxConfiguration(str):
         return None
 
     @staticmethod
+    def _manual_inbound_user(inbound, username: str):
+        for user in inbound.get("users", []):
+            if not isinstance(user, dict):
+                continue
+            if user.get("name") == username or user.get("username") == username or user.get("Username") == username:
+                return user
+        return None
+
+    @staticmethod
     def _client_tls(server_tls, address: str) -> dict:
         if not isinstance(server_tls, dict) or not server_tls.get("enabled"):
             return {}
@@ -82,34 +91,55 @@ class SingBoxConfiguration(str):
         return tls
 
     def add_custom_inbounds(self, proxies, format_variables, advanced_config=None):
-        """Expose configured sing-box server inbounds as client outbounds."""
+        """Expose GUI-created sing-box inbounds as per-user client outbounds.
+
+        Marzban-managed proxy credentials take precedence.  Protocols that do
+        not have a native Marzban proxy type can still be exported when the
+        current username matches a manually configured inbound client.
+        """
         if advanced_config is None:
             return
         protocol_map = {
+            "anytls": "anytls",
+            "http": "http",
+            "hysteria": "hysteria",
+            "hysteria2": "hysteria2",
+            "mixed": "socks",
+            "naive": "naive",
+            "shadowsocks": "shadowsocks",
+            "shadowtls": "shadowtls",
+            "socks": "socks",
+            "trojan": "trojan",
+            "tuic": "tuic",
             "vless": "vless",
             "vmess": "vmess",
-            "trojan": "trojan",
-            "shadowsocks": "shadowsocks",
-            "hysteria2": "hysteria2",
         }
         address = format_variables.get("SERVER_IP")
+        username = format_variables.get("USERNAME", "")
         if not address:
             return
         for inbound in advanced_config.get("inbounds", []):
             if not isinstance(inbound, dict):
                 continue
-            protocol = protocol_map.get(inbound.get("type"))
+            inbound_type = inbound.get("type")
+            protocol = protocol_map.get(inbound_type)
             tag = inbound.get("tag")
             port = inbound.get("listen_port")
             settings = self._proxy_settings(proxies, protocol) if protocol else None
-            if not protocol or not isinstance(tag, str) or not tag or not settings:
+            manual_user = self._manual_inbound_user(inbound, username) if isinstance(username, str) else None
+            if not protocol or not isinstance(tag, str) or not tag:
                 continue
             if not isinstance(port, int) or isinstance(port, bool) or not 1 <= port <= 65535:
                 continue
 
-            user_settings = settings.model_dump() if hasattr(settings, "model_dump") else dict(settings)
+            user_settings = (
+                settings.model_dump() if hasattr(settings, "model_dump")
+                else dict(settings) if settings
+                else {}
+            )
+            credentials = user_settings if settings else (manual_user or {})
             remark = self._remark_validation(
-                f"{format_variables.get('USERNAME', '{USERNAME}')} [{protocol} / {tag}]"
+                f"{format_variables.get('USERNAME', '{USERNAME}')} [{inbound_type} / {tag}]"
             )
             outbound = {
                 "type": protocol,
@@ -118,29 +148,66 @@ class SingBoxConfiguration(str):
                 "server_port": port,
             }
             if protocol in ("vless", "vmess"):
-                if not user_settings.get("id"):
+                if not credentials.get("id") and not credentials.get("uuid"):
                     continue
-                outbound["uuid"] = user_settings["id"]
-                if protocol == "vless" and user_settings.get("flow") not in (None, "", "none"):
-                    outbound["flow"] = user_settings["flow"]
+                outbound["uuid"] = credentials.get("id") or credentials["uuid"]
+                if protocol == "vless" and credentials.get("flow") not in (None, "", "none"):
+                    outbound["flow"] = credentials["flow"]
                 if protocol == "vmess":
-                    if user_settings.get("alterId") is not None:
-                        outbound["alter_id"] = user_settings["alterId"]
-                    if user_settings.get("security"):
-                        outbound["security"] = user_settings["security"]
-            elif protocol == "trojan":
-                if not user_settings.get("password"):
+                    if credentials.get("alterId") is not None:
+                        outbound["alter_id"] = credentials["alterId"]
+                    elif credentials.get("alter_id") is not None:
+                        outbound["alter_id"] = credentials["alter_id"]
+                    if credentials.get("security"):
+                        outbound["security"] = credentials["security"]
+            elif protocol in ("trojan", "anytls", "shadowtls", "socks", "naive", "http"):
+                password = credentials.get("password") or credentials.get("Password")
+                if not password:
                     continue
-                outbound["password"] = user_settings["password"]
-            elif protocol == "shadowsocks":
-                if not user_settings.get("password"):
+                outbound["password"] = password
+                if protocol in ("http", "naive", "socks"):
+                    client_username = credentials.get("username") or credentials.get("Username")
+                    if client_username:
+                        outbound["username"] = client_username
+            elif protocol == "tuic":
+                if not credentials.get("uuid") or not credentials.get("password"):
                     continue
-                outbound["password"] = user_settings["password"]
-                outbound["method"] = inbound.get("method") or user_settings.get("method", "chacha20-ietf-poly1305")
+                outbound["uuid"] = credentials["uuid"]
+                outbound["password"] = credentials["password"]
+            elif protocol == "hysteria":
+                auth = credentials.get("auth") or credentials.get("auth_str")
+                if not auth:
+                    continue
+                outbound["auth"] = auth
             elif protocol == "hysteria2":
-                if not user_settings.get("auth"):
+                password = credentials.get("auth") or credentials.get("password")
+                if not password:
                     continue
-                outbound["password"] = user_settings["auth"]
+                outbound["password"] = password
+            elif protocol == "shadowsocks":
+                password = credentials.get("password") or credentials.get("Password") or inbound.get("password")
+                if not password:
+                    continue
+                outbound["password"] = password
+                outbound["method"] = inbound.get("method") or user_settings.get("method") or "chacha20-ietf-poly1305"
+
+            for key in (
+                "network", "congestion_control", "quic_congestion_control",
+                "zero_rtt_handshake", "heartbeat", "idle_timeout",
+                "keep_alive_period", "max_concurrent_streams",
+                "disable_path_mtu_discovery", "bbr_profile", "brutal_debug",
+            ):
+                if key in inbound and inbound[key] not in (None, ""):
+                    outbound[key] = deepcopy(inbound[key])
+            if inbound_type == "shadowtls":
+                if inbound.get("version") is not None:
+                    outbound["version"] = inbound["version"]
+                handshake = inbound.get("handshake")
+                if isinstance(handshake, dict) and handshake.get("server"):
+                    outbound["tls"] = {
+                        "enabled": True,
+                        "server_name": handshake["server"],
+                    }
 
             if isinstance(inbound.get("tls"), dict):
                 tls = self._client_tls(inbound["tls"], address)
@@ -150,15 +217,15 @@ class SingBoxConfiguration(str):
                 outbound["transport"] = deepcopy(inbound["transport"])
             if isinstance(inbound.get("multiplex"), dict):
                 outbound["multiplex"] = deepcopy(inbound["multiplex"])
-            if protocol == "hysteria2" and isinstance(inbound.get("obfs"), dict):
+            if protocol in ("hysteria", "hysteria2") and inbound.get("obfs"):
                 outbound["obfs"] = deepcopy(inbound["obfs"])
             self.add_outbound(outbound)
 
     def render(self, reverse=False):
-        urltest_types = ["vmess", "vless", "trojan", "shadowsocks", "hysteria2", "tuic", "http", "ssh"]
+        urltest_types = ["anytls", "vmess", "vless", "trojan", "shadowsocks", "hysteria", "hysteria2", "naive", "shadowtls", "socks", "tuic", "http", "ssh"]
         urltest_tags = [outbound["tag"]
                         for outbound in self.config["outbounds"] if outbound["type"] in urltest_types]
-        selector_types = ["vmess", "vless", "trojan", "shadowsocks", "hysteria2", "tuic", "http", "ssh", "urltest"]
+        selector_types = ["anytls", "vmess", "vless", "trojan", "shadowsocks", "hysteria", "hysteria2", "naive", "shadowtls", "socks", "tuic", "http", "ssh", "urltest"]
         selector_tags = [outbound["tag"]
                          for outbound in self.config["outbounds"] if outbound["type"] in selector_types]
 
