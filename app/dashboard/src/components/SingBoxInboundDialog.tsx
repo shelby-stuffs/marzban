@@ -26,6 +26,7 @@ import {
   Text,
   VStack,
 } from "@chakra-ui/react";
+import { fetch } from "service/http";
 import { useEffect, useMemo, useState } from "react";
 
 type JsonObject = Record<string, any>;
@@ -215,6 +216,20 @@ const textValue = (value: unknown, kind: FieldKind = "text") => (
 const listValue = (value: string) => value.split(",").map((item) => item.trim()).filter(Boolean);
 const getObject = (value: unknown): JsonObject => value && typeof value === "object" && !Array.isArray(value) ? value as JsonObject : {};
 const normalizeNetwork = (value: unknown) => typeof value === "string" && value.includes(",") ? listValue(value) : value;
+const randomSecret = (size = 24) => {
+  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789-_";
+  const bytes = crypto.getRandomValues(new Uint8Array(size));
+  return Array.from(bytes, (byte) => alphabet[byte % alphabet.length]).join("");
+};
+const randomUuid = () => {
+  if (typeof crypto.randomUUID === "function") return crypto.randomUUID();
+  const bytes = crypto.getRandomValues(new Uint8Array(16));
+  bytes[6] = (bytes[6] & 0x0f) | 0x40;
+  bytes[8] = (bytes[8] & 0x3f) | 0x80;
+  const hex = Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+};
+const randomShortId = () => Array.from(crypto.getRandomValues(new Uint8Array(4)), (byte) => byte.toString(16).padStart(2, "0")).join("");
 const cleanUser = (user: JsonObject, fields: FieldSpec[]) => Object.fromEntries(
   fields.map((field) => [field.key, user[field.key]]).filter(([, value]) => value !== undefined && value !== null && value !== ""),
 );
@@ -229,6 +244,8 @@ export const SingBoxInboundDialog = ({ isOpen, initialValue, onClose, onSave }: 
   const [users, setUsers] = useState<JsonObject[]>([]);
   const [obfsType, setObfsType] = useState("");
   const [obfs, setObfs] = useState<JsonObject>({});
+  const [realityPublicKey, setRealityPublicKey] = useState("");
+  const [generatingKeypair, setGeneratingKeypair] = useState(false);
   const [masqueradeType, setMasqueradeType] = useState("none");
   const [masqueradeValue, setMasqueradeValue] = useState("");
   const [masqueradeRewriteHost, setMasqueradeRewriteHost] = useState(false);
@@ -247,6 +264,7 @@ export const SingBoxInboundDialog = ({ isOpen, initialValue, onClose, onSave }: 
     setTransport({ ...nextTransport, type: undefined });
     setTls({ ...nextTls, reality: undefined });
     setReality(getObject(nextTls.reality));
+    setRealityPublicKey(String(nextTls.reality?.public_key || ""));
     setUsers(Array.isArray(next.users) ? next.users.filter((item): item is JsonObject => Boolean(item) && typeof item === "object" && !Array.isArray(item)) : []);
     setObfsType(String(nextObfs.type || ""));
     setObfs(nextObfs);
@@ -278,6 +296,23 @@ export const SingBoxInboundDialog = ({ isOpen, initialValue, onClose, onSave }: 
   const updateUser = (index: number, key: string, next: unknown) => setUsers((current) => current.map((user, userIndex) => userIndex === index ? { ...user, [key]: next } : user));
   const addUser = () => setUsers((current) => [...current, { [userFields[0]?.key || "name"]: `client-${current.length + 1}` }]);
   const removeUser = (index: number) => setUsers((current) => current.filter((_, userIndex) => userIndex !== index));
+  const generateFieldValue = (field: FieldSpec) => {
+    if (field.key === "uuid") return randomUuid();
+    if (field.key === "short_id") return randomShortId();
+    return randomSecret();
+  };
+  const generateRealityKeypair = async () => {
+    setGeneratingKeypair(true);
+    try {
+      const keypair = await fetch<{ private_key: string; public_key: string }>("/singbox/generate/reality-keypair", { method: "POST" });
+      setReality((current) => ({ ...current, private_key: keypair.private_key }));
+      setRealityPublicKey(keypair.public_key);
+    } catch (generationError) {
+      setError(generationError instanceof Error ? generationError.message : "Unable to generate Reality key pair");
+    } finally {
+      setGeneratingKeypair(false);
+    }
+  };
 
   const fieldControl = (
     field: FieldSpec,
@@ -294,7 +329,8 @@ export const SingBoxInboundDialog = ({ isOpen, initialValue, onClose, onSave }: 
     };
     if (kind === "checkbox") return <Checkbox isChecked={Boolean(current)} onChange={(event) => change(event.target.checked)}>{field.label}</Checkbox>;
     if (kind === "select") return <FormControl><FormLabel fontSize="xs" mb="1">{field.label}</FormLabel><Select size="sm" value={textValue(current)} onChange={(event) => change(event.target.value)}><option value="">Default</option>{(field.options || []).map((option) => <option key={option} value={option}>{option}</option>)}</Select>{field.helper && <FormHelperText>{field.helper}</FormHelperText>}</FormControl>;
-    return <FormControl><FormLabel fontSize="xs" mb="1">{field.label}</FormLabel><Input size="sm" type={kind === "password" ? "password" : kind === "number" ? "number" : "text"} fontFamily={kind === "password" ? undefined : "mono"} value={textValue(current, kind)} placeholder={field.placeholder} onChange={(event) => change(event.target.value)} />{field.helper && <FormHelperText>{field.helper}</FormHelperText>}</FormControl>;
+    const canGenerate = kind === "password" || field.key === "uuid" || field.key === "userkey" || field.key === "auth";
+    return <FormControl><FormLabel fontSize="xs" mb="1">{field.label}</FormLabel><HStack><Input size="sm" type={kind === "password" ? "password" : kind === "number" ? "number" : "text"} fontFamily={kind === "password" ? undefined : "mono"} value={textValue(current, kind)} placeholder={field.placeholder} onChange={(event) => change(event.target.value)} />{canGenerate && <Button size="sm" variant="outline" flexShrink={0} onClick={() => change(generateFieldValue(field))}>Generate</Button>}</HStack>{field.helper && <FormHelperText>{field.helper}</FormHelperText>}</FormControl>;
   };
 
   const save = () => {
@@ -409,7 +445,7 @@ export const SingBoxInboundDialog = ({ isOpen, initialValue, onClose, onSave }: 
                 <VStack align="stretch" spacing="4">
                   <Text color="gray.500" fontSize="sm">Only options supported by <b>{protocol}</b> are shown.</Text>
                   <Grid templateColumns={{ base: "1fr", md: "repeat(2, 1fr)" }} gap="3">{protocolFields.map((field) => <Box key={field.key}>{fieldControl(field, value, (key, next) => update(key, next))}</Box>)}</Grid>
-                  {protocol === "hysteria2" && <Box borderWidth="1px" borderColor="terminal.border" borderRadius="md" p="3"><Text fontWeight="bold" mb="3">Obfuscation</Text><Grid templateColumns={{ base: "1fr", md: "1fr 1fr" }} gap="3"><FormControl><FormLabel fontSize="xs" mb="1">Type</FormLabel><Select size="sm" value={obfsType} onChange={(event) => setObfsType(event.target.value)}><option value="">Disabled</option><option value="salamander">Salamander</option><option value="gecko">Gecko</option></Select></FormControl>{obfsType && <FormControl><FormLabel fontSize="xs" mb="1">Password</FormLabel><Input size="sm" type="password" value={String(obfs.password || "")} onChange={(event) => setObfs((current) => ({ ...current, password: event.target.value }))} /></FormControl>}</Grid></Box>}
+                  {protocol === "hysteria2" && <Box borderWidth="1px" borderColor="terminal.border" borderRadius="md" p="3"><Text fontWeight="bold" mb="3">Obfuscation</Text><Grid templateColumns={{ base: "1fr", md: "1fr 1fr" }} gap="3"><FormControl><FormLabel fontSize="xs" mb="1">Type</FormLabel><Select size="sm" value={obfsType} onChange={(event) => setObfsType(event.target.value)}><option value="">Disabled</option><option value="salamander">Salamander</option><option value="gecko">Gecko</option></Select></FormControl>{obfsType && <FormControl><FormLabel fontSize="xs" mb="1">Password</FormLabel><HStack><Input size="sm" type="password" value={String(obfs.password || "")} onChange={(event) => setObfs((current) => ({ ...current, password: event.target.value }))} /><Button size="sm" variant="outline" onClick={() => setObfs((current) => ({ ...current, password: randomSecret() }))}>Generate</Button></HStack></FormControl>}</Grid></Box>}
                   {protocol === "hysteria2" && <Box borderWidth="1px" borderColor="terminal.border" borderRadius="md" p="3"><Text fontWeight="bold" mb="3">Masquerade</Text><Grid templateColumns={{ base: "1fr", md: "1fr 1fr" }} gap="3"><FormControl><FormLabel fontSize="xs" mb="1">Mode</FormLabel><Select size="sm" value={masqueradeType} onChange={(event) => setMasqueradeType(event.target.value)}><option value="none">Disabled</option><option value="string">URL / string</option><option value="file">Static file directory</option><option value="proxy">Proxy URL</option></Select></FormControl>{masqueradeType !== "none" && <FormControl><FormLabel fontSize="xs" mb="1">{masqueradeType === "file" ? "Directory" : "Value"}</FormLabel><Input size="sm" fontFamily="mono" value={masqueradeValue} onChange={(event) => setMasqueradeValue(event.target.value)} /></FormControl>}{masqueradeType === "proxy" && <Checkbox isChecked={masqueradeRewriteHost} onChange={(event) => setMasqueradeRewriteHost(event.target.checked)}>Rewrite host</Checkbox>}</Grid></Box>}
                   {protocol === "shadowtls" && <Box borderWidth="1px" borderColor="terminal.border" borderRadius="md" p="3"><Text fontWeight="bold" mb="3">Handshake</Text><Grid templateColumns={{ base: "1fr", md: "1fr 1fr" }} gap="3"><FormControl><FormLabel fontSize="xs" mb="1">Server</FormLabel><Input size="sm" fontFamily="mono" value={String(value.handshake?.server || "")} onChange={(event) => update("handshake", { ...(value.handshake || {}), server: event.target.value })} /></FormControl><FormControl><FormLabel fontSize="xs" mb="1">Server port</FormLabel><Input size="sm" type="number" value={value.handshake?.server_port || ""} onChange={(event) => update("handshake", { ...(value.handshake || {}), server_port: event.target.value ? Number(event.target.value) : undefined })} /></FormControl></Grid></Box>}
                 </VStack>
@@ -418,7 +454,7 @@ export const SingBoxInboundDialog = ({ isOpen, initialValue, onClose, onSave }: 
                 {!transportSupported ? <Alert status="info"><AlertIcon />This protocol has no separate V2Ray transport. Its network is configured in the Protocol tab.</Alert> : <VStack align="stretch" spacing="4"><FormControl><FormLabel>Transport</FormLabel><Select value={network} onChange={(event) => setNetwork(event.target.value)}>{NETWORKS.map((item) => <option key={item} value={item}>{item}</option>)}</Select><FormHelperText>Transport-specific fields appear automatically.</FormHelperText></FormControl><Grid templateColumns={{ base: "1fr", md: "repeat(2, 1fr)" }} gap="3">{(TRANSPORT_FIELDS[network] || []).map((field) => <Box key={field.key}>{fieldControl(field, transport, (key, next) => setTransport((current) => ({ ...current, [key]: next })))}</Box>)}</Grid></VStack>}
               </TabPanel>
               <TabPanel px="0">
-                {!tlsSupported ? <Alert status="info"><AlertIcon />This protocol does not use TLS in the inbound schema.</Alert> : <VStack align="stretch" spacing="4"><FormControl><FormLabel>Security</FormLabel><Select value={security} onChange={(event) => setSecurity(event.target.value)}>{SECURITIES.map((item) => <option key={item} value={item}>{item}</option>)}</Select></FormControl>{security !== "none" && <><Grid templateColumns={{ base: "1fr", md: "repeat(2, 1fr)" }} gap="3">{[{ key: "server_name", label: "Server name", placeholder: "edge.example.com" }, { key: "certificate_path", label: "Certificate path", placeholder: "/etc/ssl/fullchain.pem" }, { key: "key_path", label: "Private key path", kind: "password" as FieldKind }, { key: "insecure", label: "Insecure", kind: "checkbox" as FieldKind }, { key: "alpn", label: "ALPN", kind: "csv" as FieldKind, placeholder: "h2, http/1.1" }, { key: "min_version", label: "Minimum TLS version" }, { key: "max_version", label: "Maximum TLS version" }].map((field) => <Box key={field.key}>{fieldControl(field, tls, (key, next) => setTls((current) => ({ ...current, [key]: next })))}</Box>)}</Grid>{security === "reality" && <Box borderWidth="1px" borderColor="terminal.border" borderRadius="md" p="3"><Text fontWeight="bold" mb="3">Reality</Text><Grid templateColumns={{ base: "1fr", md: "repeat(2, 1fr)" }} gap="3"><FormControl><FormLabel fontSize="xs" mb="1">Private key</FormLabel><Input size="sm" type="password" value={String(reality.private_key || "")} onChange={(event) => setReality((current) => ({ ...current, private_key: event.target.value }))} /></FormControl><FormControl><FormLabel fontSize="xs" mb="1">Short ID</FormLabel><Input size="sm" fontFamily="mono" value={String(reality.short_id || "")} onChange={(event) => setReality((current) => ({ ...current, short_id: event.target.value }))} /></FormControl><FormControl><FormLabel fontSize="xs" mb="1">Handshake server</FormLabel><Input size="sm" fontFamily="mono" value={String(reality.handshake?.server || "")} onChange={(event) => setReality((current) => ({ ...current, handshake: { ...(current.handshake || {}), server: event.target.value } }))} /></FormControl><FormControl><FormLabel fontSize="xs" mb="1">Handshake port</FormLabel><Input size="sm" type="number" value={reality.handshake?.server_port || ""} onChange={(event) => setReality((current) => ({ ...current, handshake: { ...(current.handshake || {}), server_port: event.target.value ? Number(event.target.value) : undefined } }))} /></FormControl><FormControl><FormLabel fontSize="xs" mb="1">Max time difference</FormLabel><Input size="sm" fontFamily="mono" value={String(reality.max_time_difference || "")} placeholder="1m" onChange={(event) => setReality((current) => ({ ...current, max_time_difference: event.target.value }))} /></FormControl></Grid></Box>}</>}</VStack>}
+                {!tlsSupported ? <Alert status="info"><AlertIcon />This protocol does not use TLS in the inbound schema.</Alert> : <VStack align="stretch" spacing="4"><FormControl><FormLabel>Security</FormLabel><Select value={security} onChange={(event) => setSecurity(event.target.value)}>{SECURITIES.map((item) => <option key={item} value={item}>{item}</option>)}</Select></FormControl>{security !== "none" && <><Grid templateColumns={{ base: "1fr", md: "repeat(2, 1fr)" }} gap="3">{[{ key: "server_name", label: "Server name", placeholder: "edge.example.com" }, { key: "certificate_path", label: "Certificate path", placeholder: "/etc/ssl/fullchain.pem" }, { key: "key_path", label: "Private key path", kind: "password" as FieldKind }, { key: "insecure", label: "Insecure", kind: "checkbox" as FieldKind }, { key: "alpn", label: "ALPN", kind: "csv" as FieldKind, placeholder: "h2, http/1.1" }, { key: "min_version", label: "Minimum TLS version" }, { key: "max_version", label: "Maximum TLS version" }].map((field) => <Box key={field.key}>{fieldControl(field, tls, (key, next) => setTls((current) => ({ ...current, [key]: next })))}</Box>)}</Grid>{security === "reality" && <Box borderWidth="1px" borderColor="terminal.border" borderRadius="md" p="3"><HStack justify="space-between" mb="3"><Text fontWeight="bold">Reality</Text><Button size="sm" variant="outline" isLoading={generatingKeypair} onClick={() => void generateRealityKeypair()}>Generate key pair</Button></HStack><Grid templateColumns={{ base: "1fr", md: "repeat(2, 1fr)" }} gap="3"><FormControl><FormLabel fontSize="xs" mb="1">Private key</FormLabel><Input size="sm" type="password" value={String(reality.private_key || "")} onChange={(event) => setReality((current) => ({ ...current, private_key: event.target.value }))} /></FormControl><FormControl><FormLabel fontSize="xs" mb="1">Public key</FormLabel><Input size="sm" fontFamily="mono" value={realityPublicKey} isReadOnly /></FormControl><FormControl><FormLabel fontSize="xs" mb="1">Short ID</FormLabel><HStack><Input size="sm" fontFamily="mono" value={String(reality.short_id || "")} onChange={(event) => setReality((current) => ({ ...current, short_id: event.target.value }))} /><Button size="sm" variant="outline" onClick={() => setReality((current) => ({ ...current, short_id: randomShortId() }))}>Generate</Button></HStack></FormControl><FormControl><FormLabel fontSize="xs" mb="1">Handshake server</FormLabel><Input size="sm" fontFamily="mono" value={String(reality.handshake?.server || "")} onChange={(event) => setReality((current) => ({ ...current, handshake: { ...(current.handshake || {}), server: event.target.value } }))} /></FormControl><FormControl><FormLabel fontSize="xs" mb="1">Handshake port</FormLabel><Input size="sm" type="number" value={reality.handshake?.server_port || ""} onChange={(event) => setReality((current) => ({ ...current, handshake: { ...(current.handshake || {}), server_port: event.target.value ? Number(event.target.value) : undefined } }))} /></FormControl><FormControl><FormLabel fontSize="xs" mb="1">Max time difference</FormLabel><Input size="sm" fontFamily="mono" value={String(reality.max_time_difference || "")} placeholder="1m" onChange={(event) => setReality((current) => ({ ...current, max_time_difference: event.target.value }))} /></FormControl></Grid></Box>}</>}</VStack>}
               </TabPanel>
               <TabPanel px="0">
                 <VStack align="stretch" spacing="3">

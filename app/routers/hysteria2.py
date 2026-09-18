@@ -27,6 +27,7 @@ from app.singbox.settings import (
     save_settings,
 )
 from app.subscription import cache as subscription_cache
+from app.utils.crypto import generate_wireguard_keypair
 from config import (
     SINGBOX_ADVANCED_CONFIG_PATH,
     SINGBOX_HYSTERIA_ENABLED,
@@ -63,6 +64,12 @@ def _generated():
         fallback_certificate_path=UVICORN_SSL_CERTFILE or "",
         fallback_key_path=UVICORN_SSL_KEYFILE or "",
     )
+
+
+@singbox_router.post("/generate/reality-keypair")
+def generate_reality_keypair(_admin: Admin = Depends(Admin.check_sudo_admin)):
+    private_key, public_key = generate_wireguard_keypair()
+    return {"private_key": private_key, "public_key": public_key}
 
 
 @router.get("")

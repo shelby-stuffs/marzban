@@ -6,6 +6,7 @@ import json
 from random import choice
 
 from app.utils.helpers import UUIDEncoder
+from app.utils.crypto import get_wireguard_public_key
 from jinja2.exceptions import TemplateNotFound
 
 from app.subscription.funcs import get_grpc_gun
@@ -84,6 +85,11 @@ class SingBoxConfiguration(str):
                 for key in ("enabled", "public_key", "short_id")
                 if key in server_tls["reality"]
             }
+            if "public_key" not in reality and server_tls["reality"].get("private_key"):
+                try:
+                    reality["public_key"] = get_wireguard_public_key(server_tls["reality"]["private_key"])
+                except (TypeError, ValueError):
+                    pass
             if reality:
                 tls["reality"] = reality
         if isinstance(server_tls.get("utls"), dict):
