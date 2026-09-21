@@ -111,7 +111,13 @@ def get_users_stats(api: XRayAPI):
     try:
         params = defaultdict(int)
         for stat in filter(attrgetter('value'), api.get_users_stats(reset=True, timeout=30)):
-            params[stat.name.split('.', 1)[0]] += stat.value
+            # sing-box/Xray may return stats for manually configured users as
+            # well. Only Marzban's ``<database id>.<username>`` identities can
+            # be safely applied to the users table.
+            uid, separator, _username = str(stat.name).partition(".")
+            if not separator or not uid.isdigit():
+                continue
+            params[uid] += stat.value
         params = list({"uid": uid, "value": value} for uid, value in params.items())
         return params
     except xray_exc.XrayError:

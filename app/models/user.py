@@ -349,6 +349,7 @@ class UserModify(User):
 
 
 class UserResponse(User):
+    id: int | None = None
     username: str
     status: UserStatus
     used_traffic: int

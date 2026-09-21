@@ -72,18 +72,25 @@ class SingBoxConfiguration(str):
         return None
 
     @staticmethod
-    def _managed_credentials(username: str, inbound_type: str, tag: str, secret: str) -> dict:
+    def _managed_credentials(
+        username: str,
+        inbound_type: str,
+        tag: str,
+        secret: str,
+        account_name: str | None = None,
+    ) -> dict:
         password = managed_password(secret, username, tag)
+        account_name = account_name or username
         if inbound_type in ("http", "mixed", "naive", "socks"):
-            return {"username": username, "password": password}
+            return {"username": account_name, "password": password}
         if inbound_type in ("anytls", "hysteria2", "shadowtls", "trojan", "shadowsocks"):
-            return {"name": username, "password": password}
+            return {"name": account_name, "password": password}
         if inbound_type == "hysteria":
-            return {"name": username, "auth": password}
+            return {"name": account_name, "auth": password}
         if inbound_type == "tuic":
-            return {"name": username, "uuid": managed_uuid(secret, username, tag), "password": password}
+            return {"name": account_name, "uuid": managed_uuid(secret, username, tag), "password": password}
         if inbound_type == "vmess":
-            return {"name": username, "uuid": managed_uuid(secret, username, tag), "alterId": 0}
+            return {"name": account_name, "uuid": managed_uuid(secret, username, tag), "alterId": 0}
         return {}
 
     @staticmethod
@@ -142,6 +149,12 @@ class SingBoxConfiguration(str):
         }
         address = format_variables.get("SERVER_IP")
         username = format_variables.get("USERNAME", "")
+        user_id = format_variables.get("USER_ID")
+        account_name = (
+            f"{user_id}.{username}"
+            if user_id not in (None, "", "{USER_ID}") and username
+            else username
+        )
         managed_secret = None
         if not address:
             return
@@ -159,7 +172,10 @@ class SingBoxConfiguration(str):
                 continue
             port = inbound.get("listen_port")
             settings = self._proxy_settings(proxies, protocol) if protocol else None
-            manual_user = self._manual_inbound_user(inbound, username) if isinstance(username, str) else None
+            manual_user = (
+                self._manual_inbound_user(inbound, account_name)
+                or self._manual_inbound_user(inbound, username)
+            ) if isinstance(username, str) else None
             if not protocol or not isinstance(tag, str) or not tag:
                 continue
             if not isinstance(port, int) or isinstance(port, bool) or not 1 <= port <= 65535:
@@ -178,7 +194,13 @@ class SingBoxConfiguration(str):
                 if managed_secret is None:
                     from app.utils.jwt import get_secret_key
                     managed_secret = get_secret_key()
-                credentials = self._managed_credentials(username, inbound_type, tag, managed_secret)
+                credentials = self._managed_credentials(
+                    username,
+                    inbound_type,
+                    tag,
+                    managed_secret,
+                    account_name=account_name,
+                )
             else:
                 credentials = {}
             remark = self._remark_validation(

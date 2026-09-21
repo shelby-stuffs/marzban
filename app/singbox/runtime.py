@@ -94,10 +94,13 @@ class SingBoxRuntime:
 
     @staticmethod
     def _managed_user(user, inbound_type: str, tag: str, secret: str) -> dict | None:
+        # The same identity is used by sing-box V2Ray Stats and Marzban's
+        # usage recorder. Authentication remains derived from the username so
+        # existing subscriptions keep their stable passwords.
         name = f"{user.id}.{user.username}"
         password = managed_password(secret, user.username, tag)
         if inbound_type in ("http", "mixed", "naive", "socks"):
-            return {"Username": user.username, "Password": password}
+            return {"Username": name, "Password": password}
         if inbound_type in ("anytls", "hysteria2", "shadowtls", "trojan", "shadowsocks"):
             return {"name": name, "password": password}
         if inbound_type == "hysteria":
@@ -198,7 +201,7 @@ class SingBoxRuntime:
             for user in inbound["users"]:
                 if not isinstance(user, Mapping):
                     continue
-                name = user.get("name") or user.get("username")
+                name = user.get("name") or user.get("username") or user.get("Username")
                 if self._is_marzban_user_name(name):
                     names.add(name)
         return names

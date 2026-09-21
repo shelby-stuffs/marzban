@@ -330,6 +330,7 @@ def setup_format_variables(extra_data: dict) -> dict:
     temp_vars = {
         "SERVER_IP": SERVER_IP,
         "SERVER_IPV6": SERVER_IPV6,
+        "USER_ID": extra_data.get("id", "{USER_ID}"),
         "USERNAME": extra_data.get("username", "{USERNAME}"),
         "DATA_USAGE": readable_size(extra_data.get("used_traffic")),
         "DATA_LIMIT": data_limit,
