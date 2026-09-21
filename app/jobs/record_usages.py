@@ -8,7 +8,7 @@ from sqlalchemy import and_, bindparam, select, update
 from sqlalchemy.exc import DBAPIError
 from sqlalchemy.orm import Session
 
-from app import scheduler, xray
+from app import logger, scheduler, xray
 from app.db import GetDB
 from app.db.dialect import insert_ignore, is_retryable_error
 from app.db.models import Admin, NodeUsage, NodeUserUsage, System, User
@@ -121,6 +121,7 @@ def get_users_stats(api: XRayAPI):
         params = list({"uid": uid, "value": value} for uid, value in params.items())
         return params
     except xray_exc.XrayError:
+        logger.warning("Unable to read user traffic stats from %s", api)
         return []
 
 
@@ -154,11 +155,28 @@ def record_user_usages():
         try:
             from app.singbox.runtime import runtime
             if runtime.core.started and runtime.traffic_api is not None:
-                api_params[None].extend(get_users_stats(runtime.traffic_api))
+                # Equivalent to the legacy:
+                # api_params[None].extend(get_users_stats(runtime.traffic_api))
+                singbox_stats = get_users_stats(runtime.traffic_api)
+                api_params[None].extend(singbox_stats)
+                if singbox_stats:
+                    logger.info(
+                        "Recorded sing-box traffic for %d Marzban users",
+                        len(singbox_stats),
+                    )
+                else:
+                    logger.debug("sing-box traffic stats returned no mapped users")
+            else:
+                logger.warning(
+                    "sing-box traffic accounting is enabled but runtime/API is not ready "
+                    "(started=%s, api=%s)",
+                    runtime.core.started,
+                    runtime.traffic_api is not None,
+                )
         except Exception:
             # Accounting failures must never stop Xray usage collection. Keep
             # counters in sing-box (the gRPC query only resets on success).
-            pass
+            logger.exception("Unable to collect sing-box traffic stats")
 
     users_usage = defaultdict(int)
     for node_id, params in api_params.items():

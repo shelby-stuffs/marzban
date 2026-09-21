@@ -15,7 +15,7 @@ from app.singbox.managed_credentials import managed_password, managed_uuid
 from app.singbox.settings import generate_settings, load_settings
 from app.singbox.traffic import install_traffic_api
 from config import (SINGBOX_ADVANCED_CONFIG_PATH, SINGBOX_CONFIG_PATH, SINGBOX_EXECUTABLE_PATH, SINGBOX_HYSTERIA_SETTINGS_PATH, SINGBOX_RULE_SETS_PATH, SINGBOX_TRAFFIC_ACCOUNTING_ENABLED, SINGBOX_TRAFFIC_API_HOST, SINGBOX_TRAFFIC_API_PORT, UVICORN_SSL_CERTFILE, UVICORN_SSL_KEYFILE)
-from xray_api import XRay as XRayAPI
+from app.singbox.stats import SingBoxStats
 
 
 class SingBoxRuntime:
@@ -23,7 +23,10 @@ class SingBoxRuntime:
         self.core = SingBoxCore(SINGBOX_EXECUTABLE_PATH, SINGBOX_CONFIG_PATH)
         self._timer = None
         self._timer_lock = threading.Lock()
-        self.traffic_api = XRayAPI(SINGBOX_TRAFFIC_API_HOST, SINGBOX_TRAFFIC_API_PORT) if SINGBOX_TRAFFIC_ACCOUNTING_ENABLED else None
+        self.traffic_api = (
+            SingBoxStats(SINGBOX_TRAFFIC_API_HOST, SINGBOX_TRAFFIC_API_PORT)
+            if SINGBOX_TRAFFIC_ACCOUNTING_ENABLED else None
+        )
 
     def current_settings(self):
         settings = load_settings(SINGBOX_HYSTERIA_SETTINGS_PATH)
