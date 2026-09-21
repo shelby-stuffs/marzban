@@ -21,6 +21,8 @@ class SingBoxStats(XRay):
     """XRay-compatible client using sing-box's gRPC service namespace."""
 
     SERVICE_NAMES = (
+        # sing-box's generated protobuf package uses this service name.
+        "/experimental.v2rayapi.StatsService/QueryStats",
         "/v2ray.app.stats.command.StatsService/QueryStats",
         # Some sing-box builds register the compatibility service under the
         # Xray namespace even though the protobuf contract is the same.
