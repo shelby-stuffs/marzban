@@ -120,8 +120,13 @@ def get_users_stats(api: XRayAPI):
             params[uid] += stat.value
         params = list({"uid": uid, "value": value} for uid, value in params.items())
         return params
-    except xray_exc.XrayError:
-        logger.warning("Unable to read user traffic stats from %s", api)
+    except xray_exc.XrayError as exc:
+        details = getattr(exc, "details", None) or str(exc)
+        logger.warning(
+            "Unable to read user traffic stats from %s: %s",
+            type(api).__name__,
+            details,
+        )
         return []
 
 

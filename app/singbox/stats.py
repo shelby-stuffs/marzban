@@ -20,21 +20,40 @@ from xray_api.stats import StatResponse
 class SingBoxStats(XRay):
     """XRay-compatible client using sing-box's gRPC service namespace."""
 
+    SERVICE_NAMES = (
+        "/v2ray.app.stats.command.StatsService/QueryStats",
+        # Some sing-box builds register the compatibility service under the
+        # Xray namespace even though the protobuf contract is the same.
+        "/xray.app.stats.command.StatsService/QueryStats",
+    )
+
     def query_stats(
         self, pattern: str, reset: bool = False, timeout: int | None = None
     ) -> typing.Iterable[StatResponse]:
-        try:
-            query = self._channel.unary_unary(
-                "/v2ray.app.stats.command.StatsService/QueryStats",
-                request_serializer=command_pb2.QueryStatsRequest.SerializeToString,
-                response_deserializer=command_pb2.QueryStatsResponse.FromString,
-            )
-            response = query(
-                command_pb2.QueryStatsRequest(pattern=pattern, reset=reset),
-                timeout=timeout,
-            )
-        except grpc.RpcError as exc:
-            raise RelatedError(exc) from exc
+        request = command_pb2.QueryStatsRequest(pattern=pattern, reset=reset)
+        last_error = None
+        response = None
+        for service_name in self.SERVICE_NAMES:
+            try:
+                query = self._channel.unary_unary(
+                    service_name,
+                    request_serializer=command_pb2.QueryStatsRequest.SerializeToString,
+                    response_deserializer=command_pb2.QueryStatsResponse.FromString,
+                )
+                response = query(request, timeout=timeout)
+                break
+            except grpc.RpcError as exc:
+                last_error = exc
+                # UNIMPLEMENTED is the normal signal when a sing-box build
+                # chose the other compatibility namespace. Do not retry
+                # connection/authentication failures against another path.
+                details = (exc.details() or "").lower()
+                namespace_missing = "unknown service" in details or "unimplemented" in details
+                if exc.code() != grpc.StatusCode.UNIMPLEMENTED and not namespace_missing:
+                    raise RelatedError(exc) from exc
+
+        if response is None:
+            raise RelatedError(last_error) from last_error
 
         for stat in response.stat:
             try:
