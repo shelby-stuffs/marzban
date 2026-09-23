@@ -1,7 +1,7 @@
 ARG PYTHON_VERSION=3.12
 ARG SINGBOX_REF=v1.14.1-extended-2.7.2
 
-FROM golang:1.25-bookworm AS singbox-build
+FROM golang:1.27.1-trixie AS singbox-build
 ARG SINGBOX_REF
 RUN git clone --depth 1 --branch "${SINGBOX_REF}" https://github.com/shtorm-7/sing-box-extended.git /src/sing-box
 WORKDIR /src/sing-box
