@@ -93,8 +93,11 @@ class User(BaseModel):
 
     @field_validator("proxies", mode="before")
     def validate_proxies(cls, v, values, **kwargs):
+        # A user may be backed exclusively by GUI-created sing-box inbounds.
+        # UserCreate performs the cross-field check once ``inbounds`` is
+        # available; UserModify must also allow partial updates.
         if not v:
-            raise ValueError("Each user needs at least one proxy")
+            return {}
         return {
             proxy_type: ProxySettings.from_dict(
                 proxy_type, v.get(proxy_type, {}))
@@ -133,6 +136,15 @@ class UserCreate(User):
 
     username: str
     status: UserStatusCreate = None
+
+    @model_validator(mode="after")
+    def validate_access_credentials(self):
+        if not self.proxies and not self.inbounds.get("singbox"):
+            raise ValueError(
+                "Each user needs at least one Xray proxy or sing-box inbound"
+            )
+        return self
+
     model_config = ConfigDict(json_schema_extra={
         "example": {
             "username": "user1234",

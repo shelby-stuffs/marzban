@@ -168,9 +168,7 @@ const mergeProxies = (
 
 const baseSchema = {
   username: z.string().min(1, { message: "Required" }),
-  selected_proxies: z.array(z.string()).refine((value) => value.length > 0, {
-    message: "userDialog.selectOneProtocol",
-  }),
+  selected_proxies: z.array(z.string()),
   note: z.string().nullable(),
   proxies: z
     .record(z.string(), z.record(z.string(), z.any()))
@@ -241,7 +239,18 @@ const schema = z.discriminatedUnion("status", [
       }),
     ...baseSchema,
   }),
-]);
+]).superRefine((value, context) => {
+  if (
+    value.selected_proxies.length === 0 &&
+    !(value.inbounds.singbox && value.inbounds.singbox.length > 0)
+  ) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["selected_proxies"],
+      message: "userDialog.selectOneProtocol",
+    });
+  }
+});
 
 export const UserDialog: FC<UserDialogProps> = () => {
   const {

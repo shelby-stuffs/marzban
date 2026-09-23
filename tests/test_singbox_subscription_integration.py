@@ -5,6 +5,15 @@ import unittest
 ROOT=Path(__file__).resolve().parents[1]
 
 class SingBoxSubscriptionIntegrationTests(unittest.TestCase):
+ def test_singbox_only_users_do_not_require_xray_protocols(self):
+  user_model=(ROOT/"app/models/user.py").read_text()
+  crud=(ROOT/"app/db/crud.py").read_text()
+  dialog=(ROOT/"app/dashboard/src/components/UserDialog.tsx").read_text()
+  self.assertIn("at least one Xray proxy or sing-box inbound", user_model)
+  self.assertIn('if "proxies" in modify.model_fields_set:', crud)
+  self.assertIn(".superRefine((value, context)", dialog)
+  self.assertIn("value.inbounds.singbox", dialog)
+
  def test_share_pipeline_uses_managed_hysteria_endpoint(self):
   source=(ROOT/"app/subscription/share.py").read_text()
   self.assertIn('"subscription_host" in inbound', source)

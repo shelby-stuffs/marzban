@@ -453,7 +453,7 @@ def update_user(db: Session, dbuser: User, modify: UserModify) -> User:
         User: The updated user object.
     """
     added_proxies: Dict[ProxyTypes, Proxy] = {}
-    if modify.proxies:
+    if "proxies" in modify.model_fields_set:
         for proxy_type, settings in modify.proxies.items():
             dbproxy = db.query(Proxy) \
                 .where(Proxy.user == dbuser, Proxy.type == proxy_type) \
