@@ -232,3 +232,39 @@ def test_singbox_subscription_exports_manual_anytls_client_by_username():
         "password": "client-secret",
         "tls": {"enabled": True, "server_name": "edge.example.com"},
     }]
+
+
+def test_common_link_subscription_exports_custom_vless_xhttp():
+    links = V2rayShareLink()
+    links.add_singbox_outbounds([{
+        "type": "vless",
+        "tag": "alice [vless / xhttp-in]",
+        "server": "203.0.113.14",
+        "server_port": 2023,
+        "uuid": "00000000-0000-0000-0000-000000000003",
+        "transport": {
+            "type": "xhttp",
+            "mode": "auto",
+            "path": "/lol",
+            "headers": {"Host": "edge.example.com"},
+            "x_padding_bytes": "100-1000",
+            "no_sse_header": False,
+        },
+        "tls": {
+            "enabled": True,
+            "server_name": "edge.example.com",
+        },
+    }])
+
+    parsed = urlsplit(links.links[0])
+    query = parse_qs(parsed.query)
+    assert parsed.scheme == "vless"
+    assert parsed.username == "00000000-0000-0000-0000-000000000003"
+    assert query["type"] == ["xhttp"]
+    assert query["path"] == ["/lol"]
+    assert query["host"] == ["edge.example.com"]
+    assert query["mode"] == ["auto"]
+    assert json.loads(query["extra"][0]) == {
+        "xPaddingBytes": "100-1000",
+        "noSSEHeader": False,
+    }

@@ -93,7 +93,6 @@ const FALLBACK_FORMATS = [
   "v2ray-json",
   "clash",
   "clash-meta",
-  "sing-box",
   "outline",
   "hysteria2",
   "happ",

@@ -29,21 +29,24 @@ CONFIG_FORMATS: Tuple[str, ...] = (
     "v2ray-json",
     "clash",
     "clash-meta",
-    "sing-box",
     "outline",
     "hysteria2",
     "happ",
 )
+
+# Rendered automatically from the main endpoint based on User-Agent, but not
+# exposed as a public /{token}/{client_type} format.
+INTERNAL_FORMATS: Tuple[str, ...] = ("sing-box",)
 
 MEDIA_TYPES: Dict[str, str] = {
     "v2ray": "text/plain",
     "v2ray-json": "application/json",
     "clash": "text/yaml",
     "clash-meta": "text/yaml",
-    "sing-box": "application/json",
     "outline": "application/json",
     "hysteria2": "text/plain",
     "happ": "application/json",
+    "sing-box": "application/json",
 }
 
 #: Mutable so tests and runtime reloads can flip the custom-JSON switches

@@ -7,6 +7,7 @@ from app.subscription.rules import (
     CONFIG_FORMATS,
     CUSTOM_JSON_FLAGS,
     DEFAULT_RULES,
+    INTERNAL_FORMATS,
     ClientRule,
     media_type_for,
     resolve_client,
@@ -37,7 +38,7 @@ def custom_json_disabled():
 def test_default_rules_are_valid_regexes_and_formats():
     for rule in DEFAULT_RULES:
         re.compile(rule.pattern)
-        assert rule.config_format in CONFIG_FORMATS
+        assert rule.config_format in (*CONFIG_FORMATS, *INTERNAL_FORMATS)
         assert media_type_for(rule.config_format)
 
 

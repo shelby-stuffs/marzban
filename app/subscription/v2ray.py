@@ -74,11 +74,77 @@ class V2rayShareLink(str):
             )
             transport = outbound.get("transport") or {}
             headers = transport.get("headers") or {}
-            host = headers.get("Host") or headers.get("host") or ""
+            host = (
+                headers.get("Host")
+                or headers.get("host")
+                or transport.get("host")
+                or ""
+            )
             path = transport.get("path") or ""
             tls_mode = "tls" if tls.get("enabled") else "none"
             sni = tls.get("server_name") or ""
             alpn = ",".join(tls.get("alpn") or [])
+            reality = tls.get("reality") or {}
+            if reality.get("enabled"):
+                tls_mode = "reality"
+            utls = tls.get("utls") or {}
+            fingerprint = utls.get("fingerprint", "")
+            xhttp = {}
+            if network in ("xhttp", "splithttp"):
+                xhttp_keys = {
+                    "x_padding_bytes": "xPaddingBytes",
+                    "no_grpc_header": "noGRPCHeader",
+                    "no_sse_header": "noSSEHeader",
+                    "sc_max_each_post_bytes": "scMaxEachPostBytes",
+                    "sc_min_posts_interval_ms": "scMinPostsIntervalMs",
+                    "sc_max_buffered_posts": "scMaxBufferedPosts",
+                    "sc_stream_up_server_secs": "scStreamUpServerSecs",
+                    "server_max_header_bytes": "serverMaxHeaderBytes",
+                    "trusted_x_forwarded_for": "trustedXForwardedFor",
+                    "session_placement": "sessionPlacement",
+                    "session_key": "sessionKey",
+                    "seq_placement": "seqPlacement",
+                    "seq_key": "seqKey",
+                    "uplink_data_placement": "uplinkDataPlacement",
+                    "uplink_data_key": "uplinkDataKey",
+                    "uplink_chunk_size": "uplinkChunkSize",
+                    "uplink_http_method": "uplinkHTTPMethod",
+                    "session_id_table": "sessionIDTable",
+                    "session_id_length": "sessionIDLength",
+                    "congestion_controller": "congestionController",
+                    "cwnd": "cwnd",
+                }
+                for source_key, target_key in xhttp_keys.items():
+                    if source_key in transport:
+                        xhttp[target_key] = transport[source_key]
+                if transport.get("xmux") is not None:
+                    xhttp["xmux"] = transport["xmux"]
+                if transport.get("download") is not None:
+                    xhttp["downloadSettings"] = transport["download"]
+
+            if protocol == "vless" and outbound.get("uuid"):
+                self.add_link(self.vless(
+                    remark=remark,
+                    address=address,
+                    port=int(port),
+                    id=outbound["uuid"],
+                    net=network,
+                    path=path,
+                    host=host,
+                    flow=outbound.get("flow", ""),
+                    tls=tls_mode,
+                    sni=sni,
+                    fp=fingerprint,
+                    alpn=alpn,
+                    pbk=reality.get("public_key", ""),
+                    sid=reality.get("short_id", ""),
+                    ais="1" if tls.get("insecure") else "",
+                    mode=transport.get("mode", ""),
+                    noGRPCHeader=transport.get("no_grpc_header"),
+                    noSSEHeader=transport.get("no_sse_header"),
+                    xhttp_extra=xhttp,
+                ))
+                continue
             if protocol == "hysteria2":
                 profile = Hysteria2Client(
                     address=address,
@@ -402,11 +468,13 @@ class V2rayShareLink(str):
               x_padding_bytes: str | None = None,
               mode: str = "",
               noGRPCHeader: bool | None = None,
+              noSSEHeader: bool | None = None,
               heartbeatPeriod: int | None = None,
               scStreamUpServerSecs: int | None = None,
               keepAlivePeriod: int = 0,
               xmux: dict = {},
               downloadSettings: dict = {},
+              xhttp_extra: dict | None = None,
               ):
 
         payload = {
@@ -444,6 +512,8 @@ class V2rayShareLink(str):
                 extra["xPaddingBytes"] = x_padding_bytes
             if noGRPCHeader is not None:
                 extra["noGRPCHeader"] = noGRPCHeader
+            if noSSEHeader is not None:
+                extra["noSSEHeader"] = noSSEHeader
             if scStreamUpServerSecs is not None:
                 extra["scStreamUpServerSecs"] = scStreamUpServerSecs
             if keepAlivePeriod > 0:
@@ -452,6 +522,8 @@ class V2rayShareLink(str):
                 extra["xmux"] = xmux
             if downloadSettings:
                 extra["downloadSettings"] = downloadSettings
+            if xhttp_extra:
+                extra.update(xhttp_extra)
             if extra:
                 payload["extra"] = (json.dumps(extra)).replace(" ", "")
 
