@@ -1,5 +1,5 @@
 ARG PYTHON_VERSION=3.12
-ARG SINGBOX_REF=v1.14.0-extended-2.7.1
+ARG SINGBOX_REF=v1.14.1-extended-2.7.2
 
 FROM golang:1.25-bookworm AS singbox-build
 ARG SINGBOX_REF

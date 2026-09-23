@@ -8,7 +8,7 @@ inbounds created in the GUI or advanced configuration.
 ## How it works
 
 - The image builds `shtorm-7/sing-box-extended`
-  `v1.14.0-extended-2.7.1` with `with_quic`, `with_grpc`, and
+  `v1.14.1-extended-2.7.2` with `with_quic`, `with_grpc`, and
   `with_v2ray_api`.
 - Marzban injects a protected `experimental.v2ray_api` block into the final config.
 - For supported user inbounds such as `http`, `socks`, `mixed`, `anytls`,
