@@ -9,10 +9,12 @@ class SingBoxSubscriptionIntegrationTests(unittest.TestCase):
   user_model=(ROOT/"app/models/user.py").read_text()
   crud=(ROOT/"app/db/crud.py").read_text()
   dialog=(ROOT/"app/dashboard/src/components/UserDialog.tsx").read_text()
+  runtime=(ROOT/"app/singbox/runtime.py").read_text()
   self.assertIn("at least one Xray proxy or sing-box inbound", user_model)
   self.assertIn('if "proxies" in modify.model_fields_set:', crud)
   self.assertIn(".superRefine((value, context)", dialog)
   self.assertIn("value.inbounds.singbox", dialog)
+  self.assertIn('if inbound_type == "vless":', runtime)
 
  def test_share_pipeline_uses_managed_hysteria_endpoint(self):
   source=(ROOT/"app/subscription/share.py").read_text()

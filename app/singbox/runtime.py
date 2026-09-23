@@ -127,6 +127,8 @@ class SingBoxRuntime:
             return {"name": name, "auth": password}
         if inbound_type == "tuic":
             return {"name": name, "uuid": managed_uuid(secret, user.username, tag), "password": password}
+        if inbound_type == "vless":
+            return {"name": name, "uuid": managed_uuid(secret, user.username, tag)}
         if inbound_type == "vmess":
             return {"name": name, "uuid": managed_uuid(secret, user.username, tag), "alterId": 0}
         return None
