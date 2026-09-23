@@ -3,7 +3,7 @@ services:
     build:
       context: .
       args:
-        SINGBOX_VERSION: ${SINGBOX_VERSION:-1.13.12}
+        SINGBOX_REF: ${SINGBOX_REF:-v1.14.0-extended-2.7.1}
     environment:
       SINGBOX_ENABLED: "true"
       SINGBOX_EXECUTABLE_PATH: /usr/local/bin/sing-box
@@ -14,3 +14,4 @@ services:
       SINGBOX_TRAFFIC_ACCOUNTING_ENABLED: "true"
       SINGBOX_TRAFFIC_API_HOST: 127.0.0.1
       SINGBOX_TRAFFIC_API_PORT: "10085"
+      SINGBOX_MANAGE_VLESS: "true"

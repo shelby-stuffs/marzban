@@ -8,13 +8,29 @@ from app.db import GetDB, crud
 from app.models.proxy import ProxyTypes
 from app.models.user import UserStatus
 from app.singbox.advanced import load_advanced_config
-from app.singbox.config import build_hysteria2_settings_config, merge_advanced_config
+from app.singbox.config import (
+    build_hysteria2_settings_config,
+    convert_vless_inbounds_from_xray,
+    merge_advanced_config,
+)
 from app.singbox.core import SingBoxCore
 from app.singbox.rulesets import RuleSetsSettings, load_rule_sets, merge_rule_sets
 from app.singbox.managed_credentials import managed_password, managed_uuid
 from app.singbox.settings import generate_settings, load_settings
 from app.singbox.traffic import install_traffic_api
-from config import (SINGBOX_ADVANCED_CONFIG_PATH, SINGBOX_CONFIG_PATH, SINGBOX_EXECUTABLE_PATH, SINGBOX_HYSTERIA_SETTINGS_PATH, SINGBOX_RULE_SETS_PATH, SINGBOX_TRAFFIC_ACCOUNTING_ENABLED, SINGBOX_TRAFFIC_API_HOST, SINGBOX_TRAFFIC_API_PORT, UVICORN_SSL_CERTFILE, UVICORN_SSL_KEYFILE)
+from config import (
+    SINGBOX_ADVANCED_CONFIG_PATH,
+    SINGBOX_CONFIG_PATH,
+    SINGBOX_EXECUTABLE_PATH,
+    SINGBOX_HYSTERIA_SETTINGS_PATH,
+    SINGBOX_MANAGE_VLESS,
+    SINGBOX_RULE_SETS_PATH,
+    SINGBOX_TRAFFIC_ACCOUNTING_ENABLED,
+    SINGBOX_TRAFFIC_API_HOST,
+    SINGBOX_TRAFFIC_API_PORT,
+    UVICORN_SSL_CERTFILE,
+    UVICORN_SSL_KEYFILE,
+)
 from app.singbox.stats import SingBoxStats
 
 
@@ -62,6 +78,7 @@ class SingBoxRuntime:
     def _singbox_proxy_type(inbound_type: str):
         return {
             "vmess": ProxyTypes.VMess,
+            "vless": ProxyTypes.VLESS,
             "trojan": ProxyTypes.Trojan,
             "shadowsocks": ProxyTypes.Shadowsocks,
             "hysteria2": ProxyTypes.Hysteria2,
@@ -227,6 +244,17 @@ class SingBoxRuntime:
             advanced_config = self.current_advanced_config()
         if rule_sets is None:
             rule_sets = self.current_rule_sets()
+        if SINGBOX_MANAGE_VLESS:
+            advanced_config = dict(advanced_config)
+            advanced_inbounds = list(advanced_config.get("inbounds") or [])
+            existing_tags = {
+                item.get("tag")
+                for item in advanced_inbounds
+                if isinstance(item, dict) and isinstance(item.get("tag"), str)
+            }
+            migrated = convert_vless_inbounds_from_xray(xray.config, existing_tags)
+            if migrated:
+                advanced_config["inbounds"] = [*migrated, *advanced_inbounds]
         users = self._users(settings.tag)
         managed = build_hysteria2_settings_config(settings.model_dump(), users)
         combined = merge_advanced_config(managed, advanced_config)

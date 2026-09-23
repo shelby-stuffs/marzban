@@ -91,6 +91,8 @@ class SingBoxConfiguration(str):
             return {"name": account_name, "uuid": managed_uuid(secret, username, tag), "password": password}
         if inbound_type == "vmess":
             return {"name": account_name, "uuid": managed_uuid(secret, username, tag), "alterId": 0}
+        if inbound_type == "vless":
+            return {"name": account_name, "uuid": managed_uuid(secret, username, tag)}
         return {}
 
     @staticmethod
@@ -146,6 +148,7 @@ class SingBoxConfiguration(str):
             "trojan": "trojan",
             "tuic": "tuic",
             "vmess": "vmess",
+            "vless": "vless",
         }
         address = format_variables.get("SERVER_IP")
         username = format_variables.get("USERNAME", "")
@@ -223,6 +226,13 @@ class SingBoxConfiguration(str):
                         outbound["alter_id"] = credentials["alter_id"]
                     if credentials.get("security"):
                         outbound["security"] = credentials["security"]
+            elif protocol == "vless":
+                uuid = credentials.get("id") or credentials.get("uuid")
+                if not uuid:
+                    continue
+                outbound["uuid"] = uuid
+                if credentials.get("flow"):
+                    outbound["flow"] = credentials["flow"]
             elif protocol in ("trojan", "anytls", "shadowtls", "socks", "naive", "http"):
                 password = credentials.get("password") or credentials.get("Password")
                 if not password:
@@ -286,10 +296,10 @@ class SingBoxConfiguration(str):
         return self.config.get("outbounds", [])[initial_count:]
 
     def render(self, reverse=False):
-        urltest_types = ["anytls", "vmess", "trojan", "shadowsocks", "hysteria", "hysteria2", "naive", "shadowtls", "socks", "tuic", "http", "ssh"]
+        urltest_types = ["anytls", "vless", "vmess", "trojan", "shadowsocks", "hysteria", "hysteria2", "naive", "shadowtls", "socks", "tuic", "http", "ssh"]
         urltest_tags = [outbound["tag"]
                         for outbound in self.config["outbounds"] if outbound["type"] in urltest_types]
-        selector_types = ["anytls", "vmess", "trojan", "shadowsocks", "hysteria", "hysteria2", "naive", "shadowtls", "socks", "tuic", "http", "ssh", "urltest"]
+        selector_types = ["anytls", "vless", "vmess", "trojan", "shadowsocks", "hysteria", "hysteria2", "naive", "shadowtls", "socks", "tuic", "http", "ssh", "urltest"]
         selector_tags = [outbound["tag"]
                          for outbound in self.config["outbounds"] if outbound["type"] in selector_types]
 

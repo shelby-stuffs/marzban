@@ -7,12 +7,16 @@ inbounds created in the GUI or advanced configuration.
 
 ## How it works
 
-- The image builds unmodified sing-box `1.13.12` source with `with_quic`, `with_grpc`, and `with_v2ray_api`.
+- The image builds `shtorm-7/sing-box-extended`
+  `v1.14.0-extended-2.7.1` with `with_quic`, `with_grpc`, and
+  `with_v2ray_api`.
 - Marzban injects a protected `experimental.v2ray_api` block into the final config.
 - For supported user inbounds such as `http`, `socks`, `mixed`, `anytls`,
   `naive`, `shadowtls`, `tuic`, `vmess`, `trojan`, `shadowsocks`, `hysteria`,
-  and `hysteria2`, active/on-hold Marzban users are automatically injected.
-  VLESS remains managed by Xray.
+  `hysteria2`, and `vless`, active/on-hold Marzban users are automatically
+  injected.
+- When `SINGBOX_MANAGE_VLESS=true`, VLESS inbounds are converted from the
+  legacy Xray configuration and Xray no longer starts those listeners.
 - Existing credentials are converted to the native sing-box user shape.
   Users excluded from a specific inbound remain excluded.
 - All configured inbound tags and Marzban-formatted user names are registered
@@ -37,6 +41,7 @@ SINGBOX_ENABLED=true
 SINGBOX_TRAFFIC_ACCOUNTING_ENABLED=true
 SINGBOX_TRAFFIC_API_HOST=127.0.0.1
 SINGBOX_TRAFFIC_API_PORT=10085
+SINGBOX_MANAGE_VLESS=true
 ```
 
 If you change the port, rebuild and recreate the Marzban container. Do not define `experimental.v2ray_api` in the advanced editor; Marzban owns it to prevent accidentally disabling accounting or exposing the gRPC listener.

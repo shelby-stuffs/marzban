@@ -1,9 +1,9 @@
 ARG PYTHON_VERSION=3.12
-ARG SINGBOX_VERSION=1.13.12
+ARG SINGBOX_REF=v1.14.0-extended-2.7.1
 
 FROM golang:1.25-bookworm AS singbox-build
-ARG SINGBOX_VERSION
-RUN git clone --depth 1 --branch "v${SINGBOX_VERSION}" https://github.com/SagerNet/sing-box.git /src/sing-box
+ARG SINGBOX_REF
+RUN git clone --depth 1 --branch "${SINGBOX_REF}" https://github.com/shtorm-7/sing-box-extended.git /src/sing-box
 WORKDIR /src/sing-box
 RUN CGO_ENABLED=0 go build -trimpath \
     -tags "with_quic with_grpc with_v2ray_api" \

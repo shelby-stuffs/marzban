@@ -22,8 +22,19 @@ def hysteria_tags(config: Mapping) -> set[str]:
 
 def strip_hysteria_from_xray(config: Mapping) -> dict:
     """Return an Xray runtime config without native Hysteria inbounds/rules."""
+    return strip_protocols_from_xray(config, {"hysteria"})
+
+
+def strip_protocols_from_xray(config: Mapping, protocols: set[str]) -> dict:
+    """Return an Xray runtime config without protocols owned by sing-box."""
     result = deepcopy(dict(config))
-    tags = hysteria_tags(result)
+    tags = {
+        inbound.get("tag")
+        for inbound in result.get("inbounds", [])
+        if isinstance(inbound, Mapping)
+        and inbound.get("protocol") in protocols
+        and isinstance(inbound.get("tag"), str)
+    }
     if not tags:
         return result
     result["inbounds"] = [
@@ -44,6 +55,131 @@ def strip_hysteria_from_xray(config: Mapping) -> dict:
             cleaned.append(rule)
         routing["rules"] = cleaned
     return result
+
+
+def _split_host_port(value: str, default_port: int = 443) -> tuple[str, int]:
+    if not isinstance(value, str) or not value:
+        return "", default_port
+    if value.startswith("[") and "]" in value:
+        host, _, port = value[1:].partition("]")
+        return host, int(port.lstrip(":") or default_port)
+    host, separator, port = value.rpartition(":")
+    if separator and port.isdigit():
+        return host, int(port)
+    return value, default_port
+
+
+def _vless_transport(stream: Mapping) -> dict | None:
+    network = stream.get("network") or "tcp"
+    if network in ("tcp", "raw"):
+        return None
+    if network in ("ws", "websocket"):
+        settings = stream.get("wsSettings") or {}
+        transport = {"type": "ws"}
+        if settings.get("path"):
+            transport["path"] = settings["path"]
+        headers = settings.get("headers")
+        if isinstance(headers, Mapping) and headers:
+            transport["headers"] = deepcopy(dict(headers))
+        return transport
+    if network in ("grpc", "gun"):
+        settings = stream.get("grpcSettings") or {}
+        transport = {"type": "grpc"}
+        if settings.get("serviceName"):
+            transport["service_name"] = settings["serviceName"]
+        if settings.get("multiMode") is True:
+            transport["multi_mode"] = True
+        return transport
+    if network in ("xhttp", "splithttp"):
+        settings = stream.get("xhttpSettings") or stream.get("splithttpSettings") or {}
+        transport = {"type": "xhttp"}
+        if settings.get("path"):
+            transport["path"] = settings["path"]
+        if settings.get("host"):
+            transport["host"] = settings["host"]
+        return transport
+    raise ValueError(f"Unsupported VLESS transport for sing-box migration: {network}")
+
+
+def _vless_tls(stream: Mapping) -> dict | None:
+    security = stream.get("security") or "none"
+    if security == "none":
+        return None
+    settings = stream.get("tlsSettings") or {}
+    if security == "tls":
+        tls = {"enabled": True}
+        certificates = settings.get("certificates") or []
+        if certificates and isinstance(certificates[0], Mapping):
+            certificate = certificates[0]
+            if certificate.get("certificateFile") and certificate.get("keyFile"):
+                tls["certificate_path"] = certificate["certificateFile"]
+                tls["key_path"] = certificate["keyFile"]
+            elif certificate.get("certificate") and certificate.get("key"):
+                tls["certificate"] = certificate["certificate"]
+                tls["key"] = certificate["key"]
+        if settings.get("alpn"):
+            tls["alpn"] = settings["alpn"]
+        return tls
+    if security == "reality":
+        reality = settings.get("realitySettings") or {}
+        tls = {"enabled": True, "reality": {"enabled": True}}
+        if reality.get("privateKey"):
+            tls["reality"]["private_key"] = reality["privateKey"]
+        if reality.get("shortIds"):
+            tls["reality"]["short_id"] = reality["shortIds"][0]
+        dest_host, dest_port = _split_host_port(reality.get("dest", ""))
+        if dest_host:
+            tls["reality"]["handshake"] = {
+                "server": dest_host,
+                "server_port": dest_port,
+            }
+        return tls
+    raise ValueError(f"Unsupported VLESS security for sing-box migration: {security}")
+
+
+def convert_vless_inbounds_from_xray(config: Mapping, existing_tags: set[str] | None = None) -> list[dict]:
+    """Convert legacy Xray VLESS inbounds to native sing-box inbounds.
+
+    The conversion intentionally keeps tags, ports and UUIDs stable. Existing
+    advanced sing-box tags win, so an operator can replace one migrated inbound
+    with a hand-tuned extended configuration without creating duplicates.
+    """
+    existing_tags = existing_tags or set()
+    converted = []
+    for source in config.get("inbounds", []):
+        if not isinstance(source, Mapping) or source.get("protocol") != "vless":
+            continue
+        tag = source.get("tag")
+        port = source.get("port")
+        if not isinstance(tag, str) or not tag or tag in existing_tags:
+            continue
+        if not isinstance(port, int) or isinstance(port, bool) or not 1 <= port <= 65535:
+            continue
+        stream = source.get("streamSettings") or {}
+        inbound = {
+            "type": "vless",
+            "tag": tag,
+            "listen": source.get("listen") or "::",
+            "listen_port": port,
+            "users": [],
+        }
+        for client in (source.get("settings") or {}).get("clients", []):
+            if not isinstance(client, Mapping) or not client.get("id"):
+                continue
+            user = {"uuid": client["id"]}
+            if client.get("email"):
+                user["name"] = client["email"]
+            if client.get("flow"):
+                user["flow"] = client["flow"]
+            inbound["users"].append(user)
+        transport = _vless_transport(stream)
+        if transport:
+            inbound["transport"] = transport
+        tls = _vless_tls(stream)
+        if tls:
+            inbound["tls"] = tls
+        converted.append(inbound)
+    return converted
 
 
 def _server_obfs(stream: Mapping) -> dict | None:
