@@ -4,7 +4,7 @@ from typing import List, Optional
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from app.subscription.rules import CONFIG_FORMATS
+from app.subscription.rules import CONFIG_FORMATS, INTERNAL_FORMATS
 
 
 def _validate_pattern(value: Optional[str]) -> Optional[str]:
@@ -20,8 +20,11 @@ def _validate_pattern(value: Optional[str]) -> Optional[str]:
 def _validate_format(value: Optional[str]) -> Optional[str]:
     if value is None:
         return value
-    if value not in CONFIG_FORMATS:
-        raise ValueError(f"config_format must be one of {', '.join(CONFIG_FORMATS)}")
+    if value not in (*CONFIG_FORMATS, *INTERNAL_FORMATS):
+        raise ValueError(
+            "config_format must be one of "
+            f"{', '.join((*CONFIG_FORMATS, *INTERNAL_FORMATS))}"
+        )
     return value
 
 
