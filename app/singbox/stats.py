@@ -23,6 +23,9 @@ class SingBoxStats(XRay):
     SERVICE_NAMES = (
         # sing-box's generated protobuf package uses this service name.
         "/experimental.v2rayapi.StatsService/QueryStats",
+        # Some sing-box/extended builds override the descriptor name to the
+        # canonical V2Ray service name while keeping the same wire format.
+        "/v2ray.core.app.stats.command.StatsService/QueryStats",
         "/v2ray.app.stats.command.StatsService/QueryStats",
         # Some sing-box builds register the compatibility service under the
         # Xray namespace even though the protobuf contract is the same.

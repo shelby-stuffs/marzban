@@ -69,6 +69,13 @@ class SingBoxTrafficAccountingTests(unittest.TestCase):
         self.assertIn("runtime.core.started", source)
         ast.parse(source)
 
+    def test_stats_client_supports_extended_v2ray_service_namespace(self):
+        source = (ROOT / "app/singbox/stats.py").read_text()
+        self.assertIn(
+            '"/v2ray.core.app.stats.command.StatsService/QueryStats"',
+            source,
+        )
+
     def test_docker_build_includes_required_tags(self):
         dockerfile = (ROOT / "Dockerfile").read_text()
         self.assertIn("with_quic with_grpc with_v2ray_api", dockerfile)
