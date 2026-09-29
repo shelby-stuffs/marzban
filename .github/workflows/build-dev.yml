@@ -1,4 +1,4 @@
-name: Build-Docker-dev
+name: Build-docker-dev
 
 on:
   push:
