@@ -28,6 +28,7 @@ from app.db.models import (
     User,
     UserTemplate,
     UserUsageResetLogs,
+    ExternalSubscription,
 )
 from app.models.admin import AdminCreate, AdminModify, AdminPartialModify
 from app.models.node import NodeCreate, NodeModify, NodeStatus, NodeUsageResponse
@@ -380,6 +381,14 @@ def create_user(db: Session, user: UserCreate, admin: Admin = None) -> User:
                   excluded_inbounds=excluded_inbounds)
         )
 
+    # Handle external subscriptions
+    external_subs = []
+    if user.external_subscriptions:
+        for sub_id in user.external_subscriptions:
+            sub = db.query(ExternalSubscription).filter(ExternalSubscription.id == sub_id).first()
+            if sub:
+                external_subs.append(sub)
+
     dbuser = User(
         username=user.username,
         proxies=proxies,
@@ -397,6 +406,7 @@ def create_user(db: Session, user: UserCreate, admin: Admin = None) -> User:
         on_hold_expire_duration=(user.on_hold_expire_duration or None),
         on_hold_timeout=(user.on_hold_timeout or None),
         auto_delete_in_days=user.auto_delete_in_days,
+        external_subscriptions=external_subs,
         next_plan=NextPlan(
             data_limit=user.next_plan.data_limit,
             expire=user.next_plan.expire,
@@ -534,6 +544,15 @@ def update_user(db: Session, dbuser: User, modify: UserModify) -> User:
         )
     elif dbuser.next_plan is not None:
         db.delete(dbuser.next_plan)
+
+    # Handle external subscriptions
+    if modify.external_subscriptions is not None:
+        external_subs = []
+        for sub_id in modify.external_subscriptions:
+            sub = db.query(ExternalSubscription).filter(ExternalSubscription.id == sub_id).first()
+            if sub:
+                external_subs.append(sub)
+        dbuser.external_subscriptions = external_subs
 
     dbuser.edit_at = datetime.utcnow()
 

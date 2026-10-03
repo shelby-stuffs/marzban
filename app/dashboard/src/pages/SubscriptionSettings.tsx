@@ -73,7 +73,23 @@ type Token = {
   is_active: boolean;
 };
 
+type ExternalSubscription = {
+  id: number;
+  name: string;
+  url: string;
+  update_interval: number;
+  is_enabled: boolean;
+  last_fetched_at?: string | null;
+  last_error?: string | null;
+  created_at: string;
+  updated_at?: string | null;
+};
+
+type ExternalSubscriptionsResponse = { subscriptions: ExternalSubscription[] };
+
 type RuleDraft = Omit<Rule, "id"> & { id?: number };
+
+type ExternalSubscriptionDraft = Omit<ExternalSubscription, "id" | "created_at" | "updated_at" | "last_fetched_at" | "last_error"> & { id?: number };
 
 const emptyDraft: RuleDraft = {
   name: "",
@@ -86,6 +102,13 @@ const emptyDraft: RuleDraft = {
   min_version: "",
   max_version: "",
   is_disabled: false,
+};
+
+const emptyExternalDraft: ExternalSubscriptionDraft = {
+  name: "",
+  url: "",
+  update_interval: 3600,
+  is_enabled: true,
 };
 
 const FALLBACK_FORMATS = [
@@ -104,6 +127,240 @@ const when = (value?: string | null) =>
 
 const errorMessage = (error: any, fallback: string) =>
   error?.response?._data?.detail || error?.message || fallback;
+
+const ExternalSubscriptionsSection: FC = () => {
+  const toast = useToast();
+  const [subscriptions, setSubscriptions] = useState<ExternalSubscription[]>([]);
+  const [draft, setDraft] = useState<ExternalSubscriptionDraft>(emptyExternalDraft);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  const load = async () => {
+    setLoading(true);
+    try {
+      const data = await fetch<ExternalSubscriptionsResponse>("/external-subscription");
+      setSubscriptions(data.subscriptions);
+    } catch (error: any) {
+      toast({
+        title: errorMessage(error, "Failed to load external subscriptions"),
+        status: "error",
+        position: "top",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    void load();
+  }, []);
+
+  const update = (values: Partial<ExternalSubscriptionDraft>) =>
+    setDraft((current) => ({ ...current, ...values }));
+
+  const save = async () => {
+    setSaving(true);
+    const body = { ...draft };
+    delete (body as any).id;
+    try {
+      if (draft.id) {
+        await fetch(`/external-subscription/${draft.id}`, { method: "PUT", body });
+      } else {
+        await fetch("/external-subscription", { method: "POST", body });
+      }
+      toast({ title: "External subscription saved", status: "success", position: "top" });
+      setDraft(emptyExternalDraft);
+      await load();
+    } catch (error: any) {
+      toast({
+        title: errorMessage(error, "Invalid external subscription"),
+        status: "error",
+        position: "top",
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const remove = async (sub: ExternalSubscription) => {
+    try {
+      await fetch(`/external-subscription/${sub.id}`, { method: "DELETE" });
+      if (draft.id === sub.id) setDraft(emptyExternalDraft);
+      await load();
+    } catch (error: any) {
+      toast({
+        title: errorMessage(error, "Failed to delete external subscription"),
+        status: "error",
+        position: "top",
+      });
+    }
+  };
+
+  const fetchNow = async (sub: ExternalSubscription) => {
+    try {
+      const result = await fetch(`/external-subscription/${sub.id}/fetch`, { method: "POST" });
+      if (result.status === "success") {
+        toast({ title: `Fetched ${result.links_count} links`, status: "success", position: "top" });
+      } else {
+        toast({ title: result.message || "Fetch failed", status: "error", position: "top" });
+      }
+      await load();
+    } catch (error: any) {
+      toast({
+        title: errorMessage(error, "Failed to fetch"),
+        status: "error",
+        position: "top",
+      });
+    }
+  };
+
+  return (
+    <VStack align="stretch" spacing="4">
+      <Alert status="info" fontSize="sm">
+        <AlertIcon />
+        Внешние подписки позволяют добавлять прокси из сторонних источников. Ссылки
+        автоматически кэшируются и добавляются в подписки пользователей.
+      </Alert>
+
+      <Panel label="external subscriptions">
+        {loading ? (
+          <Spinner />
+        ) : (
+          <Box overflowX="auto">
+            <Table size="sm" fontFamily="mono">
+              <Thead>
+                <Tr>
+                  <Th>name</Th>
+                  <Th>url</Th>
+                  <Th>interval</Th>
+                  <Th>status</Th>
+                  <Th>last fetch</Th>
+                  <Th>error</Th>
+                  <Th />
+                </Tr>
+              </Thead>
+              <Tbody>
+                {subscriptions.length === 0 && (
+                  <Tr>
+                    <Td colSpan={7}>
+                      <Text color="terminal.dim">Нет внешних подписок.</Text>
+                    </Td>
+                  </Tr>
+                )}
+                {subscriptions.map((sub) => (
+                  <Tr key={sub.id} opacity={sub.is_enabled ? 1 : 0.5}>
+                    <Td>{sub.name}</Td>
+                    <Td maxW="280px" isTruncated title={sub.url}>
+                      {sub.url}
+                    </Td>
+                    <Td>{Math.round(sub.update_interval / 60)} мин</Td>
+                    <Td>
+                      <Badge colorScheme={sub.is_enabled ? "primary" : "red"}>
+                        {sub.is_enabled ? "enabled" : "disabled"}
+                      </Badge>
+                    </Td>
+                    <Td>{when(sub.last_fetched_at)}</Td>
+                    <Td maxW="220px" isTruncated title={sub.last_error || ""}>
+                      {sub.last_error || "—"}
+                    </Td>
+                    <Td>
+                      <HStack justify="flex-end" spacing="2">
+                        <Button
+                          size="xs"
+                          variant="ghost"
+                          onClick={() =>
+                            setDraft({
+                              ...sub,
+                            })
+                          }
+                        >
+                          edit
+                        </Button>
+                        <Button
+                          size="xs"
+                          variant="ghost"
+                          onClick={() => void fetchNow(sub)}
+                        >
+                          fetch
+                        </Button>
+                        <Button
+                          size="xs"
+                          variant="ghost"
+                          colorScheme="red"
+                          onClick={() => void remove(sub)}
+                        >
+                          delete
+                        </Button>
+                      </HStack>
+                    </Td>
+                  </Tr>
+                ))}
+              </Tbody>
+            </Table>
+          </Box>
+        )}
+        <HStack mt="4" spacing="3">
+          <Button size="sm" variant="ghost" onClick={() => void load()}>
+            Обновить
+          </Button>
+        </HStack>
+      </Panel>
+
+      <Panel label={draft.id ? `edit external subscription #${draft.id}` : "new external subscription"}>
+        <Grid templateColumns={{ base: "1fr", md: "repeat(3, 1fr)" }} gap="4">
+          <FormControl>
+            <FormLabel>Название</FormLabel>
+            <Input
+              value={draft.name}
+              onChange={(event) => update({ name: event.target.value })}
+            />
+          </FormControl>
+          <FormControl gridColumn={{ md: "span 2" }}>
+            <FormLabel>URL подписки</FormLabel>
+            <Input
+              fontFamily="mono"
+              value={draft.url}
+              onChange={(event) => update({ url: event.target.value })}
+            />
+          </FormControl>
+          <FormControl>
+            <FormLabel>Интервал обновления (сек)</FormLabel>
+            <Input
+              type="number"
+              value={draft.update_interval}
+              onChange={(event) =>
+                update({ update_interval: Number(event.target.value) || 3600 })
+              }
+            />
+          </FormControl>
+        </Grid>
+        <HStack mt="4" spacing="6" flexWrap="wrap">
+          <Checkbox
+            isChecked={draft.is_enabled}
+            onChange={(event) => update({ is_enabled: event.target.checked })}
+          >
+            включено
+          </Checkbox>
+        </HStack>
+        <HStack mt="4" justify="flex-end" spacing="3">
+          {draft.id && (
+            <Button variant="ghost" onClick={() => setDraft(emptyExternalDraft)}>
+              Отмена
+            </Button>
+          )}
+          <Button
+            colorScheme="primary"
+            isLoading={saving}
+            isDisabled={!draft.name || !draft.url}
+            onClick={() => void save()}
+          >
+            {draft.id ? "Сохранить" : "Добавить"}
+          </Button>
+        </HStack>
+      </Panel>
+    </VStack>
+  );
+};
 
 const RulesSection: FC = () => {
   const toast = useToast();
@@ -710,6 +967,7 @@ export const SubscriptionSettingsPage: FC = () => (
       <TabList>
         <Tab>Правила клиентов</Tab>
         <Tab>Токены</Tab>
+        <Tab>Внешние подписки</Tab>
       </TabList>
       <TabPanels>
         <TabPanel px="0">
@@ -717,6 +975,9 @@ export const SubscriptionSettingsPage: FC = () => (
         </TabPanel>
         <TabPanel px="0">
           <TokensSection />
+        </TabPanel>
+        <TabPanel px="0">
+          <ExternalSubscriptionsSection />
         </TabPanel>
       </TabPanels>
     </Tabs>

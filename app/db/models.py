@@ -1,5 +1,6 @@
 import os
 from datetime import datetime
+from typing import List
 
 from sqlalchemy import (
     JSON,
@@ -78,6 +79,14 @@ class AdminUsageLogs(Base):
     reset_at = Column(DateTime, default=datetime.utcnow)
 
 
+user_external_subscriptions_association = Table(
+    "user_external_subscriptions",
+    Base.metadata,
+    Column("user_id", ForeignKey("users.id"), primary_key=True),
+    Column("external_subscription_id", ForeignKey("external_subscriptions.id"), primary_key=True),
+)
+
+
 class User(Base):
     __tablename__ = "users"
 
@@ -126,6 +135,12 @@ class User(Base):
         cascade="all, delete-orphan"
     )
 
+    external_subscriptions = relationship(
+        "ExternalSubscription",
+        secondary=user_external_subscriptions_association,
+        back_populates="users",
+    )
+
     @hybrid_property
     def reseted_usage(self) -> int:
         return int(sum([log.used_traffic_at_reset for log in self.usage_logs]))
@@ -151,24 +166,36 @@ class User(Base):
 
     @property
     def excluded_inbounds(self):
+        from app.models.proxy import ProxyTypes
         _ = {}
         for proxy in self.proxies:
-            _[proxy.type] = [i.tag for i in proxy.excluded_inbounds]
+            proxy_type = proxy.type
+            if isinstance(proxy_type, str):
+                proxy_type = ProxyTypes(proxy_type)
+            _[proxy_type] = [i.tag for i in proxy.excluded_inbounds]
         return _
 
     @property
     def inbounds(self):
+        from app.models.proxy import ProxyTypes
         _ = {}
         for proxy in self.proxies:
-            _[proxy.type] = []
+            proxy_type = proxy.type
+            if isinstance(proxy_type, str):
+                proxy_type = ProxyTypes(proxy_type)
+            _[proxy_type] = []
             excluded_tags = [i.tag for i in proxy.excluded_inbounds]
-            for inbound in xray.config.inbounds_by_protocol.get(proxy.type, []):
+            for inbound in xray.config.inbounds_by_protocol.get(proxy_type, []):
                 if inbound["tag"] not in excluded_tags:
-                    _[proxy.type].append(inbound["tag"])
+                    _[proxy_type].append(inbound["tag"])
         if self.singbox_inbounds is not None:
             _["singbox"] = list(self.singbox_inbounds)
 
         return _
+
+    @property
+    def external_subscription_ids(self) -> List[int]:
+        return [sub.id for sub in self.external_subscriptions]
 
 
 excluded_inbounds_association = Table(
@@ -378,3 +405,36 @@ class NotificationReminder(Base):
     threshold = Column(Integer, nullable=True)
     expires_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class ExternalSubscription(Base):
+    __tablename__ = "external_subscriptions"
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String(128), nullable=False, unique=True)
+    url = Column(String(1024), nullable=False)
+    update_interval = Column(Integer, default=3600)  # in seconds
+    is_enabled = Column(Boolean, default=True)
+    last_fetched_at = Column(DateTime, nullable=True)
+    last_error = Column(String(512), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    links = relationship("ExternalSubscriptionLink", back_populates="subscription", cascade="all, delete-orphan")
+    users = relationship(
+        "User",
+        secondary=user_external_subscriptions_association,
+        back_populates="external_subscriptions",
+    )
+
+
+class ExternalSubscriptionLink(Base):
+    __tablename__ = "external_subscription_links"
+
+    id = Column(Integer, primary_key=True)
+    subscription_id = Column(Integer, ForeignKey("external_subscriptions.id"), nullable=False, index=True)
+    link = Column(String(2048), nullable=False)
+    link_hash = Column(String(64), nullable=False, index=True)  # For deduplication
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    subscription = relationship("ExternalSubscription", back_populates="links")

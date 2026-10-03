@@ -137,16 +137,21 @@ def update_user(dbuser: "DBUser"):
     user = UserResponse.model_validate(dbuser)
     email = f"{dbuser.id}.{dbuser.username}"
 
+    from app.models.proxy import ProxyTypes
+
     active_inbounds = []
-    for proxy_type, inbound_tags in user.inbounds.items():
-        if SINGBOX_ENABLED and getattr(proxy_type, "value", proxy_type) == "hysteria":
+    for proxy_type_str, inbound_tags in user.inbounds.items():
+        if proxy_type_str == "singbox":
+            continue
+        proxy_type = ProxyTypes(proxy_type_str)
+        if SINGBOX_ENABLED and proxy_type.value == "hysteria":
             continue
         for inbound_tag in inbound_tags:
             active_inbounds.append(inbound_tag)
             inbound = xray.config.inbounds_by_tag.get(inbound_tag, {})
 
             try:
-                proxy_settings = user.proxies[proxy_type].dict(no_obj=True)
+                proxy_settings = user.proxies[proxy_type_str].dict(no_obj=True)
             except KeyError:
                 pass
             account = proxy_type.account_model(email=email, **proxy_settings)

@@ -133,6 +133,7 @@ class UserCreate(User):
 
     username: str
     status: UserStatusCreate = None
+    external_subscriptions: list[int] | None = None
     model_config = ConfigDict(json_schema_extra={
         "example": {
             "username": "user1234",
@@ -249,6 +250,7 @@ class UserModify(User):
 
     status: UserStatusModify = None
     data_limit_reset_strategy: UserDataLimitResetStrategy = None
+    external_subscriptions: list[int] | None = None
     model_config = ConfigDict(json_schema_extra={
         "example": {
             "proxies": {
@@ -362,6 +364,12 @@ class UserResponse(User):
 
     admin: Optional[Admin] = None
     model_config = ConfigDict(from_attributes=True)
+
+    @property
+    def external_subscriptions(self) -> List[int]:
+        if hasattr(self, 'external_subscription_ids'):
+            return self.external_subscription_ids
+        return []
 
     @model_validator(mode="after")
     def validate_links(self):

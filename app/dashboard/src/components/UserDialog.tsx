@@ -1,6 +1,7 @@
 import {
   Alert,
   AlertIcon,
+  Badge,
   Box,
   Button,
   Checkbox,
@@ -63,6 +64,7 @@ import { RadioGroup } from "./RadioGroup";
 import { UsageFilter, createUsageConfig } from "./UsageFilter";
 import { ReloadIcon } from "./Filters";
 import classNames from "classnames";
+import { fetch } from "service/http";
 
 const AddUserIcon = chakra(UserPlusIcon, {
   baseStyle: {
@@ -87,7 +89,7 @@ const UserUsageIcon = chakra(ChartPieIcon, {
 
 export type UserDialogProps = {};
 
-export type FormType = Pick<UserCreate, keyof UserCreate> & {
+export type FormType = UserCreate & {
   selected_proxies: ProxyKeys;
 };
 
@@ -110,6 +112,7 @@ const formatUser = (user: User): FormType => {
         ? { singbox: singboxTags }
         : {}),
     },
+    external_subscriptions: user.external_subscriptions?.map((s) => s.id) || [],
   };
 };
 const generateHysteriaPassword = () =>
@@ -137,6 +140,7 @@ const getDefaultValues = (): FormType => {
     on_hold_expire_duration: null,
     note: "",
     inbounds,
+    external_subscriptions: [],
     proxies: {
       vless: { id: "", flow: "" },
       vmess: { id: "" },
@@ -212,6 +216,7 @@ const baseSchema = {
     });
     return ins;
   }),
+  external_subscriptions: z.array(z.number()).optional(),
 };
 
 const schema = z.discriminatedUnion("status", [
@@ -263,6 +268,18 @@ export const UserDialog: FC<UserDialogProps> = () => {
   const { t, i18n } = useTranslation();
 
   const { colorMode } = useColorMode();
+
+  const [externalSubscriptions, setExternalSubscriptions] = useState<
+    { id: number; name: string; url: string; is_enabled: boolean }[]
+  >([]);
+
+  useEffect(() => {
+    fetch<{ subscriptions: { id: number; name: string; url: string; is_enabled: boolean }[] }>(
+      "/external-subscription"
+    )
+      .then((data) => setExternalSubscriptions(data.subscriptions))
+      .catch(() => setExternalSubscriptions([]));
+  }, []);
 
   const [usageVisible, setUsageVisible] = useState(false);
   const handleUsageToggle = () => {
@@ -853,6 +870,53 @@ export const UserDialog: FC<UserDialogProps> = () => {
                                   {inbound.port ? `:${inbound.port}` : ""}
                                 </Text>
                               </Text>
+                            </Checkbox>
+                          );
+                        })}
+                      </SimpleGrid>
+                    </FormControl>
+                  )}
+                  {externalSubscriptions.length > 0 && (
+                    <FormControl mt="4">
+                      <FormLabel>{t("userDialog.externalSubscriptions")}</FormLabel>
+                      <Text fontSize="xs" color="gray.500" mb="2">
+                        {t("userDialog.externalSubscriptionsHelp")}
+                      </Text>
+                      <SimpleGrid columns={1} gap={2}>
+                        {externalSubscriptions.map((sub) => {
+                          const selected =
+                            form.watch("external_subscriptions") || [];
+                          return (
+                            <Checkbox
+                              key={sub.id}
+                              size="sm"
+                              colorScheme="primary"
+                              isChecked={selected.includes(sub.id)}
+                              onChange={(event) => {
+                                const next = event.target.checked
+                                  ? [...selected, sub.id]
+                                  : selected.filter((id) => id !== sub.id);
+                                form.setValue("external_subscriptions", next, {
+                                  shouldDirty: true,
+                                  shouldValidate: true,
+                                });
+                              }}
+                              isDisabled={disabled}
+                            >
+                              <HStack alignItems="center" spacing="3">
+                                <Text fontSize="sm" fontWeight="medium">
+                                  {sub.name}
+                                </Text>
+                                <Text fontSize="xs" color="gray.500" maxW="300px" isTruncated title={sub.url}>
+                                  {sub.url}
+                                </Text>
+                                <Badge
+                                  size="sm"
+                                  colorScheme={sub.is_enabled ? "green" : "gray"}
+                                >
+                                  {sub.is_enabled ? t("status.enabled", "Enabled") : t("status.disabled", "Disabled")}
+                                </Badge>
+                              </HStack>
                             </Checkbox>
                           );
                         })}

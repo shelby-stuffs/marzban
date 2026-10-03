@@ -19,6 +19,7 @@ from . import *
 
 if TYPE_CHECKING:
     from app.models.user import UserResponse
+    from sqlalchemy.orm import Session
 
 from config import (
     ACTIVE_STATUS_TEXT,
@@ -197,6 +198,17 @@ def _generate_expired_notice(config_format: str) -> str:
     return "\n".join(links)
 
 
+def _get_external_links(db: "Session", user_id: int = None) -> List[str]:
+    """Get cached external subscription links, optionally filtered by user access."""
+    try:
+        from app.db import subscription as subscription_store
+        if user_id:
+            return subscription_store.get_user_external_links(db, user_id)
+        return subscription_store.get_all_external_links(db)
+    except Exception:
+        return []
+
+
 def generate_subscription(
         user: "UserResponse",
         config_format: Literal[
@@ -204,6 +216,8 @@ def generate_subscription(
         ],
         as_base64: bool,
         reverse: bool,
+        db: "Session" = None,
+        include_external: bool = True,
 ) -> str:
     kwargs = {
         "proxies": user.proxies,
@@ -221,8 +235,23 @@ def generate_subscription(
             config = base64.b64encode(config.encode()).decode()
         return config
 
+    # Get external links if database session is provided
+    external_links = []
+    if db and include_external:
+        external_links = _get_external_links(db, user.id if hasattr(user, 'id') else None)
+
     if config_format == "v2ray":
-        config = "\n".join(generate_v2ray_links(**kwargs))
+        links = generate_v2ray_links(**kwargs)
+        if external_links:
+            links.extend(external_links)
+        config = "\n".join(links)
+    elif config_format == "hysteria2":
+        links = generate_v2ray_links(**kwargs)
+        links = filter_links(links, HYSTERIA2_SCHEMES)
+        if external_links:
+            ext_hysteria = filter_links(external_links, HYSTERIA2_SCHEMES)
+            links.extend(ext_hysteria)
+        config = "\n".join(links)
     elif config_format == "clash-meta":
         config = generate_clash_subscription(**kwargs, is_meta=True)
     elif config_format == "clash":
@@ -233,8 +262,6 @@ def generate_subscription(
         config = generate_outline_subscription(**kwargs)
     elif config_format == "v2ray-json":
         config = generate_v2ray_json_subscription(**kwargs)
-    elif config_format == "hysteria2":
-        config = generate_hysteria2_subscription(**kwargs)
     elif config_format == "happ":
         config = generate_happ_subscription(**kwargs)
     else:
