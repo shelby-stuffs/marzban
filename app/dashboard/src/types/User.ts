@@ -40,6 +40,18 @@ export type DataLimitResetStrategy =
 export type UserInbounds = {
   [key: string]: string[];
 };
+export type ExternalSubscription = {
+  id: number;
+  name: string;
+  url: string;
+  update_interval: number;
+  is_enabled: boolean;
+  last_fetched_at?: string | null;
+  last_error?: string | null;
+  created_at: string;
+  updated_at?: string | null;
+};
+
 export type User = {
   proxies: ProxyType;
   expire: number | null;
@@ -56,6 +68,7 @@ export type User = {
   note: string;
   online_at: string;
   sub_last_user_agent: string | null;
+  external_subscriptions: ExternalSubscription[];
 };
 
 export type UserCreate = Pick<

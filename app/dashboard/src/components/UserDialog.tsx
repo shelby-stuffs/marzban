@@ -63,6 +63,7 @@ import { RadioGroup } from "./RadioGroup";
 import { UsageFilter, createUsageConfig } from "./UsageFilter";
 import { ReloadIcon } from "./Filters";
 import classNames from "classnames";
+import { fetch } from "service/http";
 
 const AddUserIcon = chakra(UserPlusIcon, {
   baseStyle: {
@@ -263,6 +264,18 @@ export const UserDialog: FC<UserDialogProps> = () => {
   const { t, i18n } = useTranslation();
 
   const { colorMode } = useColorMode();
+
+  const [externalSubscriptions, setExternalSubscriptions] = useState<
+    { id: number; name: string; url: string }[]
+  >([]);
+
+  useEffect(() => {
+    fetch<{ subscriptions: { id: number; name: string; url: string }[] }>(
+      "/external-subscription"
+    )
+      .then((data) => setExternalSubscriptions(data.subscriptions))
+      .catch(() => setExternalSubscriptions([]));
+  }, []);
 
   const [usageVisible, setUsageVisible] = useState(false);
   const handleUsageToggle = () => {
@@ -851,6 +864,45 @@ export const UserDialog: FC<UserDialogProps> = () => {
                                 <Text as="span" color="gray.500" ml="2">
                                   {inbound.type}
                                   {inbound.port ? `:${inbound.port}` : ""}
+                                </Text>
+                              </Text>
+                            </Checkbox>
+                          );
+                        })}
+                      </SimpleGrid>
+                    </FormControl>
+                  )}
+                  {singboxInbounds.length > 0 && (
+                    <FormControl mt="4">
+                      <FormLabel>{t("userDialog.externalSubscriptions")}</FormLabel>
+                      <Text fontSize="xs" color="gray.500" mb="2">
+                        {t("userDialog.externalSubscriptionsHelp")}
+                      </Text>
+                      <SimpleGrid columns={1} gap={2}>
+                        {externalSubscriptions.map((sub) => {
+                          const selected =
+                            form.watch("external_subscriptions") || [];
+                          return (
+                            <Checkbox
+                              key={sub.id}
+                              size="sm"
+                              colorScheme="primary"
+                              isChecked={selected.includes(sub.id)}
+                              onChange={(event) => {
+                                const next = event.target.checked
+                                  ? [...selected, sub.id]
+                                  : selected.filter((id) => id !== sub.id);
+                                form.setValue("external_subscriptions", next, {
+                                  shouldDirty: true,
+                                  shouldValidate: true,
+                                });
+                              }}
+                              isDisabled={disabled}
+                            >
+                              <Text fontSize="sm">
+                                {sub.name}
+                                <Text as="span" color="gray.500" ml="2">
+                                  {sub.url}
                                 </Text>
                               </Text>
                             </Checkbox>

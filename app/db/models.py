@@ -126,6 +126,12 @@ class User(Base):
         cascade="all, delete-orphan"
     )
 
+    external_subscriptions = relationship(
+        "ExternalSubscription",
+        secondary=user_external_subscriptions_association,
+        back_populates="users",
+    )
+
     @hybrid_property
     def reseted_usage(self) -> int:
         return int(sum([log.used_traffic_at_reset for log in self.usage_logs]))
@@ -183,6 +189,13 @@ template_inbounds_association = Table(
     Base.metadata,
     Column("user_template_id", ForeignKey("user_templates.id")),
     Column("inbound_tag", ForeignKey("inbounds.tag")),
+)
+
+user_external_subscriptions_association = Table(
+    "user_external_subscriptions",
+    Base.metadata,
+    Column("user_id", ForeignKey("users.id"), primary_key=True),
+    Column("external_subscription_id", ForeignKey("external_subscriptions.id"), primary_key=True),
 )
 
 
@@ -378,3 +391,36 @@ class NotificationReminder(Base):
     threshold = Column(Integer, nullable=True)
     expires_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class ExternalSubscription(Base):
+    __tablename__ = "external_subscriptions"
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String(128), nullable=False, unique=True)
+    url = Column(String(1024), nullable=False)
+    update_interval = Column(Integer, default=3600)  # in seconds
+    is_enabled = Column(Boolean, default=True)
+    last_fetched_at = Column(DateTime, nullable=True)
+    last_error = Column(String(512), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    links = relationship("ExternalSubscriptionLink", back_populates="subscription", cascade="all, delete-orphan")
+    users = relationship(
+        "User",
+        secondary=user_external_subscriptions_association,
+        back_populates="external_subscriptions",
+    )
+
+
+class ExternalSubscriptionLink(Base):
+    __tablename__ = "external_subscription_links"
+
+    id = Column(Integer, primary_key=True)
+    subscription_id = Column(Integer, ForeignKey("external_subscriptions.id"), nullable=False, index=True)
+    link = Column(String(2048), nullable=False)
+    link_hash = Column(String(64), nullable=False, index=True)  # For deduplication
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    subscription = relationship("ExternalSubscription", back_populates="links")

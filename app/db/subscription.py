@@ -1,10 +1,11 @@
-"""Persistence for subscription client rules and per-device tokens."""
+"""Persistence for subscription client rules, per-device tokens, and external subscriptions."""
 
 from __future__ import annotations
 
+import hashlib
 import secrets
 from datetime import datetime, timedelta
-from typing import List, Optional
+from typing import List, Optional, TYPE_CHECKING
 
 from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String
 from sqlalchemy.orm import Session, backref, relationship
@@ -12,9 +13,44 @@ from sqlalchemy.orm import Session, backref, relationship
 from app.db.base import Base
 from app.subscription.rules import DEFAULT_RULES, ClientRule
 
+if TYPE_CHECKING:
+    from app.db.models import User
+
 #: New tokens carry a prefix so the router can tell them apart from the legacy
 #: signed tokens without a database round trip.
 TOKEN_PREFIX = "st_"
+
+
+class ExternalSubscription(Base):
+    """An external subscription source to fetch and merge with local configs."""
+
+    __tablename__ = "external_subscriptions"
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String(128), nullable=False, unique=True)
+    url = Column(String(1024), nullable=False)
+    update_interval = Column(Integer, nullable=False, default=3600, server_default="3600")
+    is_enabled = Column(Boolean, nullable=False, default=True, server_default="1")
+    last_fetched_at = Column(DateTime, nullable=True)
+    last_error = Column(String(512), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, nullable=True)
+
+    links = relationship("ExternalSubscriptionLink", back_populates="subscription", cascade="all, delete-orphan")
+
+
+class ExternalSubscriptionLink(Base):
+    """A cached proxy link from an external subscription."""
+
+    __tablename__ = "external_subscription_links"
+
+    id = Column(Integer, primary_key=True)
+    subscription_id = Column(Integer, ForeignKey("external_subscriptions.id"), nullable=False, index=True)
+    link = Column(String(2048), nullable=False)
+    link_hash = Column(String(64), nullable=False, index=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    subscription = relationship("ExternalSubscription", back_populates="links")
 
 
 class SubscriptionRule(Base):
@@ -253,3 +289,128 @@ def purge_expired_tokens(db: Session, older_than_days: int = 0) -> int:
     if stale:
         db.commit()
     return len(stale)
+
+
+# --- external subscriptions --------------------------------------------------
+
+
+def get_external_subscriptions(db: Session, include_disabled: bool = True) -> List[ExternalSubscription]:
+    query = db.query(ExternalSubscription)
+    if not include_disabled:
+        query = query.filter(ExternalSubscription.is_enabled.is_(True))
+    return query.order_by(ExternalSubscription.name).all()
+
+
+def get_external_subscription(db: Session, sub_id: int) -> Optional[ExternalSubscription]:
+    return db.query(ExternalSubscription).filter(ExternalSubscription.id == sub_id).first()
+
+
+def get_external_subscription_by_name(db: Session, name: str) -> Optional[ExternalSubscription]:
+    return db.query(ExternalSubscription).filter(ExternalSubscription.name == name).first()
+
+
+def create_external_subscription(
+    db: Session,
+    name: str,
+    url: str,
+    update_interval: int = 3600,
+    is_enabled: bool = True,
+) -> ExternalSubscription:
+    sub = ExternalSubscription(
+        name=name,
+        url=url,
+        update_interval=update_interval,
+        is_enabled=is_enabled,
+    )
+    db.add(sub)
+    db.commit()
+    db.refresh(sub)
+    return sub
+
+
+def update_external_subscription(
+    db: Session,
+    sub: ExternalSubscription,
+    **values,
+) -> ExternalSubscription:
+    for key, value in values.items():
+        if value is not None:
+            setattr(sub, key, value)
+    sub.updated_at = datetime.utcnow()
+    db.commit()
+    db.refresh(sub)
+    return sub
+
+
+def delete_external_subscription(db: Session, sub: ExternalSubscription) -> None:
+    db.delete(sub)
+    db.commit()
+
+
+# --- external subscription links ---------------------------------------------
+
+
+def compute_link_hash(link: str) -> str:
+    """Compute a hash of the link for deduplication."""
+    return hashlib.sha256(link.encode()).hexdigest()[:64]
+
+
+def get_external_subscription_links(db: Session, subscription_id: int) -> List[ExternalSubscriptionLink]:
+    return db.query(ExternalSubscriptionLink).filter(
+        ExternalSubscriptionLink.subscription_id == subscription_id
+    ).all()
+
+
+def get_all_external_links(db: Session) -> List[str]:
+    """Get all cached external links from enabled subscriptions."""
+    links = db.query(ExternalSubscriptionLink).join(ExternalSubscription).filter(
+        ExternalSubscription.is_enabled.is_(True)
+    ).all()
+    return [link.link for link in links]
+
+
+def get_user_external_links(db: Session, user_id: int) -> List[str]:
+    """Get cached external links for subscriptions the user has access to."""
+    from app.db.models import User, ExternalSubscription
+    
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        return []
+    
+    # Get enabled external subscriptions the user has access to
+    sub_ids = [sub.id for sub in user.external_subscriptions if sub.is_enabled]
+    if not sub_ids:
+        return []
+    
+    links = db.query(ExternalSubscriptionLink).filter(
+        ExternalSubscriptionLink.subscription_id.in_(sub_ids)
+    ).all()
+    return [link.link for link in links]
+
+
+def store_external_links(db: Session, subscription_id: int, links: List[str]) -> int:
+    """Store fetched links for a subscription, replacing old ones."""
+    # Delete old links
+    db.query(ExternalSubscriptionLink).filter(
+        ExternalSubscriptionLink.subscription_id == subscription_id
+    ).delete()
+    
+    # Insert new links with deduplication
+    seen_hashes = set()
+    stored = 0
+    for link in links:
+        link_hash = compute_link_hash(link)
+        if link_hash in seen_hashes:
+            continue
+        seen_hashes.add(link_hash)
+        
+        db_link = ExternalSubscriptionLink(
+            subscription_id=subscription_id,
+            link=link,
+            link_hash=link_hash,
+        )
+        db.add(db_link)
+        stored += 1
+    
+    db.commit()
+    return stored

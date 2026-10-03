@@ -128,3 +128,41 @@ class SubscriptionClientPreview(BaseModel):
     reverse: bool
     media_type: str
     source: str
+
+
+class ExternalSubscriptionBase(BaseModel):
+    name: str = Field(max_length=128)
+    url: str = Field(max_length=1024)
+    update_interval: int = Field(default=3600, ge=60, le=86400)
+    is_enabled: bool = True
+
+
+class ExternalSubscriptionCreate(ExternalSubscriptionBase):
+    model_config = ConfigDict(json_schema_extra={
+        "example": {
+            "name": "my-external-sub",
+            "url": "https://example.com/subscription",
+            "update_interval": 3600,
+            "is_enabled": True,
+        }
+    })
+
+
+class ExternalSubscriptionModify(BaseModel):
+    name: Optional[str] = Field(default=None, max_length=128)
+    url: Optional[str] = Field(default=None, max_length=1024)
+    update_interval: Optional[int] = Field(default=None, ge=60, le=86400)
+    is_enabled: Optional[bool] = None
+
+
+class ExternalSubscriptionResponse(ExternalSubscriptionBase):
+    id: int
+    last_fetched_at: Optional[datetime] = None
+    last_error: Optional[str] = None
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ExternalSubscriptionsResponse(BaseModel):
+    subscriptions: List[ExternalSubscriptionResponse]

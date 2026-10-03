@@ -3,7 +3,7 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, Header, Path, Request, Response
 from fastapi.responses import HTMLResponse
 
-from app.db import Session, crud, get_db
+from app.db import Session, crud, get_db, User
 from app.db import subscription as subscription_store
 from app.dependencies import (
     SubscriptionContext,
@@ -74,12 +74,21 @@ def active_rules(db: Session) -> Optional[List[ClientRule]]:
     return rules or None
 
 
-def cache_key(dbuser, client: ResolvedClient) -> str:
+def cache_key(dbuser, client: ResolvedClient, db: Session = None) -> str:
     """Identity of a rendered subscription.
 
     Traffic counters are intentionally excluded: they change constantly and the
     short TTL keeps the rendered usage figures fresh enough.
     """
+    # Include a hash of user's external subscription IDs to invalidate cache when they change
+    external_hash = 0
+    if db and hasattr(dbuser, 'id'):
+        # Get user's external subscription IDs
+        user = db.query(User).filter(User.id == dbuser.id).first()
+        if user:
+            sub_ids = tuple(sorted([sub.id for sub in user.external_subscriptions if sub.is_enabled]))
+            external_hash = hash(sub_ids) if sub_ids else 0
+    
     return cache.build_key(
         dbuser.username,
         client.config_format,
@@ -90,11 +99,12 @@ def cache_key(dbuser, client: ResolvedClient) -> str:
         getattr(dbuser, "sub_revoked_at", None),
         getattr(dbuser, "data_limit", None),
         getattr(dbuser, "expire", None),
+        external_hash,
     )
 
 
-def render_subscription(dbuser, user: UserResponse, client: ResolvedClient) -> cache.CachedResponse:
-    key = cache_key(dbuser, client)
+def render_subscription(db: Session, dbuser, user: UserResponse, client: ResolvedClient) -> cache.CachedResponse:
+    key = cache_key(dbuser, client, db)
     cached = cache.get(key)
     if cached is not None:
         return cached
@@ -104,18 +114,21 @@ def render_subscription(dbuser, user: UserResponse, client: ResolvedClient) -> c
         config_format=client.config_format,
         as_base64=client.as_base64,
         reverse=client.reverse,
+        db=db,
+        include_external=True,
     )
     return cache.store(key, content)
 
 
 def subscription_response(
     request: Request,
+    db: Session,
     dbuser,
     user: UserResponse,
     client: ResolvedClient,
     if_none_match: Optional[str] = None,
 ) -> Response:
-    entry = render_subscription(dbuser, user, client)
+    entry = render_subscription(db, dbuser, user, client)
     headers = build_response_headers(request, user)
     if cache.ETAG_ENABLED:
         headers["etag"] = entry.etag
@@ -153,7 +166,7 @@ def user_subscription(
         subscription_store.touch_token(db, context.token, user_agent)
 
     client = resolve_client(user_agent, rules=active_rules(db))
-    return subscription_response(request, dbuser, user, client, if_none_match)
+    return subscription_response(request, db, dbuser, user, client, if_none_match)
 
 
 @router.get("/{token}/info", response_model=SubscriptionUserResponse)
@@ -191,4 +204,4 @@ def user_subscription_with_client_type(
     """Provides a subscription link based on the specified client type (e.g., Clash, V2Ray)."""
     user: UserResponse = UserResponse.model_validate(dbuser)
     client = resolve_format(client_type)
-    return subscription_response(request, dbuser, user, client, if_none_match)
+    return subscription_response(request, db, dbuser, user, client, if_none_match)
