@@ -42,6 +42,7 @@ type Settings = Record<string, any>;
 
 type InboundClient = {
   email?: string;
+  subId?: string;
   id?: string;
   password?: string;
   flow?: string;
@@ -570,7 +571,7 @@ const InboundsSection: FC = () => {
 
   useEffect(() => { void load(); }, []);
 
-  const clients = draft?.settings?.clients || [];
+  const clients: InboundClient[] = (draft?.settings?.clients as InboundClient[]) || [];
   const update = (values: Partial<ManagedInbound>) =>
     setDraft((current) => (current ? { ...current, ...values } : current));
 
@@ -592,7 +593,7 @@ const InboundsSection: FC = () => {
 
   const removeClient = (index: number) => {
     if (!draft) return;
-    const next = clients.filter((_, i) => i !== index);
+    const next = clients.filter((_: InboundClient, i: number) => i !== index);
     update({ settings: { ...draft.settings, clients: next } });
   };
 
@@ -782,7 +783,7 @@ const InboundsSection: FC = () => {
                               </Td>
                             </Tr>
                           )}
-                          {clients.map((client, index) => (
+                          {clients.map((client: InboundClient, index: number) => (
                             <Tr key={index} opacity={client.enable === false ? 0.5 : 1}>
                               <Td>{client.email}</Td>
                               <Td maxW="200px" isTruncated title={client.id || client.password}>
