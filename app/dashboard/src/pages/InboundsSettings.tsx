@@ -67,8 +67,8 @@ const clean = (settings: Settings) => Object.fromEntries(
 const errorMessage = (error: any, fallback: string) =>
   error?.response?._data?.detail || error?.message || fallback;
 
-const when = (value?: string | null) =>
-  value ? new Date(value).toLocaleString() : "—";
+const when = (value?: string | number | null) =>
+  value !== undefined && value !== null && value !== "" ? String(value) : "—";
 
 const JsonField = ({ label, value, onChange }: { label: string; value: unknown; onChange: (value: unknown) => void }) => {
   const [text, setText] = useState(value ? JSON.stringify(value, null, 2) : "");
