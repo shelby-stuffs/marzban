@@ -1,6 +1,6 @@
 from fastapi import APIRouter
-from . import (admin,core,environment,home,hysteria2,node,subscription,subscription_settings,system,user,user_template,wireguard_outbound,xhttp_inbound,external_subscription)
+from . import (admin,core,environment,home,hysteria2,node,subscription,subscription_settings,system,user,user_template,wireguard_outbound,xhttp_inbound,external_subscription,inbound_manager)
 api_router=APIRouter()
-routers=[admin.router,core.router,environment.router,hysteria2.router,hysteria2.singbox_router,node.router,wireguard_outbound.router,xhttp_inbound.router,subscription_settings.router,subscription_settings.token_router,subscription.router,system.router,user_template.router,user.router,home.router,external_subscription.router]
+routers=[admin.router,core.router,environment.router,hysteria2.router,hysteria2.singbox_router,node.router,wireguard_outbound.router,xhttp_inbound.router,subscription_settings.router,subscription_settings.token_router,subscription.router,system.router,user_template.router,user.router,home.router,external_subscription.router,inbound_manager.router]
 for router in routers:api_router.include_router(router)
 __all__=["api_router"]
