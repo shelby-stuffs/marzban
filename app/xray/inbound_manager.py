@@ -179,3 +179,34 @@ def delete_inbound(config: dict, tag: str) -> dict:
     updated = deepcopy(config)
     updated["inbounds"] = [i for i in updated.get("inbounds", []) if i.get("tag") != tag]
     return updated
+
+
+def generate_reality_keys() -> dict:
+    """Generate an x25519 key pair for reality via the xray binary."""
+    import subprocess
+
+    from config import XRAY_EXECUTABLE_PATH
+
+    try:
+        output = subprocess.run(
+            [XRAY_EXECUTABLE_PATH, "x25519"],
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        raise RuntimeError(f"Failed to run xray x25519: {exc}") from exc
+
+    private_key = None
+    public_key = None
+    for line in (output.stdout or "").splitlines():
+        line = line.strip()
+        if line.lower().startswith("private key"):
+            private_key = line.split(":", 1)[1].strip()
+        elif line.lower().startswith("public key"):
+            public_key = line.split(":", 1)[1].strip()
+
+    if not private_key or not public_key:
+        raise RuntimeError("xray x25519 did not return keys")
+
+    return {"private_key": private_key, "public_key": public_key}

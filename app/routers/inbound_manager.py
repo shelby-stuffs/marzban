@@ -111,3 +111,12 @@ def remove_inbound(
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     _validate_and_apply(updated)
     return {}
+
+
+@router.post("/reality-keygen")
+def post_reality_keygen(_admin: Admin = Depends(Admin.check_sudo_admin)):
+    """Generate an x25519 key pair for reality stream settings."""
+    try:
+        return generate_reality_keys()
+    except RuntimeError as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
