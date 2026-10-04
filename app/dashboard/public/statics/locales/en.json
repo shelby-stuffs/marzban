@@ -362,6 +362,7 @@
   "singbox.dynamicSubscriptionXrayOwned": "Handled by Xray",
   "singbox.dynamicSubscriptionXrayReason": "This VLESS inbound stays in the Xray subscription and is not exported by sing-box.",
   "userDialog.singboxInbounds": "sing-box inbounds",
+  "inbounds.title": "Inbounds",
   "userDialog.singboxInboundsHelp": "Select the sing-box inbounds that should be added to this user’s main subscription.",
   "userDialog.externalSubscriptions": "External subscriptions",
   "userDialog.externalSubscriptionsHelp": "Select the external subscriptions that should be added to this user’s main subscription.",
