@@ -44,8 +44,8 @@ RUN apt-get update \
     && echo "Downloading Iran geobase..." \
     && curl -L -o /tmp/geoip_IR.dat "https://raw.githubusercontent.com/Chocolate4U/Iran-v2ray-rules/release/geoip.dat" \
     && curl -L -o /tmp/geosite_IR.dat "https://raw.githubusercontent.com/Chocolate4U/Iran-v2ray-rules/release/geosite.dat" \
-    && mv /tmp/geoip_custom.dat /usr/local/share/xray/geoip_custom.dat \
-    && mv /tmp/geosite_custom.dat /usr/local/share/xray/geosite_custom.dat \
+    && mv /tmp/geoip_IR.dat /usr/local/share/xray/geoip_IR.dat \
+    && mv /tmp/geosite_IR.dat /usr/local/share/xray/geosite_IR.dat \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=singbox-build /out/sing-box /usr/local/bin/sing-box
