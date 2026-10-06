@@ -41,6 +41,11 @@ RUN apt-get update \
     && curl -L -o /tmp/geosite_custom.dat "https://iplist.opencck.org/?format=geosite&data=domains&wildcard=1&group=ai&group=anime&group=art&group=discord&group=education&group=finance&group=games&group=hosting&group=jetbrains&group=messengers&group=music&group=news&group=porn&group=shop&group=socials&group=tools&group=torrent&group=video&group=youtube" \
     && mv /tmp/geoip_custom.dat /usr/local/share/xray/geoip_custom.dat \
     && mv /tmp/geosite_custom.dat /usr/local/share/xray/geosite_custom.dat \
+    && echo "Downloading Iran geobase..." \
+    && curl -L -o /tmp/geoip_IR.dat "https://raw.githubusercontent.com/Chocolate4U/Iran-v2ray-rules/release/geoip.dat" \
+    && curl -L -o /tmp/geosite_IR.dat "https://raw.githubusercontent.com/Chocolate4U/Iran-v2ray-rules/release/geosite.dat" \
+    && mv /tmp/geoip_custom.dat /usr/local/share/xray/geoip_custom.dat \
+    && mv /tmp/geosite_custom.dat /usr/local/share/xray/geosite_custom.dat \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=singbox-build /out/sing-box /usr/local/bin/sing-box
